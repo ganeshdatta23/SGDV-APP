@@ -1,0 +1,19 @@
+{
+    "logs": [
+        {
+            "outputFile": "com.darshanamcompassnative.app-mergeDebugResources-41:/values-so/values-so.xml",
+            "map": [
+                {
+                    "source": "/Users/mmt11937/.gradle/caches/transforms-3/07eec3d4c4a2857a41467e32ffd392d9/transformed/jetified-react-android-0.73.8-debug/res/values-so/values-so.xml",
+                    "from": {
+                        "startLines": "2,3,4,5,6,7",
+                        "startColumns": "4,4,4,4,4,4",
+                        "startOffsets": "55,124,207,275,345,419",
+                        "endColumns": "68,82,67,69,73,72",
+                        "endOffsets": "119,202,270,340,414,487"
+                    }
+                }
+            ]
+        }
+    ]
+}
