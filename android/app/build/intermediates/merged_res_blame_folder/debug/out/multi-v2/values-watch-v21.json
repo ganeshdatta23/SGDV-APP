@@ -4,7 +4,7 @@
             "outputFile": "com.darshanamcompassnative.app-mergeDebugResources-41:/values-watch-v21/values-watch-v21.xml",
             "map": [
                 {
-                    "source": "/Users/mmt11937/.gradle/caches/transforms-3/2cc55d4908d2453c100389f96f8c36cf/transformed/appcompat-1.6.1/res/values-watch-v21/values-watch-v21.xml",
+                    "source": "C:\\Users\\ganes\\.gradle\\caches\\transforms-3\\2cc55d4908d2453c100389f96f8c36cf\\transformed\\appcompat-1.6.1\\res\\values-watch-v21\\values-watch-v21.xml",
                     "from": {
                         "startLines": "2,6,10",
                         "startColumns": "4,4,4",

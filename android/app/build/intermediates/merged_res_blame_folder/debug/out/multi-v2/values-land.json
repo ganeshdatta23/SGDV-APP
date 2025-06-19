@@ -4,7 +4,7 @@
             "outputFile": "com.darshanamcompassnative.app-mergeDebugResources-41:/values-land/values-land.xml",
             "map": [
                 {
-                    "source": "/Users/mmt11937/.gradle/caches/transforms-3/2cc55d4908d2453c100389f96f8c36cf/transformed/appcompat-1.6.1/res/values-land/values-land.xml",
+                    "source": "C:\\Users\\ganes\\.gradle\\caches\\transforms-3\\2cc55d4908d2453c100389f96f8c36cf\\transformed\\appcompat-1.6.1\\res\\values-land\\values-land.xml",
                     "from": {
                         "startLines": "2,3,4",
                         "startColumns": "4,4,4",

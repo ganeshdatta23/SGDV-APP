@@ -9,181 +9,181 @@
 9        android:targetSdkVersion="34" />
 10
 11    <uses-permission android:name="android.permission.INTERNET" />
-11-->/Users/mmt11937/Documents/SGDV-APP/android/app/src/main/AndroidManifest.xml:3:5-67
-11-->/Users/mmt11937/Documents/SGDV-APP/android/app/src/main/AndroidManifest.xml:3:22-64
+11-->D:\New folder\SGDV-APP\android\app\src\main\AndroidManifest.xml:3:5-67
+11-->D:\New folder\SGDV-APP\android\app\src\main\AndroidManifest.xml:3:22-64
 12    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-12-->/Users/mmt11937/Documents/SGDV-APP/android/app/src/main/AndroidManifest.xml:4:5-79
-12-->/Users/mmt11937/Documents/SGDV-APP/android/app/src/main/AndroidManifest.xml:4:22-76
+12-->D:\New folder\SGDV-APP\android\app\src\main\AndroidManifest.xml:4:5-79
+12-->D:\New folder\SGDV-APP\android\app\src\main\AndroidManifest.xml:4:22-76
 13    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-13-->/Users/mmt11937/Documents/SGDV-APP/android/app/src/main/AndroidManifest.xml:5:5-81
-13-->/Users/mmt11937/Documents/SGDV-APP/android/app/src/main/AndroidManifest.xml:5:22-78
+13-->D:\New folder\SGDV-APP\android\app\src\main\AndroidManifest.xml:5:5-81
+13-->D:\New folder\SGDV-APP\android\app\src\main\AndroidManifest.xml:5:22-78
 14    <uses-permission android:name="android.permission.VIBRATE" />
-14-->/Users/mmt11937/Documents/SGDV-APP/android/app/src/main/AndroidManifest.xml:6:5-66
-14-->/Users/mmt11937/Documents/SGDV-APP/android/app/src/main/AndroidManifest.xml:6:22-63
+14-->D:\New folder\SGDV-APP\android\app\src\main\AndroidManifest.xml:6:5-66
+14-->D:\New folder\SGDV-APP\android\app\src\main\AndroidManifest.xml:6:22-63
 15    <!--
 16    This manifest file is used only by Gradle to configure debug-only capabilities
 17    for React Native Apps.
 18    -->
 19    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
-19-->[com.facebook.react:react-android:0.73.8] /Users/mmt11937/.gradle/caches/transforms-3/07eec3d4c4a2857a41467e32ffd392d9/transformed/jetified-react-android-0.73.8-debug/AndroidManifest.xml:16:5-78
-19-->[com.facebook.react:react-android:0.73.8] /Users/mmt11937/.gradle/caches/transforms-3/07eec3d4c4a2857a41467e32ffd392d9/transformed/jetified-react-android-0.73.8-debug/AndroidManifest.xml:16:22-75
+19-->[com.facebook.react:react-android:0.73.8] C:\Users\ganes\.gradle\caches\transforms-3\07eec3d4c4a2857a41467e32ffd392d9\transformed\jetified-react-android-0.73.8-debug\AndroidManifest.xml:16:5-78
+19-->[com.facebook.react:react-android:0.73.8] C:\Users\ganes\.gradle\caches\transforms-3\07eec3d4c4a2857a41467e32ffd392d9\transformed\jetified-react-android-0.73.8-debug\AndroidManifest.xml:16:22-75
 20    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
-20-->[com.facebook.flipper:flipper:0.201.0] /Users/mmt11937/.gradle/caches/transforms-3/04b438375ae1367826a34f410c8b1c21/transformed/jetified-flipper-0.201.0/AndroidManifest.xml:14:5-76
-20-->[com.facebook.flipper:flipper:0.201.0] /Users/mmt11937/.gradle/caches/transforms-3/04b438375ae1367826a34f410c8b1c21/transformed/jetified-flipper-0.201.0/AndroidManifest.xml:14:22-73
+20-->[com.facebook.flipper:flipper:0.201.0] C:\Users\ganes\.gradle\caches\transforms-3\04b438375ae1367826a34f410c8b1c21\transformed\jetified-flipper-0.201.0\AndroidManifest.xml:14:5-76
+20-->[com.facebook.flipper:flipper:0.201.0] C:\Users\ganes\.gradle\caches\transforms-3\04b438375ae1367826a34f410c8b1c21\transformed\jetified-flipper-0.201.0\AndroidManifest.xml:14:22-73
 21    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-21-->[androidx.media3:media3-common:1.4.1] /Users/mmt11937/.gradle/caches/transforms-3/62e4995cf0c60990db275bd21baa4b74/transformed/jetified-media3-common-1.4.1/AndroidManifest.xml:22:5-79
-21-->[androidx.media3:media3-common:1.4.1] /Users/mmt11937/.gradle/caches/transforms-3/62e4995cf0c60990db275bd21baa4b74/transformed/jetified-media3-common-1.4.1/AndroidManifest.xml:22:22-76
+21-->[androidx.media3:media3-common:1.4.1] C:\Users\ganes\.gradle\caches\transforms-3\62e4995cf0c60990db275bd21baa4b74\transformed\jetified-media3-common-1.4.1\AndroidManifest.xml:22:5-79
+21-->[androidx.media3:media3-common:1.4.1] C:\Users\ganes\.gradle\caches\transforms-3\62e4995cf0c60990db275bd21baa4b74\transformed\jetified-media3-common-1.4.1\AndroidManifest.xml:22:22-76
 22
 23    <permission
-23-->[androidx.core:core:1.13.1] /Users/mmt11937/.gradle/caches/transforms-3/4ae12e25005f285b26417d563d8b7645/transformed/core-1.13.1/AndroidManifest.xml:22:5-24:47
+23-->[androidx.core:core:1.13.1] C:\Users\ganes\.gradle\caches\transforms-3\4ae12e25005f285b26417d563d8b7645\transformed\core-1.13.1\AndroidManifest.xml:22:5-24:47
 24        android:name="com.darshanamcompassnative.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
-24-->[androidx.core:core:1.13.1] /Users/mmt11937/.gradle/caches/transforms-3/4ae12e25005f285b26417d563d8b7645/transformed/core-1.13.1/AndroidManifest.xml:23:9-81
+24-->[androidx.core:core:1.13.1] C:\Users\ganes\.gradle\caches\transforms-3\4ae12e25005f285b26417d563d8b7645\transformed\core-1.13.1\AndroidManifest.xml:23:9-81
 25        android:protectionLevel="signature" />
-25-->[androidx.core:core:1.13.1] /Users/mmt11937/.gradle/caches/transforms-3/4ae12e25005f285b26417d563d8b7645/transformed/core-1.13.1/AndroidManifest.xml:24:9-44
+25-->[androidx.core:core:1.13.1] C:\Users\ganes\.gradle\caches\transforms-3\4ae12e25005f285b26417d563d8b7645\transformed\core-1.13.1\AndroidManifest.xml:24:9-44
 26
 27    <uses-permission android:name="com.darshanamcompassnative.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" />
-27-->[androidx.core:core:1.13.1] /Users/mmt11937/.gradle/caches/transforms-3/4ae12e25005f285b26417d563d8b7645/transformed/core-1.13.1/AndroidManifest.xml:26:5-97
-27-->[androidx.core:core:1.13.1] /Users/mmt11937/.gradle/caches/transforms-3/4ae12e25005f285b26417d563d8b7645/transformed/core-1.13.1/AndroidManifest.xml:26:22-94
+27-->[androidx.core:core:1.13.1] C:\Users\ganes\.gradle\caches\transforms-3\4ae12e25005f285b26417d563d8b7645\transformed\core-1.13.1\AndroidManifest.xml:26:5-97
+27-->[androidx.core:core:1.13.1] C:\Users\ganes\.gradle\caches\transforms-3\4ae12e25005f285b26417d563d8b7645\transformed\core-1.13.1\AndroidManifest.xml:26:22-94
 28
 29    <application
-29-->/Users/mmt11937/Documents/SGDV-APP/android/app/src/main/AndroidManifest.xml:8:5-27:19
+29-->D:\New folder\SGDV-APP\android\app\src\main\AndroidManifest.xml:8:5-27:19
 30        android:name="com.darshanamcompassnative.MainApplication"
-30-->/Users/mmt11937/Documents/SGDV-APP/android/app/src/main/AndroidManifest.xml:9:7-38
+30-->D:\New folder\SGDV-APP\android\app\src\main\AndroidManifest.xml:9:7-38
 31        android:allowBackup="false"
-31-->/Users/mmt11937/Documents/SGDV-APP/android/app/src/main/AndroidManifest.xml:13:7-34
+31-->D:\New folder\SGDV-APP\android\app\src\main\AndroidManifest.xml:13:7-34
 32        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
-32-->[androidx.core:core:1.13.1] /Users/mmt11937/.gradle/caches/transforms-3/4ae12e25005f285b26417d563d8b7645/transformed/core-1.13.1/AndroidManifest.xml:28:18-86
+32-->[androidx.core:core:1.13.1] C:\Users\ganes\.gradle\caches\transforms-3\4ae12e25005f285b26417d563d8b7645\transformed\core-1.13.1\AndroidManifest.xml:28:18-86
 33        android:debuggable="true"
 34        android:extractNativeLibs="false"
 35        android:icon="@mipmap/ic_launcher"
-35-->/Users/mmt11937/Documents/SGDV-APP/android/app/src/main/AndroidManifest.xml:11:7-41
+35-->D:\New folder\SGDV-APP\android\app\src\main\AndroidManifest.xml:11:7-41
 36        android:label="@string/app_name"
-36-->/Users/mmt11937/Documents/SGDV-APP/android/app/src/main/AndroidManifest.xml:10:7-39
+36-->D:\New folder\SGDV-APP\android\app\src\main\AndroidManifest.xml:10:7-39
 37        android:roundIcon="@mipmap/ic_launcher_round"
-37-->/Users/mmt11937/Documents/SGDV-APP/android/app/src/main/AndroidManifest.xml:12:7-52
+37-->D:\New folder\SGDV-APP\android\app\src\main\AndroidManifest.xml:12:7-52
 38        android:theme="@style/AppTheme"
-38-->/Users/mmt11937/Documents/SGDV-APP/android/app/src/main/AndroidManifest.xml:14:7-38
+38-->D:\New folder\SGDV-APP\android\app\src\main\AndroidManifest.xml:14:7-38
 39        android:usesCleartextTraffic="true" >
-39-->/Users/mmt11937/Documents/SGDV-APP/android/app/src/debug/AndroidManifest.xml:6:9-44
+39-->D:\New folder\SGDV-APP\android\app\src\debug\AndroidManifest.xml:6:9-44
 40        <activity
-40-->/Users/mmt11937/Documents/SGDV-APP/android/app/src/main/AndroidManifest.xml:15:7-26:18
+40-->D:\New folder\SGDV-APP\android\app\src\main\AndroidManifest.xml:15:7-26:18
 41            android:name="com.darshanamcompassnative.MainActivity"
-41-->/Users/mmt11937/Documents/SGDV-APP/android/app/src/main/AndroidManifest.xml:16:9-37
+41-->D:\New folder\SGDV-APP\android\app\src\main\AndroidManifest.xml:16:9-37
 42            android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|screenSize|smallestScreenSize|uiMode"
-42-->/Users/mmt11937/Documents/SGDV-APP/android/app/src/main/AndroidManifest.xml:18:9-118
+42-->D:\New folder\SGDV-APP\android\app\src\main\AndroidManifest.xml:18:9-118
 43            android:exported="true"
-43-->/Users/mmt11937/Documents/SGDV-APP/android/app/src/main/AndroidManifest.xml:21:9-32
+43-->D:\New folder\SGDV-APP\android\app\src\main\AndroidManifest.xml:21:9-32
 44            android:label="@string/app_name"
-44-->/Users/mmt11937/Documents/SGDV-APP/android/app/src/main/AndroidManifest.xml:17:9-41
+44-->D:\New folder\SGDV-APP\android\app\src\main\AndroidManifest.xml:17:9-41
 45            android:launchMode="singleTask"
-45-->/Users/mmt11937/Documents/SGDV-APP/android/app/src/main/AndroidManifest.xml:19:9-40
+45-->D:\New folder\SGDV-APP\android\app\src\main\AndroidManifest.xml:19:9-40
 46            android:windowSoftInputMode="adjustResize" >
-46-->/Users/mmt11937/Documents/SGDV-APP/android/app/src/main/AndroidManifest.xml:20:9-51
+46-->D:\New folder\SGDV-APP\android\app\src\main\AndroidManifest.xml:20:9-51
 47            <intent-filter>
-47-->/Users/mmt11937/Documents/SGDV-APP/android/app/src/main/AndroidManifest.xml:22:9-25:25
+47-->D:\New folder\SGDV-APP\android\app\src\main\AndroidManifest.xml:22:9-25:25
 48                <action android:name="android.intent.action.MAIN" />
-48-->/Users/mmt11937/Documents/SGDV-APP/android/app/src/main/AndroidManifest.xml:23:13-65
-48-->/Users/mmt11937/Documents/SGDV-APP/android/app/src/main/AndroidManifest.xml:23:21-62
+48-->D:\New folder\SGDV-APP\android\app\src\main\AndroidManifest.xml:23:13-65
+48-->D:\New folder\SGDV-APP\android\app\src\main\AndroidManifest.xml:23:21-62
 49
 50                <category android:name="android.intent.category.LAUNCHER" />
-50-->/Users/mmt11937/Documents/SGDV-APP/android/app/src/main/AndroidManifest.xml:24:13-73
-50-->/Users/mmt11937/Documents/SGDV-APP/android/app/src/main/AndroidManifest.xml:24:23-70
+50-->D:\New folder\SGDV-APP\android\app\src\main\AndroidManifest.xml:24:13-73
+50-->D:\New folder\SGDV-APP\android\app\src\main\AndroidManifest.xml:24:23-70
 51            </intent-filter>
 52        </activity>
 53        <activity
-53-->[com.facebook.react:react-android:0.73.8] /Users/mmt11937/.gradle/caches/transforms-3/07eec3d4c4a2857a41467e32ffd392d9/transformed/jetified-react-android-0.73.8-debug/AndroidManifest.xml:19:9-21:40
+53-->[com.facebook.react:react-android:0.73.8] C:\Users\ganes\.gradle\caches\transforms-3\07eec3d4c4a2857a41467e32ffd392d9\transformed\jetified-react-android-0.73.8-debug\AndroidManifest.xml:19:9-21:40
 54            android:name="com.facebook.react.devsupport.DevSettingsActivity"
-54-->[com.facebook.react:react-android:0.73.8] /Users/mmt11937/.gradle/caches/transforms-3/07eec3d4c4a2857a41467e32ffd392d9/transformed/jetified-react-android-0.73.8-debug/AndroidManifest.xml:20:13-77
+54-->[com.facebook.react:react-android:0.73.8] C:\Users\ganes\.gradle\caches\transforms-3\07eec3d4c4a2857a41467e32ffd392d9\transformed\jetified-react-android-0.73.8-debug\AndroidManifest.xml:20:13-77
 55            android:exported="false" />
-55-->[com.facebook.react:react-android:0.73.8] /Users/mmt11937/.gradle/caches/transforms-3/07eec3d4c4a2857a41467e32ffd392d9/transformed/jetified-react-android-0.73.8-debug/AndroidManifest.xml:21:13-37
+55-->[com.facebook.react:react-android:0.73.8] C:\Users\ganes\.gradle\caches\transforms-3\07eec3d4c4a2857a41467e32ffd392d9\transformed\jetified-react-android-0.73.8-debug\AndroidManifest.xml:21:13-37
 56        <activity
-56-->[com.google.android.gms:play-services-base:17.5.0] /Users/mmt11937/.gradle/caches/transforms-3/c5196877a5321f98da90bdbe0091f5e8/transformed/jetified-play-services-base-17.5.0/AndroidManifest.xml:23:9-26:75
+56-->[com.google.android.gms:play-services-base:17.5.0] C:\Users\ganes\.gradle\caches\transforms-3\c5196877a5321f98da90bdbe0091f5e8\transformed\jetified-play-services-base-17.5.0\AndroidManifest.xml:23:9-26:75
 57            android:name="com.google.android.gms.common.api.GoogleApiActivity"
-57-->[com.google.android.gms:play-services-base:17.5.0] /Users/mmt11937/.gradle/caches/transforms-3/c5196877a5321f98da90bdbe0091f5e8/transformed/jetified-play-services-base-17.5.0/AndroidManifest.xml:24:13-79
+57-->[com.google.android.gms:play-services-base:17.5.0] C:\Users\ganes\.gradle\caches\transforms-3\c5196877a5321f98da90bdbe0091f5e8\transformed\jetified-play-services-base-17.5.0\AndroidManifest.xml:24:13-79
 58            android:exported="false"
-58-->[com.google.android.gms:play-services-base:17.5.0] /Users/mmt11937/.gradle/caches/transforms-3/c5196877a5321f98da90bdbe0091f5e8/transformed/jetified-play-services-base-17.5.0/AndroidManifest.xml:25:13-37
+58-->[com.google.android.gms:play-services-base:17.5.0] C:\Users\ganes\.gradle\caches\transforms-3\c5196877a5321f98da90bdbe0091f5e8\transformed\jetified-play-services-base-17.5.0\AndroidManifest.xml:25:13-37
 59            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
-59-->[com.google.android.gms:play-services-base:17.5.0] /Users/mmt11937/.gradle/caches/transforms-3/c5196877a5321f98da90bdbe0091f5e8/transformed/jetified-play-services-base-17.5.0/AndroidManifest.xml:26:13-72
+59-->[com.google.android.gms:play-services-base:17.5.0] C:\Users\ganes\.gradle\caches\transforms-3\c5196877a5321f98da90bdbe0091f5e8\transformed\jetified-play-services-base-17.5.0\AndroidManifest.xml:26:13-72
 60
 61        <meta-data
-61-->[com.google.android.gms:play-services-basement:17.5.0] /Users/mmt11937/.gradle/caches/transforms-3/118eea9b8dc60b798bcbc9cdd12c3aa6/transformed/jetified-play-services-basement-17.5.0/AndroidManifest.xml:23:9-25:69
+61-->[com.google.android.gms:play-services-basement:17.5.0] C:\Users\ganes\.gradle\caches\transforms-3\118eea9b8dc60b798bcbc9cdd12c3aa6\transformed\jetified-play-services-basement-17.5.0\AndroidManifest.xml:23:9-25:69
 62            android:name="com.google.android.gms.version"
-62-->[com.google.android.gms:play-services-basement:17.5.0] /Users/mmt11937/.gradle/caches/transforms-3/118eea9b8dc60b798bcbc9cdd12c3aa6/transformed/jetified-play-services-basement-17.5.0/AndroidManifest.xml:24:13-58
+62-->[com.google.android.gms:play-services-basement:17.5.0] C:\Users\ganes\.gradle\caches\transforms-3\118eea9b8dc60b798bcbc9cdd12c3aa6\transformed\jetified-play-services-basement-17.5.0\AndroidManifest.xml:24:13-58
 63            android:value="@integer/google_play_services_version" />
-63-->[com.google.android.gms:play-services-basement:17.5.0] /Users/mmt11937/.gradle/caches/transforms-3/118eea9b8dc60b798bcbc9cdd12c3aa6/transformed/jetified-play-services-basement-17.5.0/AndroidManifest.xml:25:13-66
+63-->[com.google.android.gms:play-services-basement:17.5.0] C:\Users\ganes\.gradle\caches\transforms-3\118eea9b8dc60b798bcbc9cdd12c3aa6\transformed\jetified-play-services-basement-17.5.0\AndroidManifest.xml:25:13-66
 64
 65        <provider
-65-->[androidx.emoji2:emoji2:1.2.0] /Users/mmt11937/.gradle/caches/transforms-3/08b455c33d4fee4cd60c98c6865859c9/transformed/jetified-emoji2-1.2.0/AndroidManifest.xml:24:9-32:20
+65-->[androidx.emoji2:emoji2:1.2.0] C:\Users\ganes\.gradle\caches\transforms-3\08b455c33d4fee4cd60c98c6865859c9\transformed\jetified-emoji2-1.2.0\AndroidManifest.xml:24:9-32:20
 66            android:name="androidx.startup.InitializationProvider"
-66-->[androidx.emoji2:emoji2:1.2.0] /Users/mmt11937/.gradle/caches/transforms-3/08b455c33d4fee4cd60c98c6865859c9/transformed/jetified-emoji2-1.2.0/AndroidManifest.xml:25:13-67
+66-->[androidx.emoji2:emoji2:1.2.0] C:\Users\ganes\.gradle\caches\transforms-3\08b455c33d4fee4cd60c98c6865859c9\transformed\jetified-emoji2-1.2.0\AndroidManifest.xml:25:13-67
 67            android:authorities="com.darshanamcompassnative.androidx-startup"
-67-->[androidx.emoji2:emoji2:1.2.0] /Users/mmt11937/.gradle/caches/transforms-3/08b455c33d4fee4cd60c98c6865859c9/transformed/jetified-emoji2-1.2.0/AndroidManifest.xml:26:13-68
+67-->[androidx.emoji2:emoji2:1.2.0] C:\Users\ganes\.gradle\caches\transforms-3\08b455c33d4fee4cd60c98c6865859c9\transformed\jetified-emoji2-1.2.0\AndroidManifest.xml:26:13-68
 68            android:exported="false" >
-68-->[androidx.emoji2:emoji2:1.2.0] /Users/mmt11937/.gradle/caches/transforms-3/08b455c33d4fee4cd60c98c6865859c9/transformed/jetified-emoji2-1.2.0/AndroidManifest.xml:27:13-37
+68-->[androidx.emoji2:emoji2:1.2.0] C:\Users\ganes\.gradle\caches\transforms-3\08b455c33d4fee4cd60c98c6865859c9\transformed\jetified-emoji2-1.2.0\AndroidManifest.xml:27:13-37
 69            <meta-data
-69-->[androidx.emoji2:emoji2:1.2.0] /Users/mmt11937/.gradle/caches/transforms-3/08b455c33d4fee4cd60c98c6865859c9/transformed/jetified-emoji2-1.2.0/AndroidManifest.xml:29:13-31:52
+69-->[androidx.emoji2:emoji2:1.2.0] C:\Users\ganes\.gradle\caches\transforms-3\08b455c33d4fee4cd60c98c6865859c9\transformed\jetified-emoji2-1.2.0\AndroidManifest.xml:29:13-31:52
 70                android:name="androidx.emoji2.text.EmojiCompatInitializer"
-70-->[androidx.emoji2:emoji2:1.2.0] /Users/mmt11937/.gradle/caches/transforms-3/08b455c33d4fee4cd60c98c6865859c9/transformed/jetified-emoji2-1.2.0/AndroidManifest.xml:30:17-75
+70-->[androidx.emoji2:emoji2:1.2.0] C:\Users\ganes\.gradle\caches\transforms-3\08b455c33d4fee4cd60c98c6865859c9\transformed\jetified-emoji2-1.2.0\AndroidManifest.xml:30:17-75
 71                android:value="androidx.startup" />
-71-->[androidx.emoji2:emoji2:1.2.0] /Users/mmt11937/.gradle/caches/transforms-3/08b455c33d4fee4cd60c98c6865859c9/transformed/jetified-emoji2-1.2.0/AndroidManifest.xml:31:17-49
+71-->[androidx.emoji2:emoji2:1.2.0] C:\Users\ganes\.gradle\caches\transforms-3\08b455c33d4fee4cd60c98c6865859c9\transformed\jetified-emoji2-1.2.0\AndroidManifest.xml:31:17-49
 72            <meta-data
-72-->[androidx.lifecycle:lifecycle-process:2.6.2] /Users/mmt11937/.gradle/caches/transforms-3/3a0ad3715a17d05520b61587b580ce61/transformed/jetified-lifecycle-process-2.6.2/AndroidManifest.xml:29:13-31:52
+72-->[androidx.lifecycle:lifecycle-process:2.6.2] C:\Users\ganes\.gradle\caches\transforms-3\3a0ad3715a17d05520b61587b580ce61\transformed\jetified-lifecycle-process-2.6.2\AndroidManifest.xml:29:13-31:52
 73                android:name="androidx.lifecycle.ProcessLifecycleInitializer"
-73-->[androidx.lifecycle:lifecycle-process:2.6.2] /Users/mmt11937/.gradle/caches/transforms-3/3a0ad3715a17d05520b61587b580ce61/transformed/jetified-lifecycle-process-2.6.2/AndroidManifest.xml:30:17-78
+73-->[androidx.lifecycle:lifecycle-process:2.6.2] C:\Users\ganes\.gradle\caches\transforms-3\3a0ad3715a17d05520b61587b580ce61\transformed\jetified-lifecycle-process-2.6.2\AndroidManifest.xml:30:17-78
 74                android:value="androidx.startup" />
-74-->[androidx.lifecycle:lifecycle-process:2.6.2] /Users/mmt11937/.gradle/caches/transforms-3/3a0ad3715a17d05520b61587b580ce61/transformed/jetified-lifecycle-process-2.6.2/AndroidManifest.xml:31:17-49
+74-->[androidx.lifecycle:lifecycle-process:2.6.2] C:\Users\ganes\.gradle\caches\transforms-3\3a0ad3715a17d05520b61587b580ce61\transformed\jetified-lifecycle-process-2.6.2\AndroidManifest.xml:31:17-49
 75            <meta-data
-75-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/mmt11937/.gradle/caches/transforms-3/266da38d2afad82e20bd7384576a6815/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:29:13-31:52
+75-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\ganes\.gradle\caches\transforms-3\266da38d2afad82e20bd7384576a6815\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:29:13-31:52
 76                android:name="androidx.profileinstaller.ProfileInstallerInitializer"
-76-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/mmt11937/.gradle/caches/transforms-3/266da38d2afad82e20bd7384576a6815/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:30:17-85
+76-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\ganes\.gradle\caches\transforms-3\266da38d2afad82e20bd7384576a6815\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:30:17-85
 77                android:value="androidx.startup" />
-77-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/mmt11937/.gradle/caches/transforms-3/266da38d2afad82e20bd7384576a6815/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:31:17-49
+77-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\ganes\.gradle\caches\transforms-3\266da38d2afad82e20bd7384576a6815\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:31:17-49
 78        </provider>
 79
 80        <receiver
-80-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/mmt11937/.gradle/caches/transforms-3/266da38d2afad82e20bd7384576a6815/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:34:9-52:20
+80-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\ganes\.gradle\caches\transforms-3\266da38d2afad82e20bd7384576a6815\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:34:9-52:20
 81            android:name="androidx.profileinstaller.ProfileInstallReceiver"
-81-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/mmt11937/.gradle/caches/transforms-3/266da38d2afad82e20bd7384576a6815/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:35:13-76
+81-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\ganes\.gradle\caches\transforms-3\266da38d2afad82e20bd7384576a6815\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:35:13-76
 82            android:directBootAware="false"
-82-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/mmt11937/.gradle/caches/transforms-3/266da38d2afad82e20bd7384576a6815/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:36:13-44
+82-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\ganes\.gradle\caches\transforms-3\266da38d2afad82e20bd7384576a6815\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:36:13-44
 83            android:enabled="true"
-83-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/mmt11937/.gradle/caches/transforms-3/266da38d2afad82e20bd7384576a6815/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:37:13-35
+83-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\ganes\.gradle\caches\transforms-3\266da38d2afad82e20bd7384576a6815\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:37:13-35
 84            android:exported="true"
-84-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/mmt11937/.gradle/caches/transforms-3/266da38d2afad82e20bd7384576a6815/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:38:13-36
+84-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\ganes\.gradle\caches\transforms-3\266da38d2afad82e20bd7384576a6815\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:38:13-36
 85            android:permission="android.permission.DUMP" >
-85-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/mmt11937/.gradle/caches/transforms-3/266da38d2afad82e20bd7384576a6815/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:39:13-57
+85-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\ganes\.gradle\caches\transforms-3\266da38d2afad82e20bd7384576a6815\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:39:13-57
 86            <intent-filter>
-86-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/mmt11937/.gradle/caches/transforms-3/266da38d2afad82e20bd7384576a6815/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:40:13-42:29
+86-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\ganes\.gradle\caches\transforms-3\266da38d2afad82e20bd7384576a6815\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:40:13-42:29
 87                <action android:name="androidx.profileinstaller.action.INSTALL_PROFILE" />
-87-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/mmt11937/.gradle/caches/transforms-3/266da38d2afad82e20bd7384576a6815/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:41:17-91
-87-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/mmt11937/.gradle/caches/transforms-3/266da38d2afad82e20bd7384576a6815/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:41:25-88
+87-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\ganes\.gradle\caches\transforms-3\266da38d2afad82e20bd7384576a6815\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:41:17-91
+87-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\ganes\.gradle\caches\transforms-3\266da38d2afad82e20bd7384576a6815\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:41:25-88
 88            </intent-filter>
 89            <intent-filter>
-89-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/mmt11937/.gradle/caches/transforms-3/266da38d2afad82e20bd7384576a6815/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:43:13-45:29
+89-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\ganes\.gradle\caches\transforms-3\266da38d2afad82e20bd7384576a6815\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:43:13-45:29
 90                <action android:name="androidx.profileinstaller.action.SKIP_FILE" />
-90-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/mmt11937/.gradle/caches/transforms-3/266da38d2afad82e20bd7384576a6815/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:44:17-85
-90-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/mmt11937/.gradle/caches/transforms-3/266da38d2afad82e20bd7384576a6815/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:44:25-82
+90-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\ganes\.gradle\caches\transforms-3\266da38d2afad82e20bd7384576a6815\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:44:17-85
+90-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\ganes\.gradle\caches\transforms-3\266da38d2afad82e20bd7384576a6815\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:44:25-82
 91            </intent-filter>
 92            <intent-filter>
-92-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/mmt11937/.gradle/caches/transforms-3/266da38d2afad82e20bd7384576a6815/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:46:13-48:29
+92-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\ganes\.gradle\caches\transforms-3\266da38d2afad82e20bd7384576a6815\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:46:13-48:29
 93                <action android:name="androidx.profileinstaller.action.SAVE_PROFILE" />
-93-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/mmt11937/.gradle/caches/transforms-3/266da38d2afad82e20bd7384576a6815/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:47:17-88
-93-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/mmt11937/.gradle/caches/transforms-3/266da38d2afad82e20bd7384576a6815/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:47:25-85
+93-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\ganes\.gradle\caches\transforms-3\266da38d2afad82e20bd7384576a6815\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:47:17-88
+93-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\ganes\.gradle\caches\transforms-3\266da38d2afad82e20bd7384576a6815\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:47:25-85
 94            </intent-filter>
 95            <intent-filter>
-95-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/mmt11937/.gradle/caches/transforms-3/266da38d2afad82e20bd7384576a6815/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:49:13-51:29
+95-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\ganes\.gradle\caches\transforms-3\266da38d2afad82e20bd7384576a6815\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:49:13-51:29
 96                <action android:name="androidx.profileinstaller.action.BENCHMARK_OPERATION" />
-96-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/mmt11937/.gradle/caches/transforms-3/266da38d2afad82e20bd7384576a6815/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:50:17-95
-96-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/mmt11937/.gradle/caches/transforms-3/266da38d2afad82e20bd7384576a6815/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:50:25-92
+96-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\ganes\.gradle\caches\transforms-3\266da38d2afad82e20bd7384576a6815\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:50:17-95
+96-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\ganes\.gradle\caches\transforms-3\266da38d2afad82e20bd7384576a6815\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:50:25-92
 97            </intent-filter>
 98        </receiver>
 99
 100        <meta-data
-100-->[com.facebook.soloader:soloader:0.10.5] /Users/mmt11937/.gradle/caches/transforms-3/35decf3d695cc2f2da8cee102a62d288/transformed/jetified-soloader-0.10.5/AndroidManifest.xml:12:9-14:37
+100-->[com.facebook.soloader:soloader:0.10.5] C:\Users\ganes\.gradle\caches\transforms-3\35decf3d695cc2f2da8cee102a62d288\transformed\jetified-soloader-0.10.5\AndroidManifest.xml:12:9-14:37
 101            android:name="com.facebook.soloader.enabled"
-101-->[com.facebook.soloader:soloader:0.10.5] /Users/mmt11937/.gradle/caches/transforms-3/35decf3d695cc2f2da8cee102a62d288/transformed/jetified-soloader-0.10.5/AndroidManifest.xml:13:13-57
+101-->[com.facebook.soloader:soloader:0.10.5] C:\Users\ganes\.gradle\caches\transforms-3\35decf3d695cc2f2da8cee102a62d288\transformed\jetified-soloader-0.10.5\AndroidManifest.xml:13:13-57
 102            android:value="false" />
-102-->[com.facebook.soloader:soloader:0.10.5] /Users/mmt11937/.gradle/caches/transforms-3/35decf3d695cc2f2da8cee102a62d288/transformed/jetified-soloader-0.10.5/AndroidManifest.xml:14:13-34
+102-->[com.facebook.soloader:soloader:0.10.5] C:\Users\ganes\.gradle\caches\transforms-3\35decf3d695cc2f2da8cee102a62d288\transformed\jetified-soloader-0.10.5\AndroidManifest.xml:14:13-34
 103    </application>
 104
 105</manifest>
