@@ -109,8 +109,8 @@ function App(): React.JSX.Element {
     <SafeAreaView style={styles.container}>
       <StatusBar 
         barStyle="light-content" 
-        backgroundColor="#000" 
-        translucent={true}
+        backgroundColor="rgba(0, 20, 40, 0.9)" 
+        translucent={false}
       />
       
       {/* Header */}
@@ -169,25 +169,33 @@ function App(): React.JSX.Element {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: 'linear-gradient(135deg, #1a1a2e, #16213e)',
   },
   header: {
     alignItems: 'center',
-    paddingVertical: 20,
+    paddingTop: 60,
+    paddingBottom: 30,
     paddingHorizontal: 20,
+    backgroundColor: 'rgba(0, 20, 40, 0.9)',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0, 255, 255, 0.3)',
   },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#00ffff',
+    fontSize: 32,
+    fontWeight: '700',
+    color: '#FFD700',
     textAlign: 'center',
-    marginBottom: 5,
+    marginBottom: 8,
+    textShadowColor: 'rgba(255, 215, 0, 0.5)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
   },
   sunEventText: {
-    fontSize: 16,
-    color: '#fff',
+    fontSize: 18,
+    color: '#E6E6FA',
     textAlign: 'center',
-    marginTop: 10,
+    marginTop: 12,
+    fontWeight: '500',
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
