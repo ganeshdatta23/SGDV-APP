@@ -82,7 +82,8 @@ export default function CompassView({ targetHeading: propTargetHeading = 45, tar
       lastUpdateTime.current = now;
 
       // Calculate heading from magnetometer data
-      const angle = Math.atan2(y, x) * (180 / Math.PI);
+      // Fix coordinate system: atan2(-x, y) for correct magnetic north alignment
+      const angle = Math.atan2(-x, y) * (180 / Math.PI);
       const rawHeading = (angle + 360) % 360;
 
       // --- Exponential smoothing to reduce noise & jitter ---
@@ -390,25 +391,33 @@ export default function CompassView({ targetHeading: propTargetHeading = 45, tar
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: 'transparent',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 50,
+    paddingVertical: 20,
   },
   digitalReadout: {
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-    padding: 20,
-    borderRadius: 15,
-    marginBottom: 30,
+    backgroundColor: 'rgba(0, 30, 60, 0.9)',
+    padding: 24,
+    borderRadius: 20,
+    marginBottom: 40,
     alignItems: 'center',
-    minWidth: 150,
-    borderWidth: 1,
-    borderColor: '#333',
+    minWidth: 200,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 215, 0, 0.6)',
+    shadowColor: '#FFD700',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
   turnText: {
-    fontSize: 20,
-    color: '#00ffff',
-    fontWeight: 'bold',
+    fontSize: 22,
+    color: '#FFD700',
+    fontWeight: '700',
+    textShadowColor: 'rgba(255, 215, 0, 0.5)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   compassContainer: {
     alignItems: 'center',
@@ -429,13 +438,18 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   statusContainer: {
-    marginTop: 30,
+    marginTop: 40,
     alignItems: 'center',
     paddingHorizontal: 20,
+    backgroundColor: 'rgba(0, 20, 40, 0.8)',
+    borderRadius: 15,
+    paddingVertical: 20,
+    marginHorizontal: 20,
   },
   statusText: {
-    fontSize: 16,
+    fontSize: 18,
     textAlign: 'center',
-    marginVertical: 5,
+    marginVertical: 8,
+    fontWeight: '600',
   },
 }); 
