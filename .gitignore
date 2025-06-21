@@ -9,7 +9,25 @@
 !.yarn/plugins
 !.yarn/releases
 !.yarn/versions
+
+# React Native
 *.apk
+*.aab
+*.ipa
+android/app/build/
+android/build/
+android/.gradle/
+android/gradle/
+android/gradlew*
+ios/build/
+ios/Pods/
+ios/*.xcworkspace
+ios/*.xcodeproj/xcuserdata/
+
+# Metro
+.metro-health-check*
+metro.config.js.bak
+
 # testing
 /coverage
 
@@ -19,12 +37,13 @@
 
 # production
 /build
-android/
-ios/
 
 # misc
 .DS_Store
 *.pem
+*.log
+*.tmp
+*.temp
 
 # debug
 npm-debug.log*
@@ -36,10 +55,38 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-.genkit/*
-.env*
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
 
-# firebase
+# OS
+Thumbs.db
+.DS_Store
+
+# Environment
+.env*
+!.env.example
+
+# Firebase
 firebase-debug.log
 firestore-debug.log
 .vercel
+
+# React Native specific
+android/app/src/main/assets/index.android.bundle
+android/app/src/main/assets/index.android.bundle.map
+ios/main.jsbundle
+ios/main.jsbundle.map
+
+# Flipper
+android/app/debug.keystore
+
+# Gradle
+.gradle/
+gradle-wrapper.jar
+gradle-wrapper.properties
+
+# Autolinking
+android/build/generated/
