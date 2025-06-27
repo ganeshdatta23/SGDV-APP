@@ -10,6 +10,7 @@
     "test": "jest"
   },
   "dependencies": {
+    "@notifee/react-native": "^9.1.8",
     "react": "18.2.0",
     "react-native": "0.73.8",
     "react-native-geolocation-service": "^5.3.1",

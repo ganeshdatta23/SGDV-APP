@@ -32,8 +32,8 @@ export default function CompassView({ targetHeading: propTargetHeading = 45, tar
   const [userLocation, setUserLocation] = useState<Coordinates | null>(null);
   const [isCalibrating, setIsCalibrating] = useState(false);
   
-  // Track if we've already triggered haptics for current alignment
-  const hasTriggeredHapticsRef = useRef(false);
+  // Track previous alignment state to prevent re-triggering events.
+  const prevIsFacingTargetRef = useRef(false);
 
   /**
    * Low-pass filter coefficient. 0 → no smoothing, 1 → maximum smoothing.
@@ -186,28 +186,27 @@ export default function CompassView({ targetHeading: propTargetHeading = 45, tar
 
   // Notify parent when alignment state changes
   useEffect(() => {
-    if (onAlignmentChange) {
-      onAlignmentChange(isFacingTarget);
-    }
-    
-    // Handle haptics - only trigger once when first becoming aligned
-    if (isFacingTarget && !hasTriggeredHapticsRef.current) {
+    const prevIsFacingTarget = prevIsFacingTargetRef.current;
+    // Update the ref with the current value for the next render.
+    prevIsFacingTargetRef.current = isFacingTarget;
+
+    // If the alignment state has changed from false to true, trigger events.
+    if (isFacingTarget && !prevIsFacingTarget) {
+      if (onAlignmentChange) {
+        onAlignmentChange(true);
+      }
+
       // Trigger haptic feedback
       const options = {
         enableVibrateFallback: true,
         ignoreAndroidSystemSettings: false,
       };
-      
       ReactNativeHapticFeedback.trigger('notificationSuccess', options);
-      hasTriggeredHapticsRef.current = true;
-      
-      // Reset haptics flag after 2 seconds
-      setTimeout(() => {
-        hasTriggeredHapticsRef.current = false;
-      }, 2000);
-    } else if (!isFacingTarget) {
-      // Reset the haptics flag when no longer aligned
-      hasTriggeredHapticsRef.current = false;
+    } else if (!isFacingTarget && prevIsFacingTarget) {
+      // Optionally, notify parent when alignment is lost.
+      if (onAlignmentChange) {
+        onAlignmentChange(false);
+      }
     }
   }, [isFacingTarget, onAlignmentChange]);
 

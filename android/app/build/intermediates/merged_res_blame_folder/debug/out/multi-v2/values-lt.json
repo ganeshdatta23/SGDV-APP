@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.darshanamcompassnative.app-mergeDebugResources-41:/values-lt/values-lt.xml",
+            "outputFile": "com.darshanamcompassnative.app-mergeDebugResources-45:/values-lt/values-lt.xml",
             "map": [
                 {
                     "source": "/Users/mmt11937/.gradle/caches/transforms-3/118eea9b8dc60b798bcbc9cdd12c3aa6/transformed/jetified-play-services-basement-17.5.0/res/values-lt/values.xml",

@@ -19,7 +19,7 @@
 
 # production
 /build
-android/
+android/app/build
 ios/
 
 # misc

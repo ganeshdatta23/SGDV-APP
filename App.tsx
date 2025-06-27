@@ -5,7 +5,9 @@
  */
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { SafeAreaView, StatusBar, StyleSheet, Text, View, Image, TouchableOpacity } from 'react-native';
+import { Switch } from 'react-native';
+import { scheduleNotification, cancelAllNotifications } from './utils/notificationManager';
+import { SafeAreaView, StatusBar, StyleSheet, Text, View, Image, TouchableOpacity, AppState } from 'react-native';
 import SimpleCompassView from './components/CompassView';
 import { parseUrlOrCoords } from './utils/locationUtils';
 import Video from 'react-native-video';
@@ -21,6 +23,17 @@ function App(): React.JSX.Element {
   // Alignment state
   const [isAligned, setIsAligned] = useState(false);
   const [nextSunEvent, setNextSunEvent] = useState<{ time: Date; type: 'sunrise' | 'sunset'; isToday: boolean } | null>(null);
+  const [isAlarmEnabled, setIsAlarmEnabled] = useState(false);
+
+  useEffect(() => {
+    if (isAlarmEnabled && nextSunEvent) {
+      const title = `Time for ${nextSunEvent.type}!`;
+      const body = `The sun will ${nextSunEvent.type} at ${formatSunTime(nextSunEvent.time)}.`;
+      scheduleNotification(title, body, nextSunEvent.time.getTime());
+    } else {
+      cancelAllNotifications();
+    }
+  }, [isAlarmEnabled, nextSunEvent]);
 
   // Handle Darshan audio
   const soundRef = useRef<Sound | null>(null);
@@ -56,6 +69,8 @@ function App(): React.JSX.Element {
 
     if (isAligned) {
       console.log('🎵 Playing darshan audio...');
+      // Reset audio to the beginning before playing.
+      sound.setCurrentTime(0);
       sound.play((success) => {
         if (!success) {
           console.log('❌ Sound playback failed');
@@ -66,6 +81,38 @@ function App(): React.JSX.Element {
     } else {
       sound.pause();
     }
+  }, [isAligned]);
+
+  // Handle app state changes for audio playback
+  useEffect(() => {
+    const handleAppStateChange = (nextAppState: string) => {
+      const sound = soundRef.current;
+      if (!sound) {
+        return;
+      }
+
+      if (nextAppState === 'background' || nextAppState === 'inactive') {
+        console.log('App is in background, pausing audio.');
+        sound.pause();
+      } else if (nextAppState === 'active') {
+        console.log('App is in foreground, checking alignment to resume audio.');
+        if (isAligned) {
+          sound.play((success) => {
+            if (!success) {
+              console.log('❌ Sound playback failed on resume');
+            } else {
+              console.log('✅ Sound playback resumed');
+            }
+          });
+        }
+      }
+    };
+
+    const subscription = AppState.addEventListener('change', handleAppStateChange);
+
+    return () => {
+      subscription.remove();
+    };
   }, [isAligned]);
 
   // Calculate and display next sunrise/sunset using new API
@@ -122,6 +169,16 @@ function App(): React.JSX.Element {
             {nextSunEvent.isToday ? ' today' : ' tomorrow'}
           </Text>
         )}
+        <View style={styles.alarmContainer}>
+          <Text style={styles.alarmText}>Set Alarm</Text>
+          <Switch
+            trackColor={{ false: '#767577', true: '#81b0ff' }}
+            thumbColor={isAlarmEnabled ? '#f5dd4b' : '#f4f3f4'}
+            ios_backgroundColor="#3e3e3e"
+            onValueChange={setIsAlarmEnabled}
+            value={isAlarmEnabled}
+          />
+        </View>
       </View>
 
       {/* Compass Component */}
@@ -189,6 +246,16 @@ const styles = StyleSheet.create({
     textShadowColor: 'rgba(255, 215, 0, 0.5)',
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 4,
+  },
+  alarmContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  alarmText: {
+    color: '#FFD700',
+    fontSize: 18,
+    marginRight: 10,
   },
   sunEventText: {
     fontSize: 18,

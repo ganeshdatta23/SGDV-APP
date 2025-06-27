@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.darshanamcompassnative.app-mergeDebugResources-41:/values-da/values-da.xml",
+            "outputFile": "com.darshanamcompassnative.app-mergeDebugResources-45:/values-da/values-da.xml",
             "map": [
                 {
                     "source": "/Users/mmt11937/.gradle/caches/transforms-3/4ae12e25005f285b26417d563d8b7645/transformed/core-1.13.1/res/values-da/values-da.xml",

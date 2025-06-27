@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.darshanamcompassnative.app-mergeDebugResources-41:/values-fi/values-fi.xml",
+            "outputFile": "com.darshanamcompassnative.app-mergeDebugResources-45:/values-fi/values-fi.xml",
             "map": [
                 {
                     "source": "/Users/mmt11937/.gradle/caches/transforms-3/07eec3d4c4a2857a41467e32ffd392d9/transformed/jetified-react-android-0.73.8-debug/res/values-fi/values-fi.xml",
