@@ -8,7 +8,7 @@ node_modules/
 !.yarn/releases
 !.yarn/versions
 
-# React Native
+# React Native Build Files
 *.apk
 *.aab
 *.ipa
@@ -18,29 +18,31 @@ android/.gradle/
 android/gradle/
 android/gradlew*
 android/app/debug.keystore
+android/app/release.keystore
 ios/build/
 ios/Pods/
 ios/*.xcworkspace
 ios/*.xcodeproj/xcuserdata/
+ios/DerivedData/
 
-# Metro
+# Metro Bundler
 .metro-health-check*
 metro.config.js.bak
-
-# Bundle artifacts
 android/app/src/main/assets/index.android.bundle
 android/app/src/main/assets/index.android.bundle.map
 ios/main.jsbundle
 ios/main.jsbundle.map
 
-# Autolinking
+# Autolinking & Generated Files
 android/build/generated/
 **/autolinking.json
+android/app/src/main/java/com/facebook/react/PackageList.java
 
-# Testing
+# Testing & Coverage
 coverage/
+__tests__/coverage/
 
-# Build
+# Build & Distribution
 build/
 dist/
 
@@ -51,20 +53,21 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# Runtime data
+# Runtime Data
 pids
 *.pid
 *.seed
 *.pid.lock
 
-# IDE
+# IDE Files
 .vscode/
 .idea/
 *.swp
 *.swo
 *.sublime-*
+.history/
 
-# OS
+# OS Files
 .DS_Store
 .DS_Store?
 ._*
@@ -73,16 +76,16 @@ pids
 ehthumbs.db
 Thumbs.db
 
-# Environment
+# Environment Variables
 .env*
 !.env.example
 
-# Temporary
+# Temporary Files
 *.tmp
 *.temp
 .cache/
 
-# Ruby/Bundler
+# Ruby/Bundler (for iOS)
 vendor/
 .bundle/
 Gemfile.lock
@@ -99,9 +102,28 @@ firestore-debug.log
 gradle-wrapper.jar
 gradle-wrapper.properties
 
-# Next.js (if applicable)
-.next/
-out/
+# Keystore Files (Security)
+*.keystore
+*.jks
+release-key.keystore
+debug.keystore
 
-# Vercel
-.vercel
+# React Native Specific
+react-native-config.js
+.buckconfig.local
+.flowconfig
+
+# Watchman
+.watchmanconfig
+
+# CocoaPods (iOS)
+ios/Podfile.lock
+
+# Fastlane (iOS/Android deployment)
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots
+fastlane/test_output
+
+# Sentry
+.sentryclirc

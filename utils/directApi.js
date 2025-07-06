@@ -10,7 +10,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
  * @param {string} locationId - The ID of the location to fetch
  * @returns {Promise<{latitude: number, longitude: number, address: string, googleMapsUrl: string} | null>}
  */
-export const fetchLocationDirect = async (locationId = 'appaji') => {
+export const fetchLocationDirect = async (locationId = 'swamiji_location') => {
   try {
     console.log('Fetching location directly via REST API for ID:', locationId);
     
