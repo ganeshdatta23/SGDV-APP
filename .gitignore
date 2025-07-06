@@ -17,8 +17,6 @@ android/build/
 android/.gradle/
 android/gradle/
 android/gradlew*
-android/app/debug.keystore
-android/app/release.keystore
 ios/build/
 ios/Pods/
 ios/*.xcworkspace
@@ -101,12 +99,6 @@ firestore-debug.log
 .gradle/
 gradle-wrapper.jar
 gradle-wrapper.properties
-
-# Keystore Files (Security)
-*.keystore
-*.jks
-release-key.keystore
-debug.keystore
 
 # React Native Specific
 react-native-config.js
