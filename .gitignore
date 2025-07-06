@@ -33,6 +33,9 @@ android/app/src/main/assets/index.android.bundle.map
 ios/main.jsbundle
 ios/main.jsbundle.map
 
+# Production build
+/build
+
 # Autolinking
 android/build/generated/
 **/autolinking.json
