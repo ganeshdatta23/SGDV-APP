@@ -20,14 +20,16 @@ interface CompassViewProps {
   targetHeading?: number | null;
   /** If provided, the component will compute the bearing from the user's
    * current location to this destination and override targetHeading. */
-  targetLocation?: Coordinates | null;
+  targetLocation?: Coordinates & { address?: string } | null;
   /** Notifies parent whenever alignment status toggles */
   onAlignmentChange?: (aligned: boolean) => void;
+  /** Hide status container when aligned (for video overlay) */
+  hideStatusWhenAligned?: boolean;
 }
 
-const FACING_THRESHOLD_DEGREES = 15; // Reasonable threshold for alignment
+const FACING_THRESHOLD_DEGREES = 20; // Reasonable threshold for alignment
 
-export default function CompassView({ targetHeading: propTargetHeading = 45, targetLocation = null, onAlignmentChange }: CompassViewProps) {
+export default function CompassView({ targetHeading: propTargetHeading = 45, targetLocation = null, onAlignmentChange, hideStatusWhenAligned = false }: CompassViewProps) {
   const [heading, setHeading] = useState<number | null>(null);
   const [userLocation, setUserLocation] = useState<Coordinates | null>(null);
   const [isCalibrating, setIsCalibrating] = useState(false);
@@ -212,7 +214,7 @@ export default function CompassView({ targetHeading: propTargetHeading = 45, tar
   }, [isFacingTarget, onAlignmentChange]);
 
   // Larger dial: use 85% of the smaller screen dimension (previously 70%)
-  const compassSize = Math.min(width, height) * 0.8;
+  const compassSize = Math.min(width, height) * 0.72;
   const compassRadius = compassSize / 2;
   const centerX = compassSize / 2;
   const centerY = compassSize / 2;
@@ -255,7 +257,7 @@ export default function CompassView({ targetHeading: propTargetHeading = 45, tar
           y1={startY}
           x2={endX}
           y2={endY}
-          stroke="#fff"
+          stroke="#000000"
           strokeWidth={strokeWidth}
         />
       );
@@ -276,8 +278,8 @@ export default function CompassView({ targetHeading: propTargetHeading = 45, tar
 
   return (
     <View style={styles.container}>
-      {/* Minimalist HUD */}
-      <View style={styles.digitalReadout}>
+      {/* Turn instruction above compass */}
+      <View style={styles.turnContainer}>
         <Text style={styles.turnText}>{getTurnInstruction()}</Text>
       </View>
 
@@ -291,7 +293,7 @@ export default function CompassView({ targetHeading: propTargetHeading = 45, tar
               y1="15"
               x2="20"
               y2="43"
-              stroke="red"
+              stroke="#00ff00"
               strokeWidth="3"
             />
           </Svg>
@@ -305,8 +307,8 @@ export default function CompassView({ targetHeading: propTargetHeading = 45, tar
               cx={(compassSize + 50) / 2}
               cy={(compassSize + 50) / 2}
               r={compassRadius - 10}
-              stroke="#444"
-              strokeWidth="1"
+              stroke="#000000"
+              strokeWidth="2"
               fill="none"
             />
 
@@ -315,7 +317,7 @@ export default function CompassView({ targetHeading: propTargetHeading = 45, tar
               cx={(compassSize + 50) / 2}
               cy={(compassSize + 50) / 2}
               r="6"
-              fill="#fff"
+              fill="#000000"
             />
             
             {/* Degree markings and numbers */}
@@ -331,8 +333,8 @@ export default function CompassView({ targetHeading: propTargetHeading = 45, tar
                     cx={centerX}
                     cy={15}
                     r="8"
-                    fill={isFacingTarget ? '#00ff00' : '#ffaa00'}
-                    stroke="#000"
+                    fill={isFacingTarget ? '#00ff00' : '#ffff00'}
+                    stroke="#000000"
                     strokeWidth="2"
                   />
                 </G>
@@ -351,7 +353,7 @@ export default function CompassView({ targetHeading: propTargetHeading = 45, tar
 
               // For now, remove the counter-rotation animation to fix the crash
               // TODO: Implement proper counter-rotation without causing ClassCastException
-              const color = '#fff';
+              const color = '#000000';
               const fontSize = dir === 'N' ? 24 : 24;
 
               return (
@@ -374,16 +376,18 @@ export default function CompassView({ targetHeading: propTargetHeading = 45, tar
       </View>
 
       {/* Status indicators */}
-      <View style={styles.statusContainer}>
-        {effectiveTargetHeading !== null && (
-          <Text style={[styles.statusText, { color: isFacingTarget ? '#00ff00' : '#ffaa00' }]}>
-            Target: {effectiveTargetHeading.toFixed(0)}° ({getCardinalDirection(effectiveTargetHeading)})
+      {!(hideStatusWhenAligned && isFacingTarget) && (
+        <View style={styles.statusContainer}>
+          {/* <Text style={styles.locationText}>📍 {"Appaji's location"}</Text> */}
+          <Text style={styles.locationText}> {"📍 "+ targetLocation?.address || "📍 "+ 'Datta Peetham, Mysore'}</Text>
+          <Text style={styles.statusText}>
+            Your heading: {heading !== null ? Math.round(heading) : '--'}°
           </Text>
-        )}
-        <Text style={[styles.statusText, { color: isFacingTarget ? '#00ff00' : '#fff' }]}>
-          {isFacingTarget ? 'Facing Target Direction!' : 'Turn to align with swamiji\'s direction'}
-        </Text>
-      </View>
+          <Text style={styles.statusText}>
+            Target bearing: {effectiveTargetHeading !== null ? Math.round(effectiveTargetHeading) : '--'}°
+          </Text>
+        </View>
+      )}
     </View>
   );
 }
@@ -394,36 +398,27 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 20,
+    paddingVertical: 0,
   },
-  digitalReadout: {
-    backgroundColor: 'rgba(0, 30, 60, 0.9)',
-    padding: 24,
-    borderRadius: 20,
-    marginBottom: 40,
-    alignItems: 'center',
-    minWidth: 200,
-    borderWidth: 2,
-    borderColor: 'rgba(255, 215, 0, 0.6)',
-    shadowColor: '#FFD700',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-  },
+
   turnText: {
-    fontSize: 22,
-    color: '#FFD700',
-    fontWeight: '700',
-    textShadowColor: 'rgba(255, 215, 0, 0.5)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
+    fontSize: 23,
+    color: '#FFFFFF',
+    fontWeight: '600',
+    textAlign: 'center',
+    marginTop: 0
   },
   compassContainer: {
     alignItems: 'center',
     justifyContent: 'center',
     marginVertical: 30,
+    marginBottom: 120,
     position: 'relative',
+  },
+  turnContainer: {
+    alignItems: 'center',
+    marginBottom: 0,
+    marginTop: 0,
   },
   phoneMarker: {
     position: 'absolute',
@@ -438,18 +433,28 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   statusContainer: {
-    marginTop: 40,
+    position: 'absolute',
+    bottom: 40,
+    left: 20,
+    right: 20,
     alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    borderRadius: 12,
+    paddingVertical: 16,
     paddingHorizontal: 20,
-    backgroundColor: 'rgba(0, 20, 40, 0.8)',
-    borderRadius: 15,
-    paddingVertical: 20,
-    marginHorizontal: 20,
   },
   statusText: {
-    fontSize: 18,
+    fontSize: 16,
     textAlign: 'center',
-    marginVertical: 8,
-    fontWeight: '600',
+    marginVertical: 0,
+    fontWeight: '400',
+    color: '#FFFFFF',
+  },
+  locationText: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginVertical: 1,
+    fontWeight: '500',
+    color: '#FFFFFF',
   },
 }); 

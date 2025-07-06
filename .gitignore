@@ -13,7 +13,7 @@ node_modules/
 *.aab
 *.ipa
 
-
+.gradle/
 android/app/build/
 android/app/src/main/res/
 archive/

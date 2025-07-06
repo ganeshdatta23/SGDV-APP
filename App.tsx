@@ -6,6 +6,7 @@
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { SafeAreaView, StatusBar, StyleSheet, Text, View, Image, TouchableOpacity, AppState, Switch, Modal } from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
 import SimpleCompassView from './components/CompassView';
 import { fetchLocationDirect } from './utils/directApi';
 import Video from 'react-native-video';
@@ -214,30 +215,23 @@ function App(): React.JSX.Element {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar 
-        barStyle="light-content" 
-        backgroundColor="rgba(0, 20, 40, 0.9)" 
-        translucent={false}
-      />
+    <LinearGradient
+      colors={['#FF6B35', '#F7931E']}
+      style={styles.container}
+    >
+      <SafeAreaView style={styles.safeArea}>
+        <StatusBar 
+          barStyle="light-content" 
+          backgroundColor="transparent" 
+          translucent={true}
+        />
       
       {/* Header */}
       <View style={styles.header}>
-        <View style={styles.headerRow}>
-          <Text style={styles.title}>Guru Digbandanam</Text>
-          <TouchableOpacity 
-            style={styles.alarmButton}
-            onPress={() => setShowAlarmSettings(true)}
-          >
-            <Text style={styles.alarmButtonText}>⏰</Text>
-          </TouchableOpacity>
+        <View style={styles.titleContainer}>
+          <Text style={styles.title}>Guru Digvandanam</Text>
+          <Text style={styles.subtitle}>Offer your prayers to the direction of Appaji</Text>
         </View>
-        {nextSunEvent && (
-          <Text style={styles.sunEventText}>
-            Next {nextSunEvent.type}: {formatSunTime(nextSunEvent.time)}
-            {nextSunEvent.isToday ? ' today' : ' tomorrow'}
-          </Text>
-        )}
       </View>
 
       {/* Compass Component */}
@@ -245,13 +239,25 @@ function App(): React.JSX.Element {
         <SimpleCompassView 
           targetLocation={targetLocation}
           onAlignmentChange={handleAlignmentChange}
+          hideStatusWhenAligned={true}
         />
       ) : (
         <SimpleCompassView 
           targetHeading={45}
           onAlignmentChange={handleAlignmentChange}
+          hideStatusWhenAligned={true}
         />
       )}
+
+      {/* Bottom Alarm Button */}
+      <View style={styles.bottomButtonContainer}>
+        <TouchableOpacity 
+          style={styles.bottomAlarmButton}
+          onPress={() => setShowAlarmSettings(true)}
+        >
+          <Text style={styles.bottomAlarmButtonText}>⏰ Alarm Settings</Text>
+        </TouchableOpacity>
+      </View>
 
       {/* Darshan overlay */}
       {isAligned && (
@@ -347,23 +353,37 @@ function App(): React.JSX.Element {
           </View>
         </View>
       </Modal>
-    </SafeAreaView>
+      </SafeAreaView>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'linear-gradient(135deg, #1a1a2e, #16213e)',
+  },
+  safeArea: {
+    flex: 1,
   },
   header: {
-    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'flex-start',
     paddingTop: 60,
-    paddingBottom: 30,
+    paddingBottom: 20,
     paddingHorizontal: 20,
-    backgroundColor: 'rgba(0, 20, 40, 0.9)',
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0, 255, 255, 0.3)',
+    backgroundColor: 'transparent',
+  },
+  titleContainer: {
+    alignItems: 'center',
+    flex: 1
+  },
+  subtitle: {
+    fontSize: 17,
+    color: '#FFFFFF',
+    textAlign: 'center',
+    marginTop: 8,
+    fontWeight: '400',
   },
   headerRow: {
     flexDirection: 'row',
@@ -374,31 +394,34 @@ const styles = StyleSheet.create({
   },
   alarmButton: {
     padding: 10,
-    backgroundColor: 'rgba(255, 215, 0, 0.2)',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     borderRadius: 25,
     borderWidth: 1,
-    borderColor: 'rgba(255, 215, 0, 0.5)',
+    borderColor: 'rgba(255, 255, 255, 0.5)',
   },
   alarmButtonText: {
     fontSize: 20,
-    color: '#FFD700',
+    color: '#FFFFFF',
   },
   title: {
-    fontSize: 32,
+    fontSize: 29,
     fontWeight: '700',
-    color: '#FFD700',
+    color: '#FFFFFF',
     textAlign: 'center',
     marginBottom: 8,
-    textShadowColor: 'rgba(255, 215, 0, 0.5)',
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 4,
   },
   sunEventText: {
     fontSize: 18,
-    color: '#E6E6FA',
+    color: '#FFFFFF',
     textAlign: 'center',
     marginTop: 12,
     fontWeight: '500',
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
@@ -477,6 +500,27 @@ const styles = StyleSheet.create({
     color: '#000',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  bottomButtonContainer: {
+    position: 'absolute',
+    bottom: 120,
+    left: 20,
+    right: 20,
+    alignItems: 'center',
+    zIndex: 1,
+  },
+  bottomAlarmButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 25,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.5)',
+  },
+  bottomAlarmButtonText: {
+    fontSize: 16,
+    color: '#FFFFFF',
+    fontWeight: '600',
   },
 });
 

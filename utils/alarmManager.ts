@@ -10,10 +10,10 @@ interface AlarmConfig {
 }
 
 const DEFAULT_ALARM_CONFIG: AlarmConfig = {
-  sunriseEnabled: true,
-  sunsetEnabled: true,
-  sunriseOffset: 15, // 15 minutes before sunrise
-  sunsetOffset: 15, // 15 minutes before sunset
+  sunriseEnabled: false,
+  sunsetEnabled: false,
+  sunriseOffset: 2, // 1 minute before sunrise
+  sunsetOffset: 2, // 1 minute before sunset
 };
 
 // Initialize simple alarm system

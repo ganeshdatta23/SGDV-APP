@@ -109,6 +109,8 @@ get your device_id using adb devices -l
 
 # Amar's device_id 
 adb -s f85563d4 logcat | grep "ReactNativeJS"
+adb -s f85563d4 logcat -d | grep "ReactNativeJS" | tail -20
+
 
 # Dump logs 
 # use -d flag
