@@ -7,6 +7,7 @@ import { Animated, Easing } from 'react-native';
 import Geolocation from 'react-native-geolocation-service';
 import { Coordinates, calculateBearing } from '../utils/locationUtils';
 
+const AnimatedG = Animated.createAnimatedComponent(G);
 const { width, height } = Dimensions.get('window');
 
 // Helper function to get cardinal direction
@@ -351,23 +352,31 @@ export default function CompassView({ targetHeading: propTargetHeading = 45, tar
               const labelX = (compassSize + 50) / 2 + labelRadius * Math.sin((angle * Math.PI) / 180);
               const labelY = (compassSize + 50) / 2 - labelRadius * Math.cos((angle * Math.PI) / 180) + (dir==='N'?0:8);
 
-              // For now, remove the counter-rotation animation to fix the crash
-              // TODO: Implement proper counter-rotation without causing ClassCastException
+              const textCounterRotation = dialRotation.interpolate({
+                inputRange: [-360, 360],
+                outputRange: [360, -360],
+              });
               const color = '#000000';
               const fontSize = dir === 'N' ? 24 : 24;
 
               return (
-                <SvgText
+                <AnimatedG
                   key={dir}
-                  x={labelX}
-                  y={labelY}
-                  fontSize={fontSize}
-                  fill={color}
-                  textAnchor="middle"
-                  fontWeight="bold"
+                  rotation={textCounterRotation}
+                  originX={labelX}
+                  originY={labelY}
                 >
-                  {dir}
-                </SvgText>
+                  <SvgText
+                    x={labelX}
+                    y={labelY}
+                    fontSize={fontSize}
+                    fill={color}
+                    textAnchor="middle"
+                    fontWeight="bold"
+                  >
+                    {dir}
+                  </SvgText>
+                </AnimatedG>
               );
             })}
 
