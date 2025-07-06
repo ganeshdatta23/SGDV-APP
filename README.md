@@ -102,8 +102,13 @@ npx react-native run-android
 ```bash
 
 # Real time stream logs
+
+
 adb -s device_id logcat | grep "ReactNativeJS"
 get your device_id using adb devices -l
+
+# Amar's device_id 
+adb -s f85563d4 logcat | grep "ReactNativeJS"
 
 # Dump logs 
 # use -d flag

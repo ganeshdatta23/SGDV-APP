@@ -15,6 +15,21 @@
 		6132EF182BDFF13200BBE14D /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 6132EF172BDFF13200BBE14D /* PrivacyInfo.xcprivacy */; };
 		7699B88040F8A987B510C191 /* libPods-DarshanamCompassNative-DarshanamCompassNativeTests.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 19F6CBCC0A4E27FBF8BF4A61 /* libPods-DarshanamCompassNative-DarshanamCompassNativeTests.a */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
+		8E8CE7B0416C4D44AA8554AE /* SpotiDownloader (mp3cut.net).mp3 in Resources */ = {isa = PBXBuildFile; fileRef = F31D89B0C9294CAF85529E80 /* SpotiDownloader (mp3cut.net).mp3 */; };
+		A39112329FEE4B62BFB47CDA /* background-music.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 1B913F7F6B244742BA6E0F84 /* background-music.mp3 */; };
+		49DA39D7D4194B09B5DBCF3B /* General-space-universe-planet-Earth-space-art-digi-iphone-12-pro-max.jpg in Resources */ = {isa = PBXBuildFile; fileRef = D8684FA56E9E4951B0D8E547 /* General-space-universe-planet-Earth-space-art-digi-iphone-12-pro-max.jpg */; };
+		85F3F6D113BE4818B79BA323 /* HD-wallpaper-space-nebula-galaxy-stars-bright-saturated.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 0CF5ACA3EB744A0A91B6AD78 /* HD-wallpaper-space-nebula-galaxy-stars-bright-saturated.jpg */; };
+		0D82C9D665FD4700BD81171E /* WhatsApp Image 2025-05-14 at 05.32.34_bf581637.jpg in Resources */ = {isa = PBXBuildFile; fileRef = DEE3D4C1A7534AC2AD7E2AC4 /* WhatsApp Image 2025-05-14 at 05.32.34_bf581637.jpg */; };
+		DAE979E738694EDDBFFEB0CB /* appaji-sitting-smile.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D1A3E6F05724957927053C2 /* appaji-sitting-smile.png */; };
+		BC606FA287F24ECDBEF995BF /* balaswamiji.png in Resources */ = {isa = PBXBuildFile; fileRef = D95A634FD0764BC683B2A3E1 /* balaswamiji.png */; };
+		BF3D9080E3C241328A69F77F /* compass-icon.png in Resources */ = {isa = PBXBuildFile; fileRef = CF7EA2C76CCC488CAD2BEAD5 /* compass-icon.png */; };
+		510483708D21488E8CE413C9 /* dattapeetham_7e154e37ea24615612494ddffa91e134.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 9AA6DFC850084617923D8B1C /* dattapeetham_7e154e37ea24615612494ddffa91e134.jpg */; };
+		CA50766ACF9542038B370AF3 /* image.png in Resources */ = {isa = PBXBuildFile; fileRef = B1E00B9FDEB1438EBB2DD277 /* image.png */; };
+		7CE5C788B05E4220BFA78496 /* padapooja.png in Resources */ = {isa = PBXBuildFile; fileRef = 2DFDB69B3BEF421DA2B54F88 /* padapooja.png */; };
+		A1A45D96962C4E2AB9250582 /* sri-yantra.png in Resources */ = {isa = PBXBuildFile; fileRef = 37D93658197E41109EAF1E1A /* sri-yantra.png */; };
+		67228B28D763444982357F13 /* swamiji-darshan.png in Resources */ = {isa = PBXBuildFile; fileRef = 04F584A2FFF74438B727A835 /* swamiji-darshan.png */; };
+		A4314B0CDE9C45BA86B19CB9 /* 14618955-hd_720_1280_24fps.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = 80205CB16DCA49DF8B43ED1B /* 14618955-hd_720_1280_24fps.mp4 */; };
+		90DF1D562BFC445BBDA4B892 /* darshan-background.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = A4042A7A11E24556831CD8FB /* darshan-background.mp4 */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -46,6 +61,21 @@
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = DarshanamCompassNative/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		89C6BE57DB24E9ADA2F236DE /* Pods-DarshanamCompassNative-DarshanamCompassNativeTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-DarshanamCompassNative-DarshanamCompassNativeTests.release.xcconfig"; path = "Target Support Files/Pods-DarshanamCompassNative-DarshanamCompassNativeTests/Pods-DarshanamCompassNative-DarshanamCompassNativeTests.release.xcconfig"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
+		F31D89B0C9294CAF85529E80 /* SpotiDownloader (mp3cut.net).mp3 */ = {isa = PBXFileReference; name = "SpotiDownloader (mp3cut.net).mp3"; path = "../assets/audio/SpotiDownloader (mp3cut.net).mp3"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		1B913F7F6B244742BA6E0F84 /* background-music.mp3 */ = {isa = PBXFileReference; name = "background-music.mp3"; path = "../assets/audio/background-music.mp3"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		D8684FA56E9E4951B0D8E547 /* General-space-universe-planet-Earth-space-art-digi-iphone-12-pro-max.jpg */ = {isa = PBXFileReference; name = "General-space-universe-planet-Earth-space-art-digi-iphone-12-pro-max.jpg"; path = "../assets/images/General-space-universe-planet-Earth-space-art-digi-iphone-12-pro-max.jpg"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		0CF5ACA3EB744A0A91B6AD78 /* HD-wallpaper-space-nebula-galaxy-stars-bright-saturated.jpg */ = {isa = PBXFileReference; name = "HD-wallpaper-space-nebula-galaxy-stars-bright-saturated.jpg"; path = "../assets/images/HD-wallpaper-space-nebula-galaxy-stars-bright-saturated.jpg"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		DEE3D4C1A7534AC2AD7E2AC4 /* WhatsApp Image 2025-05-14 at 05.32.34_bf581637.jpg */ = {isa = PBXFileReference; name = "WhatsApp Image 2025-05-14 at 05.32.34_bf581637.jpg"; path = "../assets/images/WhatsApp Image 2025-05-14 at 05.32.34_bf581637.jpg"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		4D1A3E6F05724957927053C2 /* appaji-sitting-smile.png */ = {isa = PBXFileReference; name = "appaji-sitting-smile.png"; path = "../assets/images/appaji-sitting-smile.png"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		D95A634FD0764BC683B2A3E1 /* balaswamiji.png */ = {isa = PBXFileReference; name = "balaswamiji.png"; path = "../assets/images/balaswamiji.png"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		CF7EA2C76CCC488CAD2BEAD5 /* compass-icon.png */ = {isa = PBXFileReference; name = "compass-icon.png"; path = "../assets/images/compass-icon.png"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		9AA6DFC850084617923D8B1C /* dattapeetham_7e154e37ea24615612494ddffa91e134.jpg */ = {isa = PBXFileReference; name = "dattapeetham_7e154e37ea24615612494ddffa91e134.jpg"; path = "../assets/images/dattapeetham_7e154e37ea24615612494ddffa91e134.jpg"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		B1E00B9FDEB1438EBB2DD277 /* image.png */ = {isa = PBXFileReference; name = "image.png"; path = "../assets/images/image.png"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		2DFDB69B3BEF421DA2B54F88 /* padapooja.png */ = {isa = PBXFileReference; name = "padapooja.png"; path = "../assets/images/padapooja.png"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		37D93658197E41109EAF1E1A /* sri-yantra.png */ = {isa = PBXFileReference; name = "sri-yantra.png"; path = "../assets/images/sri-yantra.png"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		04F584A2FFF74438B727A835 /* swamiji-darshan.png */ = {isa = PBXFileReference; name = "swamiji-darshan.png"; path = "../assets/images/swamiji-darshan.png"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		80205CB16DCA49DF8B43ED1B /* 14618955-hd_720_1280_24fps.mp4 */ = {isa = PBXFileReference; name = "14618955-hd_720_1280_24fps.mp4"; path = "../assets/videos/14618955-hd_720_1280_24fps.mp4"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		A4042A7A11E24556831CD8FB /* darshan-background.mp4 */ = {isa = PBXFileReference; name = "darshan-background.mp4"; path = "../assets/videos/darshan-background.mp4"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -125,6 +155,7 @@
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
 				BBD78D7AC51CEA395F1C20DB /* Pods */,
+				E32099BF7F6A411CB871FDA4 /* Resources */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -150,6 +181,29 @@
 			);
 			path = Pods;
 			sourceTree = "<group>";
+		};
+		E32099BF7F6A411CB871FDA4 /* Resources */ = {
+			isa = "PBXGroup";
+			children = (
+				F31D89B0C9294CAF85529E80 /* SpotiDownloader (mp3cut.net).mp3 */,
+				1B913F7F6B244742BA6E0F84 /* background-music.mp3 */,
+				D8684FA56E9E4951B0D8E547 /* General-space-universe-planet-Earth-space-art-digi-iphone-12-pro-max.jpg */,
+				0CF5ACA3EB744A0A91B6AD78 /* HD-wallpaper-space-nebula-galaxy-stars-bright-saturated.jpg */,
+				DEE3D4C1A7534AC2AD7E2AC4 /* WhatsApp Image 2025-05-14 at 05.32.34_bf581637.jpg */,
+				4D1A3E6F05724957927053C2 /* appaji-sitting-smile.png */,
+				D95A634FD0764BC683B2A3E1 /* balaswamiji.png */,
+				CF7EA2C76CCC488CAD2BEAD5 /* compass-icon.png */,
+				9AA6DFC850084617923D8B1C /* dattapeetham_7e154e37ea24615612494ddffa91e134.jpg */,
+				B1E00B9FDEB1438EBB2DD277 /* image.png */,
+				2DFDB69B3BEF421DA2B54F88 /* padapooja.png */,
+				37D93658197E41109EAF1E1A /* sri-yantra.png */,
+				04F584A2FFF74438B727A835 /* swamiji-darshan.png */,
+				80205CB16DCA49DF8B43ED1B /* 14618955-hd_720_1280_24fps.mp4 */,
+				A4042A7A11E24556831CD8FB /* darshan-background.mp4 */,
+			);
+			name = Resources;
+			sourceTree = "<group>";
+			path = "";
 		};
 /* End PBXGroup section */
 
@@ -247,6 +301,21 @@
 				6132EF182BDFF13200BBE14D /* PrivacyInfo.xcprivacy in Resources */,
 				81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
+				8E8CE7B0416C4D44AA8554AE /* SpotiDownloader (mp3cut.net).mp3 in Resources */,
+				A39112329FEE4B62BFB47CDA /* background-music.mp3 in Resources */,
+				49DA39D7D4194B09B5DBCF3B /* General-space-universe-planet-Earth-space-art-digi-iphone-12-pro-max.jpg in Resources */,
+				85F3F6D113BE4818B79BA323 /* HD-wallpaper-space-nebula-galaxy-stars-bright-saturated.jpg in Resources */,
+				0D82C9D665FD4700BD81171E /* WhatsApp Image 2025-05-14 at 05.32.34_bf581637.jpg in Resources */,
+				DAE979E738694EDDBFFEB0CB /* appaji-sitting-smile.png in Resources */,
+				BC606FA287F24ECDBEF995BF /* balaswamiji.png in Resources */,
+				BF3D9080E3C241328A69F77F /* compass-icon.png in Resources */,
+				510483708D21488E8CE413C9 /* dattapeetham_7e154e37ea24615612494ddffa91e134.jpg in Resources */,
+				CA50766ACF9542038B370AF3 /* image.png in Resources */,
+				7CE5C788B05E4220BFA78496 /* padapooja.png in Resources */,
+				A1A45D96962C4E2AB9250582 /* sri-yantra.png in Resources */,
+				67228B28D763444982357F13 /* swamiji-darshan.png in Resources */,
+				A4314B0CDE9C45BA86B19CB9 /* 14618955-hd_720_1280_24fps.mp4 in Resources */,
+				90DF1D562BFC445BBDA4B892 /* darshan-background.mp4 in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

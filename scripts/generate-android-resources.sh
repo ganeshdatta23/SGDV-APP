@@ -87,3 +87,7 @@ fi
 echo "Android resources generated successfully!"
 echo "Note: These files are now in .gitignore to avoid large commits."
 echo "Run this script after cloning the repository to regenerate resources." 
+
+mkdir -p android/app/src/main/res/raw/
+cp assets/audio/background-music.mp3 android/app/src/main/res/raw/
+mv android/app/src/main/res/raw/background-music.mp3 android/app/src/main/res/raw/background_music.mp3

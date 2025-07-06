@@ -76,7 +76,7 @@ export default function CompassView({ targetHeading: propTargetHeading = 45, tar
     const subscription = magnetometer.subscribe(({ x, y, z }: SensorData) => {
       // Throttle updates to prevent excessive animations
       const now = Date.now();
-      if (now - lastUpdateTime.current < 50) { // Update at most every 50ms
+      if (now - lastUpdateTime.current < 100) { // Update at most every 50ms
         return;
       }
       lastUpdateTime.current = now;
