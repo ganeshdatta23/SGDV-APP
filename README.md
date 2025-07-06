@@ -69,7 +69,19 @@ adb devices
 adb devices -l (Also get name of android device)
 ```
 
-### 3. Running Debug Build (debug version - not sharable)
+### 3. Generate Android Resources (First Time Setup)
+
+The Android resources (icons, strings, styles) are excluded from git to avoid large commits. After cloning, run:
+
+```bash
+# Generate Android resources
+./scripts/generate-android-resources.sh
+
+# Or manually create resources if script fails
+mkdir -p android/app/src/main/res/{values,drawable,mipmap-mdpi,mipmap-hdpi,mipmap-xhdpi,mipmap-xxhdpi,mipmap-xxxhdpi}
+```
+
+### 4. Running Debug Build (debug version - not sharable)
 
 ```bash
 # Run on Android device/emulator (Recommended for testing USB-debugging mode)
@@ -85,7 +97,7 @@ npx react-native run-android
 
 ```
 
-### 3. Checking logs (Only available for Debug mode - usb debugging )
+### 5. Checking logs (Only available for Debug mode - usb debugging )
 
 ```bash
 
@@ -99,7 +111,7 @@ adb -s device_id logcat -d| grep "ReactNativeJS"
 
 ```
 
-## 🔧 4. Building APK Files (Release version - sharable)
+## 🔧 6. Building APK Files (Release version - sharable)
 
 ### Debug APK Build
 

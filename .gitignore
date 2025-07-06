@@ -12,40 +12,19 @@ node_modules/
 *.apk
 *.aab
 *.ipa
+
+
 android/app/build/
-android/build/
-android/.gradle/
-android/gradle/
-android/gradlew*
-android/app/debug.keystore
-ios/build/
-ios/Pods/
-ios/*.xcworkspace
-ios/*.xcodeproj/xcuserdata/
+android/app/src/main/res/
+archive/
+
 
 # Metro
 .metro-health-check*
 metro.config.js.bak
 
-# Bundle artifacts
-android/app/src/main/assets/index.android.bundle
-android/app/src/main/assets/index.android.bundle.map
-ios/main.jsbundle
-ios/main.jsbundle.map
-
-# Production build
-/build
-
-# Autolinking
-android/build/generated/
-**/autolinking.json
-
 # Testing
 coverage/
-
-# Build
-build/
-dist/
 
 # Logs
 *.log
@@ -88,23 +67,5 @@ Thumbs.db
 # Ruby/Bundler
 vendor/
 .bundle/
-Gemfile.lock
 
-# Firebase
-firebase-debug.log
-firestore-debug.log
-
-# Flipper
-.flipper/
-
-# Gradle
-.gradle/
-gradle-wrapper.jar
-gradle-wrapper.properties
-
-# Next.js (if applicable)
-.next/
-out/
-
-# Vercel
-.vercel
+*.log

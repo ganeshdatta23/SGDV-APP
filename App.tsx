@@ -7,20 +7,51 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { SafeAreaView, StatusBar, StyleSheet, Text, View, Image, TouchableOpacity } from 'react-native';
 import SimpleCompassView from './components/CompassView';
-import { parseUrlOrCoords } from './utils/locationUtils';
+import { fetchLocationDirect } from './utils/directApi';
 import Video from 'react-native-video';
 import Sound from 'react-native-sound';
 import { calculateSunTimes, formatSunTime, debugSunriseSunset } from './utils/sunCalculator';
 
 function App(): React.JSX.Element {
-  // Replace this with the desired URL or "lat,lng" string.
-  const TARGET_LOCATION_INPUT = "https://www.google.com/maps/@12.308367,76.645467,17z";
-
-  const parsedTarget = useMemo(() => parseUrlOrCoords(TARGET_LOCATION_INPUT), [TARGET_LOCATION_INPUT]);
+  // Dynamic location state
+  const [targetLocation, setTargetLocation] = useState<{latitude: number; longitude: number; address: string; googleMapsUrl: string} | null>(null);
+  
+  // Log targetLocation changes
+  useEffect(() => {
+    console.log('🎯 App.tsx: targetLocation state changed:', targetLocation);
+  }, [targetLocation]);
   
   // Alignment state
   const [isAligned, setIsAligned] = useState(false);
   const [nextSunEvent, setNextSunEvent] = useState<{ time: Date; type: 'sunrise' | 'sunset'; isToday: boolean } | null>(null);
+
+  // Fetch location on component mount
+  useEffect(() => {
+    const loadLocation = async () => {
+      try {
+        console.log('🔍 App.tsx: Starting location fetch process...');
+        console.log('🔍 App.tsx: About to call fetchLocationDirect()');
+        const location = await fetchLocationDirect();
+        console.log('🔍 App.tsx: fetchLocationDirect returned:', location);
+        if (location) {
+          console.log('✅ App.tsx: Target location loaded successfully:', location);
+          setTargetLocation(location);
+        } else {
+          console.log('❌ App.tsx: fetchLocationDirect returned null/undefined');
+        }
+      } catch (error) {
+        console.error('❌ App.tsx: Failed to load target location:', error);
+        if (error instanceof Error) {
+          console.error('❌ App.tsx: Error details:', error.message, error.stack);
+        } else {
+          console.error('❌ App.tsx: Error details:', String(error));
+        }
+      }
+    };
+
+    console.log('🚀 App.tsx: Component mounted, starting location load...');
+    loadLocation();
+  }, []);
 
   // Handle Darshan audio
   const soundRef = useRef<Sound | null>(null);
@@ -71,10 +102,10 @@ function App(): React.JSX.Element {
   // Calculate and display next sunrise/sunset using new API
   useEffect(() => {
     const getSunEvent = async () => {
-      if (parsedTarget) {
+      if (targetLocation) {
         try {
           // Get today's sun times (cached after first call)
-          const sunTimes = await calculateSunTimes(parsedTarget.latitude, parsedTarget.longitude);
+          const sunTimes = await calculateSunTimes(targetLocation.latitude, targetLocation.longitude);
           const now = new Date();
           
           // Determine next event
@@ -86,7 +117,7 @@ function App(): React.JSX.Element {
             // Tomorrow's sunrise
             const tomorrow = new Date(now);
             tomorrow.setDate(tomorrow.getDate() + 1);
-            const tomorrowTimes = await calculateSunTimes(parsedTarget.latitude, parsedTarget.longitude, tomorrow);
+            const tomorrowTimes = await calculateSunTimes(targetLocation.latitude, targetLocation.longitude, tomorrow);
             setNextSunEvent({ time: tomorrowTimes.sunrise, type: 'sunrise', isToday: false });
           }
         } catch (error) {
@@ -98,7 +129,7 @@ function App(): React.JSX.Element {
     };
     
     getSunEvent();
-  }, [parsedTarget]);
+  }, [targetLocation]);
 
   const handleAlignmentChange = (aligned: boolean) => {
     console.log('Alignment changed:', aligned);
@@ -125,9 +156,9 @@ function App(): React.JSX.Element {
       </View>
 
       {/* Compass Component */}
-      {parsedTarget ? (
+      {targetLocation ? (
         <SimpleCompassView 
-          targetLocation={parsedTarget}
+          targetLocation={targetLocation}
           onAlignmentChange={handleAlignmentChange}
         />
       ) : (

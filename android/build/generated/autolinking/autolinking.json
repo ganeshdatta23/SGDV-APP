@@ -1,0 +1,71 @@
+{
+  "reactNativeVersion": "0.73",
+  "dependencies": {
+    "react-native-geolocation-service": {
+      "root": "/Users/mmt11937/Desktop/SGDV-APP/node_modules/react-native-geolocation-service",
+      "name": "react-native-geolocation-service",
+      "platforms": {
+        "android": {
+          "sourceDir": "/Users/mmt11937/Desktop/SGDV-APP/node_modules/react-native-geolocation-service/android",
+          "packageImportPath": "import com.agontuk.RNFusedLocation.RNFusedLocationPackage;",
+          "packageInstance": "new RNFusedLocationPackage()"
+        }
+      }
+    },
+    "react-native-haptic-feedback": {
+      "root": "/Users/mmt11937/Desktop/SGDV-APP/node_modules/react-native-haptic-feedback",
+      "name": "react-native-haptic-feedback",
+      "platforms": {
+        "android": {
+          "sourceDir": "/Users/mmt11937/Desktop/SGDV-APP/node_modules/react-native-haptic-feedback/android",
+          "packageImportPath": "import com.mkuczera.RNReactNativeHapticFeedbackPackage;",
+          "packageInstance": "new RNReactNativeHapticFeedbackPackage()"
+        }
+      }
+    },
+    "react-native-sensors": {
+      "root": "/Users/mmt11937/Desktop/SGDV-APP/node_modules/react-native-sensors",
+      "name": "react-native-sensors",
+      "platforms": {
+        "android": {
+          "sourceDir": "/Users/mmt11937/Desktop/SGDV-APP/node_modules/react-native-sensors/android",
+          "packageImportPath": "import com.sensors.RNSensorsPackage;",
+          "packageInstance": "new RNSensorsPackage()"
+        }
+      }
+    },
+    "react-native-sound": {
+      "root": "/Users/mmt11937/Desktop/SGDV-APP/node_modules/react-native-sound",
+      "name": "react-native-sound",
+      "platforms": {
+        "android": {
+          "sourceDir": "/Users/mmt11937/Desktop/SGDV-APP/node_modules/react-native-sound/android",
+          "packageImportPath": "import com.zmxv.RNSound.RNSoundPackage;",
+          "packageInstance": "new RNSoundPackage()"
+        }
+      }
+    },
+    "react-native-svg": {
+      "root": "/Users/mmt11937/Desktop/SGDV-APP/node_modules/react-native-svg",
+      "name": "react-native-svg",
+      "platforms": {
+        "android": {
+          "sourceDir": "/Users/mmt11937/Desktop/SGDV-APP/node_modules/react-native-svg/android",
+          "packageImportPath": "import com.horcrux.svg.SvgPackage;",
+          "packageInstance": "new SvgPackage()"
+        }
+      }
+    },
+    "react-native-video": {
+      "root": "/Users/mmt11937/Desktop/SGDV-APP/node_modules/react-native-video",
+      "name": "react-native-video",
+      "platforms": {
+        "android": {
+          "sourceDir": "/Users/mmt11937/Desktop/SGDV-APP/node_modules/react-native-video/android",
+          "packageImportPath": "import com.brentvatne.react.ReactVideoPackage;",
+          "packageInstance": "new ReactVideoPackage()"
+        }
+      }
+    }
+  }
+} 
