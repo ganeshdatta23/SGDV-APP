@@ -10,13 +10,6 @@ import { Coordinates, calculateBearing } from '../utils/locationUtils';
 const AnimatedG = Animated.createAnimatedComponent(G);
 const { width, height } = Dimensions.get('window');
 
-// Helper function to get cardinal direction
-function getCardinalDirection(angle: number | null): string {
-  if (angle === null) return "--";
-  const directions = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
-  return directions[Math.round(angle / 22.5) % 16];
-}
-
 interface CompassViewProps {
   targetHeading?: number | null;
   /** If provided, the component will compute the bearing from the user's
@@ -29,11 +22,12 @@ interface CompassViewProps {
 }
 
 const FACING_THRESHOLD_DEGREES = 20; // Reasonable threshold for alignment
+const COMPASS_REFRESH_INTERVAL = 50; // milliseconds
 
 export default function CompassView({ targetHeading: propTargetHeading = 45, targetLocation = null, onAlignmentChange, hideStatusWhenAligned = false }: CompassViewProps) {
   const [heading, setHeading] = useState<number | null>(null);
   const [userLocation, setUserLocation] = useState<Coordinates | null>(null);
-  const [isCalibrating, setIsCalibrating] = useState(false);
+  // const [isCalibrating, setIsCalibrating] = useState(false);
   
   // Track if we've already triggered haptics for current alignment
   const hasTriggeredHapticsRef = useRef(false);
@@ -42,7 +36,7 @@ export default function CompassView({ targetHeading: propTargetHeading = 45, tar
    * Low-pass filter coefficient. 0 → no smoothing, 1 → maximum smoothing.
    * 0.2–0.3 feels responsive yet stable on most phones.
    */
-  const SMOOTHING_ALPHA = 0.25;
+  const SMOOTHING_ALPHA = 0.5;
 
   // Store previous heading to apply exponential smoothing across readings.
   const prevHeadingRef = useRef<number | null>(null);
@@ -79,7 +73,7 @@ export default function CompassView({ targetHeading: propTargetHeading = 45, tar
     const subscription = magnetometer.subscribe(({ x, y, z }: SensorData) => {
       // Throttle updates to prevent excessive animations
       const now = Date.now();
-      if (now - lastUpdateTime.current < 100) { // Update at most every 50ms
+      if (now - lastUpdateTime.current < COMPASS_REFRESH_INTERVAL) { // Update at most every 100ms
         return;
       }
       lastUpdateTime.current = now;
@@ -97,8 +91,8 @@ export default function CompassView({ targetHeading: propTargetHeading = 45, tar
         smoothedHeading = rawHeading;
       } else {
         // Compute the shortest angular distance (-180..180] then apply smoothing.
-        const delta = ((rawHeading - prev + 540) % 360) - 180;
-        smoothedHeading = (prev + SMOOTHING_ALPHA * delta + 360) % 360;
+        const difference = ((rawHeading - prev + 540) % 360) - 180;
+        smoothedHeading = (prev + SMOOTHING_ALPHA * difference + 360) % 360;
       }
 
       prevHeadingRef.current = smoothedHeading;
@@ -114,7 +108,7 @@ export default function CompassView({ targetHeading: propTargetHeading = 45, tar
       animationInProgress.current = true;
       Animated.timing(dialRotation, {
         toValue: -heading,
-        duration: 100,
+        duration: 20,
         easing: Easing.out(Easing.ease),
         useNativeDriver: true,
       }).start(() => {
@@ -390,11 +384,11 @@ export default function CompassView({ targetHeading: propTargetHeading = 45, tar
           {/* <Text style={styles.locationText}>📍 {"Appaji's location"}</Text> */}
           <Text style={styles.locationText}> {"📍 "+ targetLocation?.address || "📍 "+ 'Datta Peetham, Mysore'}</Text>
           <Text style={styles.statusText}>
-            Your heading: {heading !== null ? Math.round(heading) : '--'}°
+            Sunrise time: 05:00 AM
           </Text>
-          <Text style={styles.statusText}>
+          {/* <Text style={styles.statusText}>
             Target bearing: {effectiveTargetHeading !== null ? Math.round(effectiveTargetHeading) : '--'}°
-          </Text>
+          </Text> */}
         </View>
       )}
     </View>
