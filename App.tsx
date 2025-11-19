@@ -6,11 +6,12 @@
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { SafeAreaView, StatusBar, StyleSheet, Text, View, Image, TouchableOpacity, AppState, Switch, Modal } from 'react-native';
-import LinearGradient from 'react-native-linear-gradient';
+import { LinearGradient } from 'expo-linear-gradient';
 import SimpleCompassView from './components/CompassView';
 import { fetchLocationDirect } from './utils/directApi';
-import Video from 'react-native-video';
-import Sound from 'react-native-sound';
+import { VideoView, useVideoPlayer } from 'expo-video';
+import { useAudioPlayer, setAudioModeAsync } from 'expo-audio';
+import type { AudioPlayer } from 'expo-audio/build/AudioModule.types';
 import { calculateSunTimes, formatSunTime, debugSunriseSunset } from './utils/sunCalculator';
 import { initializeNotifications, scheduleAlarms, getNextAlarmInfo, getAlarmConfig, saveAlarmConfig, AlarmConfig } from './utils/alarmManager';
 
@@ -36,6 +37,17 @@ function App(): React.JSX.Element {
     sunsetOffset: 15,
   });
   const [showAlarmSettings, setShowAlarmSettings] = useState(false);
+
+  // Video player setup for expo-video
+  const videoSource = require('./assets/videos/darshan-background.mp4');
+  const videoPlayer = useVideoPlayer(videoSource, (player) => {
+    player.loop = true;
+    player.muted = true;
+    // Don't auto-play on mount - will be controlled by alignment state
+  });
+
+  // Audio player setup for expo-audio
+  const audioPlayer = useAudioPlayer(require('./assets/audio/background-music.mp3'));
 
   // App state tracking for background/foreground
   const appState = useRef(AppState.currentState);
@@ -78,6 +90,21 @@ function App(): React.JSX.Element {
 
     console.log('🚀 App.tsx: Component mounted, starting location load...');
     
+    // Initialize audio mode
+    const setupAudio = async () => {
+      try {
+        await setAudioModeAsync({
+          playsInSilentMode: true,
+          shouldPlayInBackground: false,
+        });
+        console.log('✅ Audio mode configured');
+      } catch (error) {
+        console.log('❌ Failed to configure audio mode', error);
+      }
+    };
+    
+    setupAudio();
+    
     // Initialize notifications
     initializeNotifications();
     
@@ -96,63 +123,75 @@ function App(): React.JSX.Element {
     loadLocation();
   }, []);
 
-  // Handle Darshan audio
-  const soundRef = useRef<Sound | null>(null);
-
+  // Play / pause video depending on alignment and app state
   useEffect(() => {
-    // Initialize sound
-    Sound.setCategory('Playback', true); // Enable mixing with other audio
-    
-    const sound = new Sound(require('./assets/audio/background-music.mp3'), (error) => {
-      if (error) {
-        console.log('❌ Failed to load the sound', error);
-        return;
-      }
-      console.log('✅ Sound loaded successfully');
-      console.log('🎵 Sound duration:', sound.getDuration());
-      sound.setNumberOfLoops(-1); // Loop indefinitely
-      sound.setVolume(0.8); // Set volume to 80%
-      soundRef.current = sound;
-    });
-
-    return () => {
-      if (soundRef.current) {
-        soundRef.current.release();
-      }
-    };
-  }, []);
-
-  // Play / pause audio depending on alignment and app state
-  useEffect(() => {
-    const sound = soundRef.current;
-    if (!sound) {
+    if (!videoPlayer) {
       return;
     }
 
-    // Only play if aligned AND app is in foreground
-    if (isAligned && appStateVisible === 'active') {
-      console.log('🎵 Playing darshan audio...');
-      // First stop any current playback
-      sound.stop();
-      // Small delay to ensure stop is complete, then reset and play
-      setTimeout(() => {
-        sound.setCurrentTime(0);
-        sound.play((success) => {
-          if (!success) {
-            console.log('❌ Sound playback failed');
-          } else {
-            console.log('✅ Sound playback started');
+    const playVideo = () => {
+      try {
+        // Only play if aligned AND app is in foreground
+        if (isAligned && appStateVisible === 'active') {
+          console.log('🎬 Playing darshan video...');
+          videoPlayer.loop = true;
+          videoPlayer.muted = true;
+          // Reset to start to ensure video plays from beginning
+          videoPlayer.currentTime = 0;
+          videoPlayer.play();
+          console.log('✅ Video playback started');
+        } else {
+          // Pause video if not aligned or app is in background
+          if (videoPlayer.playing) {
+            videoPlayer.pause();
+            if (appStateVisible !== 'active') {
+              console.log('🎬 Video paused - app in background');
+            } else {
+              console.log('🎬 Video paused - not aligned');
+            }
           }
-        });
-      }, 100);
-    } else {
-      // Pause audio if not aligned or app is in background
-      sound.pause();
-      if (appStateVisible !== 'active') {
-        console.log('🎵 Audio paused - app in background');
+        }
+      } catch (error) {
+        console.log('❌ Video playback error:', error);
       }
+    };
+
+    playVideo();
+  }, [isAligned, appStateVisible, videoPlayer]);
+
+  // Play / pause audio depending on alignment and app state
+  useEffect(() => {
+    if (!audioPlayer) {
+      return;
     }
-  }, [isAligned, appStateVisible]);
+
+    const playAudio = async () => {
+      try {
+        // Only play if aligned AND app is in foreground
+        if (isAligned && appStateVisible === 'active') {
+          console.log('🎵 Playing darshan audio...');
+          audioPlayer.loop = true;
+          audioPlayer.volume = 0.8;
+          // Use seekTo() instead of setting currentTime directly
+          await audioPlayer.seekTo(0);
+          audioPlayer.play();
+          console.log('✅ Sound playback started');
+        } else {
+          // Pause audio if not aligned or app is in background
+          if (audioPlayer.playing) {
+            audioPlayer.pause();
+            if (appStateVisible !== 'active') {
+              console.log('🎵 Audio paused - app in background');
+            }
+          }
+        }
+      } catch (error) {
+        console.log('❌ Audio playback error:', error);
+      }
+    };
+
+    playAudio();
+  }, [isAligned, appStateVisible, audioPlayer]);
 
   // Calculate and display next sunrise/sunset using new API
   useEffect(() => {
@@ -193,7 +232,7 @@ function App(): React.JSX.Element {
   const handleAlignmentChange = (aligned: boolean) => {
     console.log('🧭 Alignment changed:', aligned);
     console.log('🎵 App state:', appStateVisible);
-    console.log('🎵 Sound ref exists:', !!soundRef.current);
+    console.log('🎵 Audio player exists:', !!audioPlayer);
     console.log('🔒 Is closed manually:', isClosedManually);
     console.log('🔒 Current isAligned state:', isAligned);
     
@@ -263,18 +302,11 @@ function App(): React.JSX.Element {
       {isAligned && (
         <View style={styles.overlay} pointerEvents="box-none">
           {/* Background video */}
-          <Video
-            source={require('./assets/videos/darshan-background.mp4')}
+          <VideoView
+            player={videoPlayer}
             style={StyleSheet.absoluteFill}
-            resizeMode="cover"
-            repeat={true}
-            muted={true}
-            playInBackground={false}
-            playWhenInactive={false}
-            onLoad={() => console.log('🎬 Video loaded successfully')}
-            onError={(error) => console.log('❌ Video error:', error)}
-            onLoadStart={() => console.log('🎬 Video loading started')}
-            onProgress={(data) => console.log('🎬 Video progress:', data.currentTime)}
+            contentFit="cover"
+            nativeControls={false}
           />
           {/* Swamiji image overlay */}
           <Image

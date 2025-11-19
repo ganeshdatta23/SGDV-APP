@@ -1,4 +1,49 @@
 {
-  "name": "DarshanamCompassNative",
-  "displayName": "DarshanamCompassNative"
+  "expo": {
+    "name": "Guru Digvandanam",
+    "slug": "darshanam-compass-native",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/compass-icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/images/swamiji-darshan.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FF6B35"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.darshanamcompassnative",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "This app needs your location to show the direction to the sacred place.",
+        "NSLocationAlwaysUsageDescription": "This app needs your location to show the direction to the sacred place.",
+        "NSMotionUsageDescription": "This app needs access to your device motion sensors for compass functionality."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/compass-icon.png",
+        "backgroundColor": "#FF6B35"
+      },
+      "package": "com.darshanamcompassnative",
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "VIBRATE",
+        "SCHEDULE_EXACT_ALARM",
+        "USE_EXACT_ALARM"
+      ]
+    },
+    "plugins": [
+      [
+        "expo-video",
+        {
+          "supportsBackgroundPlayback": false,
+          "supportsPictureInPicture": false
+        }
+      ],
+      "expo-audio",
+      "expo-location"
+    ]
+  }
 }

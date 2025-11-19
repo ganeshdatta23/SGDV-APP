@@ -12,6 +12,7 @@ node_modules/
 *.apk
 *.aab
 *.ipa
+.expo/
 
 android/.gradle/
 android/app/build/
