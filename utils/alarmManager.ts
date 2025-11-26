@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { calculateSunTimes } from './sunCalculator';
+import { calculateSunTimes } from './sgvdApi';
 
 // Alarm configuration
 interface AlarmConfig {

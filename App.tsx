@@ -5,15 +5,88 @@
  */
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { SafeAreaView, StatusBar, StyleSheet, Text, View, Image, TouchableOpacity, AppState, Switch, Modal } from 'react-native';
+import { StatusBar, StyleSheet, Text, View, Image, TouchableOpacity, AppState } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import SimpleCompassView from './components/CompassView';
-import { fetchLocationDirect } from './utils/directApi';
+import { RadialGradient } from 'react-native-gradients';
 import { VideoView, useVideoPlayer } from 'expo-video';
 import { useAudioPlayer, setAudioModeAsync } from 'expo-audio';
-import type { AudioPlayer } from 'expo-audio/build/AudioModule.types';
-import { calculateSunTimes, formatSunTime, debugSunriseSunset } from './utils/sunCalculator';
-import { initializeNotifications, scheduleAlarms, getNextAlarmInfo, getAlarmConfig, saveAlarmConfig, AlarmConfig } from './utils/alarmManager';
+import SimpleCompassView, { COMPASS_THEME } from './components/CompassView';
+import { BottomNav, Tab } from './components/BottomNav';
+import EventsView from './components/EventsView';
+import { fetchLocationDirect, calculateSunTimes } from './utils/sgvdApi';
+import { initializeNotifications, scheduleAlarms } from './utils/alarmManager';
+
+// ============================================================================
+// APP BACKGROUND THEMES (synced with CompassView theme)
+// ============================================================================
+// Available themes: 'light' | 'dark' | 'cosmic'
+// - light: Orange/amber sunrise gradient
+// - dark: Dark stone/black night gradient  
+// - cosmic: Red-black cosmic gradient (from archive demo_sgvd_ui_5)
+// To switch themes, change COMPASS_THEME in components/CompassView.tsx
+// Both the compass and app background will automatically update
+
+const APP_BACKGROUNDS = {
+  light: {
+    // Orange/amber gradient (sunrise theme)
+    gradientColors: ['#FF6B35', '#F7931E'] as const,
+    gradientLocations: [0, 1] as const,
+    statusBarStyle: 'light-content' as const,
+    headerTextColor: '#FFFFFF',
+    subtitleColor: '#FFFFFF',
+    buttonBg: 'rgba(255, 255, 255, 0.2)',
+    buttonBorder: 'rgba(255, 255, 255, 0.5)',
+    buttonText: '#FFFFFF',
+    modalBg: 'rgba(0, 30, 60, 0.95)',
+    modalBorder: 'rgba(255, 215, 0, 0.6)',
+    modalTitle: '#FFD700',
+    modalText: '#E6E6FA',
+  },
+  dark: {
+    // Dark stone/black gradient (night theme from archive)
+    // Converted from: bg-[radial-gradient(ellipse_at_top)] from-stone-900/80 via-stone-950 to-black
+    gradientColors: ['#292524', '#1c1917', '#0c0a09', '#000000'] as const,
+    gradientLocations: [0, 0.3, 0.6, 1] as const,
+    statusBarStyle: 'light-content' as const,
+    headerTextColor: '#e7e5e4',
+    subtitleColor: '#a8a29e',
+    buttonBg: 'rgba(28, 25, 23, 0.6)',
+    buttonBorder: '#44403c',
+    buttonText: '#e7e5e4',
+    modalBg: 'rgba(12, 10, 9, 0.95)',
+    modalBorder: '#44403c',
+    modalTitle: '#FCD34D',
+    modalText: '#a8a29e',
+  },
+  cosmic: {
+    // Red-black cosmic gradient (from archive demo_sgvd_ui_5)
+    // Using REAL radial gradient: bg-[radial-gradient(ellipse_at_top)] from-amber-700/90 via-rose-950 to-slate-950
+    // amber-700: #b45309, rose-950: #4c0519, slate-950: #020617
+    isRadial: true, // Flag to use RadialGradient instead of LinearGradient
+    radialColorList: [
+      { offset: '0%', color: '#b45309', opacity: '0.9' },   // amber-700/90 at center
+      { offset: '40%', color: '#4c0519', opacity: '1' },    // rose-950
+      { offset: '100%', color: '#020617', opacity: '1' },   // slate-950 at edges
+    ],
+    // Fallback linear gradient colors (not used when isRadial is true)
+    gradientColors: ['#b45309', '#4c0519', '#020617'] as const,
+    gradientLocations: [0, 0.4, 1] as const,
+    statusBarStyle: 'light-content' as const,
+    headerTextColor: '#FFFFFF',
+    subtitleColor: '#fbbf24', // amber-400 for better contrast
+    buttonBg: 'rgba(76, 5, 25, 0.6)', // rose-950 with opacity
+    buttonBorder: 'rgba(251, 191, 36, 0.5)', // amber-400 border
+    buttonText: '#FFFFFF',
+    modalBg: 'rgba(2, 6, 23, 0.95)', // slate-950 with opacity
+    modalBorder: 'rgba(251, 191, 36, 0.6)', // amber-400 border
+    modalTitle: '#fbbf24', // amber-400
+    modalText: '#fef3c7', // amber-100
+  },
+};
+
+// Get current background theme (synced with compass theme)
+const currentBgTheme = APP_BACKGROUNDS[COMPASS_THEME];
 
 function App(): React.JSX.Element {
   // Dynamic location state
@@ -29,20 +102,15 @@ function App(): React.JSX.Element {
   const [nextSunEvent, setNextSunEvent] = useState<{ time: Date; type: 'sunrise' | 'sunset'; isToday: boolean } | null>(null);
   const [isClosedManually, setIsClosedManually] = useState(false);
   
-  // Alarm settings
-  const [alarmConfig, setAlarmConfig] = useState<AlarmConfig>({
-    sunriseEnabled: true,
-    sunsetEnabled: true,
-    sunriseOffset: 15,
-    sunsetOffset: 15,
-  });
-  const [showAlarmSettings, setShowAlarmSettings] = useState(false);
+  // Navigation state
+  const [currentTab, setCurrentTab] = useState<Tab>('home');
 
   // Video player setup for expo-video
   const videoSource = require('./assets/videos/darshan-background.mp4');
   const videoPlayer = useVideoPlayer(videoSource, (player) => {
     player.loop = true;
     player.muted = true;
+    player.playbackRate = 0.6; // Play video at 0.5x speed
     // Don't auto-play on mount - will be controlled by alignment state
   });
 
@@ -108,18 +176,6 @@ function App(): React.JSX.Element {
     // Initialize notifications
     initializeNotifications();
     
-    // Load alarm configuration
-    const loadAlarmConfig = async () => {
-      try {
-        const config = await getAlarmConfig();
-        setAlarmConfig(config);
-        console.log('⏰ Alarm config loaded:', config);
-      } catch (error) {
-        console.error('❌ Failed to load alarm config:', error);
-      }
-    };
-    
-    loadAlarmConfig();
     loadLocation();
   }, []);
 
@@ -253,50 +309,58 @@ function App(): React.JSX.Element {
     }
   };
 
-  return (
-    <LinearGradient
-      colors={['#FF6B35', '#F7931E']}
-      style={styles.container}
-    >
-      <SafeAreaView style={styles.safeArea}>
-        <StatusBar 
-          barStyle="light-content" 
-          backgroundColor="transparent" 
-          translucent={true}
-        />
-      
+  // Determine if we should use radial gradient (for cosmic theme)
+  const useRadialGradient = 'isRadial' in currentBgTheme && currentBgTheme.isRadial;
+
+  // Shared content for both gradient types
+  const appContent = (
+    <>
+      <StatusBar 
+        barStyle={currentBgTheme.statusBarStyle}
+        backgroundColor="transparent" 
+        translucent={true}
+      />
+    
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.titleContainer}>
-          <Text style={styles.title}>Guru Digvandanam</Text>
-          <Text style={styles.subtitle}>Offer your prayers to the direction of Appaji</Text>
+          <Text style={[styles.title, { color: currentBgTheme.headerTextColor }]}>
+            {currentTab === 'home' ? 'Guru Digvandanam' : 'Events'}
+          </Text>
+          <Text style={[styles.subtitle, { color: currentBgTheme.subtitleColor }]}>
+            {currentTab === 'home' 
+              ? 'Offer your prayers to the direction of Appaji' 
+              : 'Stay updated with upcoming programs'}
+          </Text>
         </View>
       </View>
 
-      {/* Compass Component */}
-      {targetLocation ? (
-        <SimpleCompassView 
-          targetLocation={targetLocation}
-          onAlignmentChange={handleAlignmentChange}
-          hideStatusWhenAligned={true}
-        />
+      {/* Main Content Area - Conditional based on tab */}
+      {currentTab === 'home' ? (
+        <>
+          {/* Compass Component */}
+          {targetLocation ? (
+            <SimpleCompassView 
+              targetLocation={targetLocation}
+              onAlignmentChange={handleAlignmentChange}
+              hideStatusWhenAligned={true}
+            />
+          ) : (
+            <SimpleCompassView 
+              targetHeading={45}
+              onAlignmentChange={handleAlignmentChange}
+              hideStatusWhenAligned={true}
+            />
+          )}
+
+        </>
       ) : (
-        <SimpleCompassView 
-          targetHeading={45}
-          onAlignmentChange={handleAlignmentChange}
-          hideStatusWhenAligned={true}
-        />
+        /* Events View */
+        <EventsView />
       )}
 
-      {/* Bottom Alarm Button */}
-      <View style={styles.bottomButtonContainer}>
-        <TouchableOpacity 
-          style={styles.bottomAlarmButton}
-          onPress={() => setShowAlarmSettings(true)}
-        >
-          <Text style={styles.bottomAlarmButtonText}>⏰ Alarm Settings</Text>
-        </TouchableOpacity>
-      </View>
+      {/* Bottom Navigation */}
+      <BottomNav currentTab={currentTab} onTabChange={setCurrentTab} />
 
       {/* Darshan overlay */}
       {isAligned && (
@@ -325,66 +389,39 @@ function App(): React.JSX.Element {
         </View>
       )}
 
-      {/* Alarm Settings Modal */}
-      <Modal
-        visible={showAlarmSettings}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setShowAlarmSettings(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>⏰ Alarm Settings</Text>
-            
-            <View style={styles.settingRow}>
-              <Text style={styles.settingLabel}>Sunrise Alarm</Text>
-              <Switch
-                value={alarmConfig.sunriseEnabled}
-                onValueChange={(value) => {
-                  const newConfig = { ...alarmConfig, sunriseEnabled: value };
-                  setAlarmConfig(newConfig);
-                  saveAlarmConfig(newConfig);
-                  if (targetLocation) {
-                    scheduleAlarms(targetLocation.latitude, targetLocation.longitude);
-                  }
-                }}
-                trackColor={{ false: '#767577', true: '#FFD700' }}
-                thumbColor={alarmConfig.sunriseEnabled ? '#FFF' : '#f4f3f4'}
-              />
-            </View>
+    </>
+  );
 
-            <View style={styles.settingRow}>
-              <Text style={styles.settingLabel}>Sunset Alarm</Text>
-              <Switch
-                value={alarmConfig.sunsetEnabled}
-                onValueChange={(value) => {
-                  const newConfig = { ...alarmConfig, sunsetEnabled: value };
-                  setAlarmConfig(newConfig);
-                  saveAlarmConfig(newConfig);
-                  if (targetLocation) {
-                    scheduleAlarms(targetLocation.latitude, targetLocation.longitude);
-                  }
-                }}
-                trackColor={{ false: '#767577', true: '#FFD700' }}
-                thumbColor={alarmConfig.sunsetEnabled ? '#FFF' : '#f4f3f4'}
-              />
-            </View>
-
-            <Text style={styles.alarmInfo}>
-              {alarmConfig.sunriseEnabled && `🌅 Sunrise alarm: ${alarmConfig.sunriseOffset} min before`}
-              {alarmConfig.sunriseEnabled && alarmConfig.sunsetEnabled && '\n'}
-              {alarmConfig.sunsetEnabled && `🌇 Sunset alarm: ${alarmConfig.sunsetOffset} min before`}
-            </Text>
-
-            <TouchableOpacity
-              style={styles.closeModalButton}
-              onPress={() => setShowAlarmSettings(false)}
-            >
-              <Text style={styles.closeModalButtonText}>Close</Text>
-            </TouchableOpacity>
-          </View>
+  // Render with RadialGradient for cosmic theme
+  if (useRadialGradient && 'radialColorList' in currentBgTheme) {
+    return (
+      <View style={styles.container}>
+        {/* Radial gradient background - ellipse at top like archive */}
+        <View style={StyleSheet.absoluteFill}>
+          <RadialGradient
+            x="50%"
+            y="60%"
+            rx="100%"
+            ry="100%"
+            colorList={currentBgTheme.radialColorList}
+          />
         </View>
-      </Modal>
+        <SafeAreaView style={styles.safeArea}>
+          {appContent}
+        </SafeAreaView>
+      </View>
+    );
+  }
+
+  // Render with LinearGradient for light/dark themes
+  return (
+    <LinearGradient
+      colors={[...currentBgTheme.gradientColors]}
+      locations={[...currentBgTheme.gradientLocations]}
+      style={styles.container}
+    >
+      <SafeAreaView style={styles.safeArea}>
+        {appContent}
       </SafeAreaView>
     </LinearGradient>
   );
@@ -412,10 +449,10 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 17,
-    color: '#FFFFFF',
     textAlign: 'center',
     marginTop: 8,
     fontWeight: '400',
+    // Color applied dynamically via inline styles
   },
   headerRow: {
     flexDirection: 'row',
@@ -424,26 +461,15 @@ const styles = StyleSheet.create({
     width: '100%',
     paddingHorizontal: 10,
   },
-  alarmButton: {
-    padding: 10,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    borderRadius: 25,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.5)',
-  },
-  alarmButtonText: {
-    fontSize: 20,
-    color: '#FFFFFF',
-  },
   title: {
-    fontSize: 29,
+    fontSize: 28,
     fontWeight: '700',
-    color: '#FFFFFF',
     textAlign: 'center',
     marginBottom: 8,
     textShadowColor: 'rgba(0, 0, 0, 0.3)',
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 4,
+    // Color applied dynamically via inline styles
   },
   sunEventText: {
     fontSize: 18,
@@ -476,83 +502,6 @@ const styles = StyleSheet.create({
   closeText: {
     color: '#fff',
     fontSize: 18,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalContent: {
-    backgroundColor: 'rgba(0, 30, 60, 0.95)',
-    borderRadius: 20,
-    padding: 30,
-    margin: 20,
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: 'rgba(255, 215, 0, 0.6)',
-    minWidth: 300,
-  },
-  modalTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#FFD700',
-    marginBottom: 20,
-    textAlign: 'center',
-  },
-  settingRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    width: '100%',
-    marginVertical: 10,
-    paddingHorizontal: 10,
-  },
-  settingLabel: {
-    fontSize: 18,
-    color: '#E6E6FA',
-    fontWeight: '600',
-  },
-  alarmInfo: {
-    fontSize: 14,
-    color: '#E6E6FA',
-    textAlign: 'center',
-    marginTop: 15,
-    marginBottom: 20,
-    lineHeight: 20,
-  },
-  closeModalButton: {
-    backgroundColor: '#FFD700',
-    paddingHorizontal: 30,
-    paddingVertical: 12,
-    borderRadius: 25,
-    marginTop: 10,
-  },
-  closeModalButtonText: {
-    color: '#000',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  bottomButtonContainer: {
-    position: 'absolute',
-    bottom: 120,
-    left: 20,
-    right: 20,
-    alignItems: 'center',
-    zIndex: 1,
-  },
-  bottomAlarmButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 25,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.5)',
-  },
-  bottomAlarmButtonText: {
-    fontSize: 16,
-    color: '#FFFFFF',
-    fontWeight: '600',
   },
 });
 
