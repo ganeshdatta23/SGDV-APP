@@ -1,18 +1,27 @@
 import React from 'react';
 import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { COMPASS_THEME } from './CompassView';
+import { COMPASS_THEME, ThemeMode } from './CompassView';
 
 // Tab type for navigation
-export type Tab = 'home' | 'events';
+export type Tab = 'home' | 'events' | 'settings';
 
 interface BottomNavProps {
   currentTab: Tab;
   onTabChange: (tab: Tab) => void;
+  currentTheme?: ThemeMode;
 }
 
 // Theme colors synced with CompassView
-const NAV_THEMES = {
+const NAV_THEMES: Record<ThemeMode, {
+  background: string;
+  borderColor: string;
+  activeText: string;
+  activeIcon: string;
+  inactiveText: string;
+  inactiveIcon: string;
+  activeGlow: string;
+}> = {
   light: {
     background: '#C74A1A', // Solid darker orange
     borderColor: '#FF8C5A',
@@ -42,12 +51,17 @@ const NAV_THEMES = {
   },
 };
 
-const currentNavTheme = NAV_THEMES[COMPASS_THEME];
+export const BottomNav: React.FC<BottomNavProps> = ({ 
+  currentTab, 
+  onTabChange,
+  currentTheme = COMPASS_THEME,
+}) => {
+  const currentNavTheme = NAV_THEMES[currentTheme];
 
-export const BottomNav: React.FC<BottomNavProps> = ({ currentTab, onTabChange }) => {
   const navItems: { id: Tab; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
     { id: 'home', label: 'Darshan', icon: 'compass' },
     { id: 'events', label: 'Programs', icon: 'calendar' },
+    { id: 'settings', label: 'Settings', icon: 'settings-outline' },
   ];
 
   return (
@@ -137,4 +151,3 @@ const styles = StyleSheet.create({
 });
 
 export default BottomNav;
-

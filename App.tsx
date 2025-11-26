@@ -11,9 +11,10 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { RadialGradient } from 'react-native-gradients';
 import { VideoView, useVideoPlayer } from 'expo-video';
 import { useAudioPlayer, setAudioModeAsync } from 'expo-audio';
-import SimpleCompassView, { COMPASS_THEME } from './components/CompassView';
+import SimpleCompassView, { COMPASS_THEME, ThemeMode } from './components/CompassView';
 import { BottomNav, Tab } from './components/BottomNav';
 import EventsView from './components/EventsView';
+import SettingsView from './components/SettingsView';
 import { fetchLocationDirect, calculateSunTimes } from './utils/sgvdApi';
 import { initializeNotifications, scheduleAlarms } from './utils/alarmManager';
 
@@ -85,9 +86,6 @@ const APP_BACKGROUNDS = {
   },
 };
 
-// Get current background theme (synced with compass theme)
-const currentBgTheme = APP_BACKGROUNDS[COMPASS_THEME];
-
 function App(): React.JSX.Element {
   // Dynamic location state
   const [targetLocation, setTargetLocation] = useState<{latitude: number; longitude: number; address: string; googleMapsUrl: string} | null>(null);
@@ -104,6 +102,12 @@ function App(): React.JSX.Element {
   
   // Navigation state
   const [currentTab, setCurrentTab] = useState<Tab>('home');
+  
+  // Theme state - allows dynamic theme switching
+  const [currentTheme, setCurrentTheme] = useState<ThemeMode>(COMPASS_THEME);
+  
+  // Get current background theme based on state
+  const currentBgTheme = APP_BACKGROUNDS[currentTheme];
 
   // Video player setup for expo-video
   const videoSource = require('./assets/videos/darshan-background.mp4');
@@ -325,18 +329,20 @@ function App(): React.JSX.Element {
       <View style={styles.header}>
         <View style={styles.titleContainer}>
           <Text style={[styles.title, { color: currentBgTheme.headerTextColor }]}>
-            {currentTab === 'home' ? 'Guru Digvandanam' : 'Events'}
+            {currentTab === 'home' ? 'Guru Digvandanam' : currentTab === 'events' ? 'Programs' : 'Settings'}
           </Text>
           <Text style={[styles.subtitle, { color: currentBgTheme.subtitleColor }]}>
             {currentTab === 'home' 
               ? 'Offer your prayers to the direction of Appaji' 
-              : 'Stay updated with upcoming programs'}
+              : currentTab === 'events'
+              ? 'Stay updated with upcoming programs'
+              : 'Customize your experience'}
           </Text>
         </View>
       </View>
 
       {/* Main Content Area - Conditional based on tab */}
-      {currentTab === 'home' ? (
+      {currentTab === 'home' && (
         <>
           {/* Compass Component */}
           {targetLocation ? (
@@ -344,23 +350,34 @@ function App(): React.JSX.Element {
               targetLocation={targetLocation}
               onAlignmentChange={handleAlignmentChange}
               hideStatusWhenAligned={true}
+              theme={currentTheme}
             />
           ) : (
             <SimpleCompassView 
               targetHeading={45}
               onAlignmentChange={handleAlignmentChange}
               hideStatusWhenAligned={true}
+              theme={currentTheme}
             />
           )}
-
         </>
-      ) : (
-        /* Events View */
-        <EventsView />
+      )}
+
+      {currentTab === 'events' && <EventsView />}
+
+      {currentTab === 'settings' && (
+        <SettingsView 
+          currentTheme={currentTheme}
+          onThemeChange={setCurrentTheme}
+        />
       )}
 
       {/* Bottom Navigation */}
-      <BottomNav currentTab={currentTab} onTabChange={setCurrentTab} />
+      <BottomNav 
+        currentTab={currentTab} 
+        onTabChange={setCurrentTab}
+        currentTheme={currentTheme}
+      />
 
       {/* Darshan overlay */}
       {isAligned && (
@@ -392,11 +409,11 @@ function App(): React.JSX.Element {
     </>
   );
 
-  // Render with RadialGradient for cosmic theme
-  if (useRadialGradient && 'radialColorList' in currentBgTheme) {
-    return (
-      <View style={styles.container}>
-        {/* Radial gradient background - ellipse at top like archive */}
+  // Single consistent render structure to prevent component remounting on theme change
+  return (
+    <View style={styles.container}>
+      {/* Background Layer - switches between RadialGradient and LinearGradient */}
+      {useRadialGradient && 'radialColorList' in currentBgTheme ? (
         <View style={StyleSheet.absoluteFill}>
           <RadialGradient
             x="50%"
@@ -406,24 +423,19 @@ function App(): React.JSX.Element {
             colorList={currentBgTheme.radialColorList}
           />
         </View>
-        <SafeAreaView style={styles.safeArea}>
-          {appContent}
-        </SafeAreaView>
-      </View>
-    );
-  }
-
-  // Render with LinearGradient for light/dark themes
-  return (
-    <LinearGradient
-      colors={[...currentBgTheme.gradientColors]}
-      locations={[...currentBgTheme.gradientLocations]}
-      style={styles.container}
-    >
+      ) : (
+        <LinearGradient
+          colors={[...currentBgTheme.gradientColors]}
+          locations={[...currentBgTheme.gradientLocations]}
+          style={StyleSheet.absoluteFill}
+        />
+      )}
+      
+      {/* Content Layer - always the same structure */}
       <SafeAreaView style={styles.safeArea}>
         {appContent}
       </SafeAreaView>
-    </LinearGradient>
+    </View>
   );
 }
 
