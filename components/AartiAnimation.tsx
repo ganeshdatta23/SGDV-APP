@@ -19,6 +19,8 @@ interface AartiAnimationProps {
   flickerIntensity?: number;
   /** Size of the Diya container in pixels, default 60 */
   diyaSize?: number;
+  /** Gap between flame and base in pixels (smaller = closer), default 5 */
+  flameBaseGap?: number;
 }
 
 export interface AartiAnimationRef {
@@ -51,7 +53,8 @@ export const AartiAnimation = forwardRef<AartiAnimationRef, AartiAnimationProps>
     centerY = 0,
     flameLength = 0.7,
     flickerIntensity = 0.8,
-    diyaSize = 60
+    diyaSize = 60,
+    flameBaseGap = 5
   }, ref) => {
     const [diyas, setDiyas] = React.useState<Diya[]>([]);
 
@@ -90,6 +93,7 @@ export const AartiAnimation = forwardRef<AartiAnimationRef, AartiAnimationProps>
             flameLength={flameLength}
             flickerIntensity={flickerIntensity}
             diyaSize={diyaSize}
+            flameBaseGap={flameBaseGap}
           />
         ))}
       </View>
@@ -106,9 +110,10 @@ interface SvgDiyaProps {
   flameLength: number;
   flickerIntensity: number;
   diyaSize: number;
+  flameBaseGap: number;
 }
 
-const SvgDiya: React.FC<SvgDiyaProps> = ({ flameLength, flickerIntensity, diyaSize }) => {
+const SvgDiya: React.FC<SvgDiyaProps> = ({ flameLength, flickerIntensity, diyaSize, flameBaseGap }) => {
   // Flame animation values
   const flameScaleX = useSharedValue(1);
   const flameScaleY = useSharedValue(flameLength);
@@ -206,7 +211,7 @@ const SvgDiya: React.FC<SvgDiyaProps> = ({ flameLength, flickerIntensity, diyaSi
       </Animated.View>
 
       {/* Base Layer - Static SVG */}
-      <View style={styles.baseContainer}>
+      <View style={[styles.baseContainer, { bottom: flameBaseGap }]}>
         <Svg width="60" height="40" viewBox="0 0 100 60">
            {/* Diya Base (Clay Lamp) */}
           <Path
@@ -240,6 +245,7 @@ interface DiyaParticleProps {
   flameLength: number;
   flickerIntensity: number;
   diyaSize: number;
+  flameBaseGap: number;
 }
 
 /**
@@ -251,7 +257,8 @@ const DiyaParticle: React.FC<DiyaParticleProps> = ({
   centerY,
   flameLength,
   flickerIntensity,
-  diyaSize
+  diyaSize,
+  flameBaseGap
 }) => {
   const translateX = useSharedValue(centerX);
   const translateY = useSharedValue(centerY);
@@ -320,7 +327,8 @@ const DiyaParticle: React.FC<DiyaParticleProps> = ({
       <SvgDiya 
         flameLength={flameLength} 
         flickerIntensity={flickerIntensity} 
-        diyaSize={diyaSize} 
+        diyaSize={diyaSize}
+        flameBaseGap={flameBaseGap}
       />
     </Animated.View>
   );
@@ -354,7 +362,7 @@ const styles = StyleSheet.create({
   },
   baseContainer: {
     position: 'absolute',
-    bottom: 5,
+    // bottom is now dynamic via inline style
     zIndex: 5,
   }
 });

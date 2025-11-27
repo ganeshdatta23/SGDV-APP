@@ -466,6 +466,10 @@ export const DarshanOverlay: React.FC<DarshanOverlayProps> = ({
         ref={aartiAnimationRef}
         centerX={SCREEN_WIDTH / 2}
         centerY={SCREEN_HEIGHT / 2}
+        flameLength={0.8}        // Add this line
+        flickerIntensity={0.8}    // Add this line
+        diyaSize={80}             // Add this line     
+        flameBaseGap={15}  // Add this line - smaller values = closer together 
       />
 
       {/* Close button */}
