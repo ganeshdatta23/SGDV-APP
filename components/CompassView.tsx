@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import { Magnetometer } from 'expo-sensors';
 import * as Haptics from 'expo-haptics';
 import * as Location from 'expo-location';
+import { Ionicons } from '@expo/vector-icons';
 import Svg, { Circle, Text as SvgText, Line, Polygon, G, Path, Defs, LinearGradient, Stop, RadialGradient } from 'react-native-svg';
 import Animated, {
   useAnimatedSensor,
@@ -15,7 +16,7 @@ import Animated, {
   runOnJS,
   useAnimatedReaction,
 } from 'react-native-reanimated';
-import { Coordinates, calculateBearing } from '../utils/locationUtils';
+import { Coordinates, calculateBearing, calculateDistance } from '../utils/locationUtils';
 
 const AnimatedG = Animated.createAnimatedComponent(G);
 const { width, height } = Dimensions.get('window');
@@ -141,29 +142,30 @@ export const COMPASS_THEME: ThemeMode = 'cosmic'; // Change this to switch theme
 // Theme color palettes
 export const THEMES = {
   light: {
-    // For orange/yellow gradient backgrounds
-    dialBackground: 'rgba(0, 0, 0, 0.15)',      // Semi-transparent dark
-    dialStroke: 'rgba(255, 255, 255, 0.25)',    // Light border
-    tickMajor: '#FFFFFF',                        // White cardinal ticks
-    tickMinor: 'rgba(255, 255, 255, 0.35)',     // Semi-transparent minor ticks
-    northColor: '#ef4444',                       // Red for North
-    cardinalColor: '#FFFFFF',                    // White for E, S, W
-    centerHubBg: 'rgba(0, 0, 0, 0.35)',         // Semi-transparent center
-    centerHubStroke: 'rgba(255, 255, 255, 0.2)',
-    headingLabel: 'rgba(255, 255, 255, 0.7)',
-    headingValue: '#FFFFFF',
-    gold: '#fbbf24',                             // Gold/amber for target
-    emerald: '#34d399',                          // Emerald for aligned
-    emeraldGlow: '#10b981',
-    turnContainerBg: 'rgba(0, 0, 0, 0.25)',
-    turnContainerBorder: 'rgba(255, 255, 255, 0.2)',
-    turnContainerAlignedBg: 'rgba(6, 78, 59, 0.4)',
-    turnContainerAlignedBorder: 'rgba(52, 211, 153, 0.5)',
-    statusBg: 'rgba(0, 0, 0, 0.35)',
-    statusBorder: 'rgba(255, 255, 255, 0.15)',
-    statusText: 'rgba(255, 255, 255, 0.85)',
-    phoneMarkerFill: '#FFFFFF',
-    phoneMarkerStroke: 'rgba(0, 0, 0, 0.3)',
+    // For orange/yellow gradient backgrounds (Sunrise theme)
+    // Medium-dark colors for balanced contrast against bright sunrise background
+    dialBackground: 'rgba(95, 46, 22, 0.5)',    // Medium brown with moderate opacity
+    dialStroke: 'rgba(183, 99, 4, 0.6)',       // Amber-600 border (medium gold)
+    tickMajor: '#D97706',                        // Amber-600 cardinal ticks (medium gold)
+    tickMinor: 'rgba(180, 83, 9, 0.5)',         // Amber-700 minor ticks (lighter)
+    northColor: '#EF4444',                       // Red-500 for North (medium red)
+    cardinalColor: '#FDE68A',                    // Amber-200 for E, S, W (lighter amber)
+    centerHubBg: 'rgba(60, 30, 15, 0.7)',       // Medium brown-black center
+    centerHubStroke: 'rgba(217, 119, 6, 0.5)',   // Amber-600 stroke
+    headingLabel: 'rgba(251, 191, 36, 0.95)',   // Amber-400 label (bright gold)
+    headingValue: '#FDE68A',                     // Amber-200 value (lighter gold)
+    gold: '#F59E0B',                             // Amber-500 for target (medium gold)
+    emerald: '#10b981',                          // Emerald-500 for aligned (medium green)
+    emeraldGlow: '#34d399',                      // Emerald-400 glow
+    turnContainerBg: 'rgba(80, 40, 20, 0.55)',   // Medium brown container
+    turnContainerBorder: 'rgba(217, 119, 6, 0.5)',
+    turnContainerAlignedBg: 'rgba(6, 78, 59, 0.5)',  // Emerald-800 aligned (lighter)
+    turnContainerAlignedBorder: 'rgba(16, 185, 129, 0.6)',
+    statusBg: 'rgba(60, 30, 15, 0.65)',         // Medium brown-black status
+    statusBorder: 'rgba(217, 119, 6, 0.4)',
+    statusText: '#FDE68A',                       // Amber-200 text (readable)
+    phoneMarkerFill: '#FDE68A',                  // Amber-200 phone marker (lighter gold)
+    phoneMarkerStroke: 'rgba(80, 40, 20, 0.6)', // Medium brown stroke
   },
   dark: {
     // For dark backgrounds (stone/black)
@@ -325,6 +327,7 @@ export default function CompassView({
   const dialRotation = useSharedValue(0);
   const smoothedHeading = useSharedValue<number | null>(null);
   const cumulativeRotation = useSharedValue(0); // Track total rotation (can exceed 360°)
+  const targetHeadingSv = useSharedValue(0); // Target heading for pointer rotation
   
   // Magnetometer fallback states
   const [magnetometerHeading, setMagnetometerHeading] = useState<number | null>(null);
@@ -547,8 +550,33 @@ export default function CompassView({
     return null;
   }, [targetLocation, userLocation]);
 
+  // Calculate distance to target
+  const distanceToTarget = React.useMemo(() => {
+    if (targetLocation && userLocation) {
+      const dist = calculateDistance(
+        userLocation.latitude,
+        userLocation.longitude,
+        targetLocation.latitude,
+        targetLocation.longitude
+      );
+      // Format to 1 decimal place if < 10km, otherwise integer
+      return dist < 10 ? dist.toFixed(1) : Math.round(dist).toString();
+    }
+    return null;
+  }, [targetLocation, userLocation]);
+
   // Choose which heading to guide towards
   const effectiveTargetHeading = dynamicTargetHeading ?? propTargetHeading;
+
+  // Update target heading shared value for pointer rotation
+  useEffect(() => {
+    if (effectiveTargetHeading !== null) {
+      targetHeadingSv.value = withSpring(effectiveTargetHeading, {
+        damping: config.rotationSpringDamping,
+        stiffness: config.rotationSpringStiffness,
+      });
+    }
+  }, [effectiveTargetHeading, targetHeadingSv]);
 
   // Get current heading value for calculations - use state instead of shared value
   const currentHeading = currentSensorType === 'rotation' ? currentHeadingState : magnetometerHeading;
@@ -602,6 +630,17 @@ export default function CompassView({
     };
   });
 
+  // Pointer rotation style (independent from dial)
+  const pointerRotateStyle = useAnimatedStyle(() => {
+    return {
+      transform: [
+        {
+          rotate: `${dialRotation.value + targetHeadingSv.value}deg`,
+        },
+      ],
+    };
+  });
+
   // Generate degree markings (72 ticks, every 5°)
   const renderDegreeMarkings = () => {
     const markings = [];
@@ -645,19 +684,19 @@ export default function CompassView({
   };
 
   // Compute align turn instruction
-  const getTurnInstruction = (): { text: string; icon: string } => {
+  const getTurnInstruction = (): { text: string; icon: keyof typeof Ionicons.glyphMap | null } => {
     if (effectiveTargetHeading === null || currentHeading === null) {
-      return { text: "--", icon: "" };
+      return { text: "--", icon: null };
     }
     let delta = ((effectiveTargetHeading - currentHeading + 540) % 360) - 180; // [-180,180]
     const absDelta = Math.abs(delta);
     if (absDelta <= config.facingThresholdDegrees) {
-      return { text: "Aligned", icon: "↑" };
+      return { text: "Aligned", icon: "checkmark-circle" };
     }
     if (delta < 0) {
-      return { text: "TURN RIGHT", icon: "→" };
+      return { text: "TURN RIGHT", icon: "arrow-redo" };
     }
-    return { text: "TURN LEFT", icon: "←" };
+    return { text: "TURN LEFT", icon: "arrow-undo" };
   };
 
   const instruction = getTurnInstruction();
@@ -677,15 +716,13 @@ export default function CompassView({
           borderRadius: config.turnContainerRadius,
         }
       ]}>
-        <Text style={[
-          styles.turnIcon,
-          { 
-            color: isFacingTarget ? colors.emerald : colors.gold,
-            fontSize: config.turnInstructionIconSize,
-          }
-        ]}>
-          {instruction.icon}
-        </Text>
+        {instruction.icon && (
+          <Ionicons 
+            name={instruction.icon} 
+            size={config.turnInstructionIconSize} 
+            color={isFacingTarget ? colors.emerald : colors.gold} 
+          />
+        )}
         <Text style={[
           styles.turnText,
           { 
@@ -712,16 +749,9 @@ export default function CompassView({
           </Svg>
         </View>
 
-        {/* Rotating Compass Dial */}
+        {/* Layer 1: Rotating Compass Dial (Background, Ticks, Cardinals) */}
         <Animated.View style={[styles.compassDial, dialRotateStyle]}>
           <Svg width={compassSize + 50} height={compassSize + 50} style={styles.compass}>
-            <Defs>
-              <LinearGradient id="glowGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                <Stop offset="0%" stopColor={isFacingTarget ? colors.emerald : colors.gold} stopOpacity="0.6" />
-                <Stop offset="100%" stopColor={isFacingTarget ? colors.emeraldGlow : colors.gold} stopOpacity="0.2" />
-              </LinearGradient>
-            </Defs>
-
             {/* Outer glow ring when aligned */}
             {isFacingTarget && (
               <Circle
@@ -797,26 +827,33 @@ export default function CompassView({
                 W
               </SvgText>
             </G>
+          </Svg>
+        </Animated.View>
 
-            {/* Target Pointer Arrow */}
-            {effectiveTargetHeading !== null && (
+        {/* Layer 2: Target Pointer (Independent Rotation) */}
+        {effectiveTargetHeading !== null && (
+          <Animated.View style={[styles.pointerLayer, pointerRotateStyle]}>
+            <Svg width={compassSize + 50} height={compassSize + 50} style={styles.compass}>
               <G transform={`translate(25, 25)`}>
-                <G transform={`rotate(${effectiveTargetHeading} ${centerX} ${centerY})`}>
-                  {/* Arrow pointer */}
-                  <Path
-                    d={`M${centerX} ${centerY - compassRadius + 15} 
-                        L${centerX + 12} ${centerY - compassRadius + 55} 
-                        L${centerX} ${centerY - compassRadius + 45} 
-                        L${centerX - 12} ${centerY - compassRadius + 55} Z`}
-                    fill={isFacingTarget ? colors.emerald : colors.gold}
-                    stroke={isFacingTarget ? '#a7f3d0' : colors.phoneMarkerFill}
-                    strokeWidth="1.5"
-                  />
-                </G>
+                {/* Arrow pointer */}
+                <Path
+                  d={`M${centerX} ${centerY - compassRadius + 15} 
+                      L${centerX + 12} ${centerY - compassRadius + 55} 
+                      L${centerX} ${centerY - compassRadius + 45} 
+                      L${centerX - 12} ${centerY - compassRadius + 55} Z`}
+                  fill={isFacingTarget ? colors.emerald : colors.gold}
+                  stroke={isFacingTarget ? '#a7f3d0' : colors.phoneMarkerFill}
+                  strokeWidth="1.5"
+                />
               </G>
-            )}
+            </Svg>
+          </Animated.View>
+        )}
 
-            {/* Center Hub */}
+        {/* Layer 3: Center Hub (Static - Always Upright) */}
+        <View style={styles.centerHubLayer}>
+          <Svg width={compassSize + 50} height={compassSize + 50} style={styles.compass}>
+            {/* Center Hub Circle */}
             <Circle
               cx={(compassSize + 50) / 2}
               cy={(compassSize + 50) / 2}
@@ -873,44 +910,53 @@ export default function CompassView({
                 {effectiveTargetHeading !== null ? `▲ ${Math.round(effectiveTargetHeading)}°` : '--'}
               </SvgText>
             </G>
-
           </Svg>
-        </Animated.View>
+        </View>
       </View>
 
-      {/* Status indicators */}
-      {!(hideStatusWhenAligned && isFacingTarget) && (
+      {/* Location Name Display */}
+      {targetLocation?.address && (
         <View style={[
-          styles.statusContainer,
+          styles.locationContainer,
           {
-            backgroundColor: colors.statusBg,
-            borderColor: colors.statusBorder,
-            paddingHorizontal: config.statusContainerPaddingH,
-            paddingVertical: config.statusContainerPaddingV,
-            borderRadius: config.statusContainerRadius,
-            bottom: config.statusContainerBottom,
-            left: config.statusContainerMargin,
-            right: config.statusContainerMargin,
+            backgroundColor: colors.turnContainerBg,
+            borderColor: colors.turnContainerBorder,
+            borderWidth: 1,
+            paddingHorizontal: 25,
+            paddingVertical: 12,
+            borderRadius: config.turnContainerRadius,
+            bottom: config.statusContainerBottom + 40,
+            shadowColor: "#000",
+            shadowOffset: {
+              width: 0,
+              height: 2,
+            },
+            shadowOpacity: 0.25,
+            shadowRadius: 3.84,
+            elevation: 5,
           }
         ]}>
+          <Ionicons 
+            name="location" 
+            size={20} 
+            color={colors.gold} 
+          />
           <Text style={[
-            styles.locationText, 
+            styles.locationText,
             { 
               color: colors.statusText,
-              fontSize: config.locationTextSize,
+              fontSize: 18,
+              fontWeight: '700',
+              textTransform: 'none',
+              letterSpacing: 0.5,
             }
           ]}>
-            {"📍 " + (targetLocation?.address || 'Datta Peetham, Mysore')}
-          </Text>
-          <Text style={[
-            styles.statusText, 
-            { 
-              color: colors.statusText, 
-              opacity: 0.8,
-              fontSize: config.statusTextSize,
-            }
-          ]}>
-            Sunrise time: 05:00 AM
+            {targetLocation.address}
+            {distanceToTarget && (
+              <Text style={{ fontWeight: '400', fontSize: 16, textTransform: 'none', opacity: 0.9 }}>
+                {` - ${distanceToTarget}km away`}
+              </Text>
+            )}
           </Text>
         </View>
       )}
@@ -960,26 +1006,30 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  pointerLayer: {
+    position: 'absolute',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  centerHubLayer: {
+    position: 'absolute',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   compass: {
     backgroundColor: 'transparent',
   },
-  statusContainer: {
+  locationContainer: {
     position: 'absolute',
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     borderWidth: 1,
-    // Padding, margins, colors, and sizing applied dynamically via inline styles
-  },
-  // location status text
-  statusText: {
-    textAlign: 'center',
-    marginVertical: 0,
-    fontWeight: '400',
-    // Font size and color applied dynamically
+    gap: 8,
   },
   locationText: {
     textAlign: 'center',
-    marginVertical: 2,
     fontWeight: '500',
-    // Font size and color applied dynamically
+    letterSpacing: 0.5,
   },
 }); 

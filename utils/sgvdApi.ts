@@ -3,6 +3,8 @@
  * Unified module for fetching location data, events, and calculating sun times
  */
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 // ============================================================================
 // CONFIGURATION
 // ============================================================================
@@ -25,6 +27,15 @@ const FALLBACK_SUNSET_HOUR = 18;  // 6:00 PM
 
 // Cache validity duration (1 hour in milliseconds)
 const CACHE_VALIDITY_MS = 60 * 60 * 1000;
+
+// Events cache validity duration (10 minutes in milliseconds)
+const EVENTS_CACHE_VALIDITY_MS = 10 * 60 * 1000;
+const EVENTS_CACHE_KEY = '@sgvd_events_cache';
+const EVENTS_TIMESTAMP_KEY = '@sgvd_events_timestamp';
+
+// Location cache keys for AsyncStorage persistence
+const LOCATION_CACHE_KEY = '@sgvd_location_cache';
+const LOCATION_TIMESTAMP_KEY = '@sgvd_location_timestamp';
 
 // ============================================================================
 // TYPES
@@ -137,10 +148,41 @@ const isCacheValid = (): boolean => {
  * Returns location info including name, coordinates, sunrise/sunset times
  */
 export const fetchLocationDirect = async (): Promise<LocationData> => {
-  // Return cached location if valid
+  // Return in-memory cached location if valid
   if (isCacheValid() && cache) {
-    console.log('📦 Using cached location data');
+    console.log('📦 Using in-memory cached location data');
     return cache.location;
+  }
+
+  // Check AsyncStorage for persisted cache
+  try {
+    const cachedLocationStr = await AsyncStorage.getItem(LOCATION_CACHE_KEY);
+    const cachedTimestamp = await AsyncStorage.getItem(LOCATION_TIMESTAMP_KEY);
+    
+    if (cachedLocationStr && cachedTimestamp) {
+      const cacheAge = Date.now() - parseInt(cachedTimestamp, 10);
+      
+      if (cacheAge < CACHE_VALIDITY_MS) {
+        console.log('📦 Using AsyncStorage cached location data');
+        const cachedData = JSON.parse(cachedLocationStr);
+        
+        // Restore Date objects from ISO strings
+        const location: LocationData = {
+          ...cachedData,
+          sunrise: new Date(cachedData.sunrise),
+          sunset: new Date(cachedData.sunset),
+        };
+        
+        // Restore to in-memory cache for faster subsequent access
+        await updateCache(location);
+        
+        return location;
+      } else {
+        console.log('⏰ AsyncStorage cache expired, fetching fresh data');
+      }
+    }
+  } catch (error) {
+    console.warn('⚠️ Failed to read from AsyncStorage:', error);
   }
 
   try {
@@ -192,8 +234,8 @@ export const fetchLocationDirect = async (): Promise<LocationData> => {
         sunset: formatSunTime(location.sunset)
       });
       
-      // Update cache with location data
-      updateCache(location);
+      // Update cache with location data (saves to both in-memory and AsyncStorage)
+      await updateCache(location);
       
       return location;
     }
@@ -215,12 +257,13 @@ export const fetchLocationDirect = async (): Promise<LocationData> => {
   }
 };
 
-// Update cache with fresh data
-const updateCache = (location: LocationData): void => {
+// Update cache with fresh data (both in-memory and AsyncStorage)
+const updateCache = async (location: LocationData): Promise<void> => {
   const { sunrise, sunset } = location;
   const solarNoon = calculateSolarNoon(sunrise, sunset);
   const { nextEvent, nextEventType } = determineNextEvent(sunrise, sunset);
   
+  // Update in-memory cache
   cache = {
     location,
     sunTimes: {
@@ -233,6 +276,21 @@ const updateCache = (location: LocationData): void => {
     date: new Date().toISOString().split('T')[0],
     timestamp: Date.now(),
   };
+  
+  // Save to AsyncStorage for persistence
+  try {
+    const locationToStore = {
+      ...location,
+      sunrise: location.sunrise.toISOString(),
+      sunset: location.sunset.toISOString(),
+    };
+    
+    await AsyncStorage.setItem(LOCATION_CACHE_KEY, JSON.stringify(locationToStore));
+    await AsyncStorage.setItem(LOCATION_TIMESTAMP_KEY, cache.timestamp.toString());
+    console.log('💾 Location cached to AsyncStorage');
+  } catch (error) {
+    console.warn('⚠️ Failed to save location to AsyncStorage:', error);
+  }
 };
 
 // ============================================================================
@@ -324,9 +382,21 @@ export function getNextSunEvent(
 /**
  * Clear the cache (useful for testing or forcing refresh)
  */
-export function cleanCache(): void {
+export async function cleanCache(): Promise<void> {
   cache = null;
-  console.log('🧹 Cache cleared');
+  
+  // Clear AsyncStorage cache entries
+  try {
+    await AsyncStorage.multiRemove([
+      LOCATION_CACHE_KEY,
+      LOCATION_TIMESTAMP_KEY,
+      EVENTS_CACHE_KEY,
+      EVENTS_TIMESTAMP_KEY,
+    ]);
+    console.log('🧹 Cache cleared (in-memory and AsyncStorage)');
+  } catch (error) {
+    console.warn('⚠️ Failed to clear AsyncStorage cache:', error);
+  }
 }
 
 // ============================================================================
@@ -338,6 +408,27 @@ export function cleanCache(): void {
  * Returns list of published events in descending order (latest first)
  */
 export async function fetchEvents(): Promise<EventData[]> {
+  // Check AsyncStorage for cached events
+  try {
+    const cachedEventsStr = await AsyncStorage.getItem(EVENTS_CACHE_KEY);
+    const cachedTimestamp = await AsyncStorage.getItem(EVENTS_TIMESTAMP_KEY);
+    
+    if (cachedEventsStr && cachedTimestamp) {
+      const cacheAge = Date.now() - parseInt(cachedTimestamp, 10);
+      
+      if (cacheAge < EVENTS_CACHE_VALIDITY_MS) {
+        console.log('📦 Using cached events data (age: ' + Math.floor(cacheAge / 1000) + 's)');
+        const cachedEvents = JSON.parse(cachedEventsStr) as EventData[];
+        return cachedEvents;
+      } else {
+        console.log('⏰ Events cache expired, fetching fresh data');
+      }
+    }
+  } catch (error) {
+    console.warn('⚠️ Failed to read events from AsyncStorage:', error);
+  }
+
+  // Fetch fresh data from API
   try {
     console.log('📅 SGVD API: Fetching events...');
     
@@ -359,9 +450,30 @@ export async function fetchEvents(): Promise<EventData[]> {
     const data = await response.json();
     console.log('📦 SGVD Events API: Received', data.length, 'events');
     
+    // Cache the fresh events data
+    try {
+      await AsyncStorage.setItem(EVENTS_CACHE_KEY, JSON.stringify(data));
+      await AsyncStorage.setItem(EVENTS_TIMESTAMP_KEY, Date.now().toString());
+      console.log('💾 Events cached to AsyncStorage');
+    } catch (error) {
+      console.warn('⚠️ Failed to cache events to AsyncStorage:', error);
+    }
+    
     return data as EventData[];
   } catch (error) {
     console.error('❌ SGVD Events API: Error:', error);
+    
+    // Try to return stale cache if available
+    try {
+      const cachedEventsStr = await AsyncStorage.getItem(EVENTS_CACHE_KEY);
+      if (cachedEventsStr) {
+        console.log('📦 Returning stale cached events due to API error');
+        return JSON.parse(cachedEventsStr) as EventData[];
+      }
+    } catch (cacheError) {
+      console.warn('⚠️ Failed to read stale cache:', cacheError);
+    }
+    
     return [];
   }
 }

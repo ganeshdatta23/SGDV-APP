@@ -5,6 +5,7 @@ import Animated, {
   useAnimatedStyle,
   withTiming,
 } from 'react-native-reanimated';
+import { RoseSvg } from './FlowerSvg';
 
 interface FlowerAnimationProps {
   startX?: number;
@@ -25,6 +26,7 @@ interface Flower {
   rotation: number;
   scale: number;
   landingOffset: number;
+  colorVariant: 'red' | 'pink' | 'deepRed' | 'coral';
 }
 
 const GRAVITY = 0.7;
@@ -54,6 +56,9 @@ export const FlowerAnimation = forwardRef<FlowerAnimationRef, FlowerAnimationPro
     }));
 
     const triggerAnimation = () => {
+      // Color variants for natural variety
+      const colorVariants: Array<'red' | 'pink' | 'deepRed' | 'coral'> = ['red', 'pink', 'deepRed', 'coral'];
+      
       // Generate flower particles with random properties
       const newFlowers: Flower[] = Array.from({ length: FLOWER_COUNT }, (_, i) => ({
         id: Date.now() + i,
@@ -64,6 +69,7 @@ export const FlowerAnimation = forwardRef<FlowerAnimationRef, FlowerAnimationPro
         rotation: Math.random() * 360,
         scale: 0.8 + Math.random() * 0.4, // Random scale between 0.8 and 1.2
         landingOffset: (Math.random() * 30) - 10, // Random offset for stacking effect
+        colorVariant: colorVariants[Math.floor(Math.random() * colorVariants.length)], // Random color
       }));
 
       setFlowers(newFlowers);
@@ -185,7 +191,7 @@ const FlowerParticle: React.FC<{ flower: Flower; groundY?: number }> = ({ flower
   //🌻🌷🌹
   return (
     <Animated.View style={[styles.flower, animatedStyle]}>
-      <Text style={styles.flowerEmoji}>🌹</Text>
+      <RoseSvg size={35} colorVariant={flower.colorVariant} />
     </Animated.View>
   );
 };

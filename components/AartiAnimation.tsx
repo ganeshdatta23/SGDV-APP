@@ -21,6 +21,8 @@ interface AartiAnimationProps {
   diyaSize?: number;
   /** Gap between flame and base in pixels (smaller = closer), default 5 */
   flameBaseGap?: number;
+  /** Radius of the circular path in pixels, default 150 */
+  radius?: number;
 }
 
 export interface AartiAnimationRef {
@@ -51,10 +53,11 @@ export const AartiAnimation = forwardRef<AartiAnimationRef, AartiAnimationProps>
   ({ 
     centerX = 0, 
     centerY = 0,
-    flameLength = 0.7,
+    flameLength = 0.5,
     flickerIntensity = 0.8,
     diyaSize = 60,
-    flameBaseGap = 5
+    flameBaseGap = 5,
+    radius = BASE_RADIUS
   }, ref) => {
     const [diyas, setDiyas] = React.useState<Diya[]>([]);
 
@@ -70,7 +73,7 @@ export const AartiAnimation = forwardRef<AartiAnimationRef, AartiAnimationProps>
       const newDiyas: Diya[] = Array.from({ length: DIYA_COUNT }, (_, i) => ({
         id: Date.now() + i,
         startAngle: (i / DIYA_COUNT) * 360, // Evenly distribute around circle
-        radius: BASE_RADIUS, // Use fixed radius for cleaner single orbit
+        radius: radius, // Use provided radius for circular path
         scale: 1.0, 
       }));
 

@@ -205,6 +205,19 @@ export const DarshanOverlay: React.FC<DarshanOverlayProps> = ({
       await audioPlayer.seekTo(0);
       audioPlayer.play();
       console.log(`🔊 Audio unmuted and playing at volume ${audioVolume}`);
+      
+      // Also play the video when audio is manually turned on
+      if (videoPlayer && visible) {
+        try {
+          videoPlayer.loop = true;
+          videoPlayer.muted = true;
+          videoPlayer.currentTime = 0;
+          videoPlayer.play();
+          console.log('🎬 Video playback started - audio manually enabled');
+        } catch (error) {
+          console.log('❌ Video playback error when unmuting audio:', error);
+        }
+      }
     } else {
       // Mute
       setIsMuted(true);
@@ -465,11 +478,12 @@ export const DarshanOverlay: React.FC<DarshanOverlayProps> = ({
       <AartiAnimation
         ref={aartiAnimationRef}
         centerX={SCREEN_WIDTH / 2}
-        centerY={SCREEN_HEIGHT / 2}
+        centerY={SCREEN_HEIGHT / 2  - 80}
         flameLength={0.8}        // Add this line
         flickerIntensity={0.8}    // Add this line
         diyaSize={80}             // Add this line     
         flameBaseGap={15}  // Add this line - smaller values = closer together 
+        radius={130}  // Add this line - radius of the circular path
       />
 
       {/* Close button */}

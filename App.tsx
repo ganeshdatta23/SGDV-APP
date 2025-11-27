@@ -121,7 +121,7 @@ function App(): React.JSX.Element {
   const videoPlayer = useVideoPlayer(videoSource, (player) => {
     player.loop = true;
     player.muted = true;
-    player.playbackRate = 0.6; // Play video at 0.5x speed
+    player.playbackRate = 0.3; // Play video at 0.5x speed
     // Don't auto-play on mount - will be controlled by alignment state
   });
 
