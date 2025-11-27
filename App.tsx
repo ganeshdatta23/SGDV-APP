@@ -14,6 +14,7 @@ import { useAudioPlayer, setAudioModeAsync } from 'expo-audio';
 import SimpleCompassView from './components/CompassView';
 import { BottomNav } from './components/BottomNav';
 import EventsView from './components/EventsView';
+import SunCycleView from './components/SunCycleView';
 import SettingsView from './components/SettingsView';
 import DarshanOverlay from './components/DarshanOverlay';
 import { fetchLocationDirect, calculateSunTimes } from './utils/sgvdApi';
@@ -292,6 +293,13 @@ function App(): React.JSX.Element {
       )}
 
       {currentTab === 'events' && <EventsView />}
+
+      {currentTab === 'sun' && (
+        <SunCycleView
+          latitude={targetLocation?.latitude}
+          longitude={targetLocation?.longitude}
+        />
+      )}
 
       {currentTab === 'settings' && (
         <SettingsView

@@ -79,7 +79,7 @@ export interface CompassConfig {
 // ============================================================================
 // NAVIGATION TYPES
 // ============================================================================
-export type Tab = 'home' | 'events' | 'settings';
+export type Tab = 'home' | 'sun' | 'events' | 'settings';
 
 export interface NavItem {
     id: Tab;

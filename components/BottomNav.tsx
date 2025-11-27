@@ -60,6 +60,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
 
   const navItems: { id: Tab; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
     { id: 'home', label: 'Darshan', icon: 'compass' },
+    { id: 'sun', label: 'Alarm', icon: 'alarm' },
     { id: 'events', label: 'Programs', icon: 'calendar' },
     { id: 'settings', label: 'Settings', icon: 'settings-outline' },
   ];

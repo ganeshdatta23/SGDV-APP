@@ -2,11 +2,16 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { calculateSunTimes } from './sgvdApi';
 
 // Alarm configuration
-interface AlarmConfig {
+export interface AlarmConfig {
   sunriseEnabled: boolean;
   sunsetEnabled: boolean;
   sunriseOffset: number; // minutes before sunrise
   sunsetOffset: number; // minutes before sunset
+  // Extended configuration for SunCycleView
+  alarmEnabled: boolean; // Loud alarm mode
+  notificationsEnabled: boolean; // General notifications
+  sunriseNotificationEnabled: boolean; // Sunrise notifications
+  sunsetNotificationEnabled: boolean; // Sunset notifications
 }
 
 const DEFAULT_ALARM_CONFIG: AlarmConfig = {
@@ -14,6 +19,10 @@ const DEFAULT_ALARM_CONFIG: AlarmConfig = {
   sunsetEnabled: false,
   sunriseOffset: 2, // 1 minute before sunrise
   sunsetOffset: 2, // 1 minute before sunset
+  alarmEnabled: false,
+  notificationsEnabled: false,
+  sunriseNotificationEnabled: false,
+  sunsetNotificationEnabled: false,
 };
 
 // Initialize simple alarm system
@@ -204,4 +213,19 @@ export const getNextAlarmInfo = async (latitude: number, longitude: number): Pro
   }
 };
 
-export type { AlarmConfig }; 
+// Schedule alarms for the next 7 days
+export const scheduleAlarmsForNext7Days = async (): Promise<void> => {
+  console.log('📅 Scheduling alarms for next 7 days (simplified)');
+  // In a real implementation, this would schedule multiple alarms
+  // For now, we just log
+};
+
+// Get scheduled notifications count
+export const getScheduledNotifications = async (): Promise<any[]> => {
+  // In a real implementation, this would return actual scheduled notifications
+  // For now, return empty array
+  const config = await getAlarmConfig();
+  const count = (config.sunriseEnabled ? 1 : 0) + (config.sunsetEnabled ? 1 : 0);
+  return Array(count * 7).fill({}); // Simulate 7 days of alarms
+};
+ 
