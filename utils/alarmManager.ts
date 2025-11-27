@@ -1,5 +1,18 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Notifications from 'expo-notifications';
+import { Platform } from 'react-native';
 import { calculateSunTimes } from './sgvdApi';
+
+// Configure how notifications are displayed when app is in foreground
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
+  }),
+});
 
 // Alarm configuration
 interface AlarmConfig {
@@ -28,9 +41,61 @@ const DEFAULT_ALARM_CONFIG: AlarmConfig = {
   sunsetNotificationEnabled: false,
 };
 
-// Initialize simple alarm system
-export const initializeNotifications = () => {
-  console.log('⏰ Simple alarm system initialized');
+// Store notification IDs for cleanup
+let scheduledNotificationIds: string[] = [];
+
+// Request notification permissions
+export const requestNotificationPermissions = async (): Promise<boolean> => {
+  try {
+    const { status: existingStatus } = await Notifications.getPermissionsAsync();
+    let finalStatus = existingStatus;
+
+    if (existingStatus !== 'granted') {
+      const { status } = await Notifications.requestPermissionsAsync();
+      finalStatus = status;
+    }
+
+    if (finalStatus !== 'granted') {
+      console.log('❌ Notification permissions not granted');
+      return false;
+    }
+
+    console.log('✅ Notification permissions granted');
+    return true;
+  } catch (error) {
+    console.error('Error requesting notification permissions:', error);
+    return false;
+  }
+};
+
+// Initialize notification system
+export const initializeNotifications = async (): Promise<boolean> => {
+  console.log('⏰ Initializing notification system...');
+  
+  // Request permissions
+  const hasPermission = await requestNotificationPermissions();
+  
+  if (!hasPermission) {
+    console.log('⚠️ Notifications will not work without permissions');
+    return false;
+  }
+
+  // Set notification channel for Android
+  if (Platform.OS === 'android') {
+    await Notifications.setNotificationChannelAsync('sunrise-sunset-alarms', {
+      name: 'Sunrise & Sunset Alarms',
+      importance: Notifications.AndroidImportance.MAX,
+      vibrationPattern: [0, 250, 250, 250],
+      lightColor: '#FF6B35',
+      sound: 'default',
+      enableVibrate: true,
+      enableLights: true,
+    });
+    console.log('✅ Android notification channel created');
+  }
+
+  console.log('✅ Notification system initialized');
+  return true;
 };
 
 // Get alarm configuration
@@ -54,13 +119,75 @@ export const saveAlarmConfig = async (config: AlarmConfig): Promise<void> => {
   }
 };
 
+// Schedule a single notification
+const scheduleNotification = async (
+  identifier: string,
+  title: string,
+  body: string,
+  triggerDate: Date,
+  isAlarm: boolean = false
+): Promise<string | null> => {
+  try {
+    // Don't schedule if the date is in the past
+    if (triggerDate <= new Date()) {
+      console.log(`⏭️ Skipping past notification: ${title} at ${triggerDate.toLocaleString()}`);
+      return null;
+    }
+
+    // Cancel any existing notification with the same identifier
+    try {
+      await Notifications.cancelScheduledNotificationAsync(identifier);
+    } catch {
+      // Ignore if notification doesn't exist
+    }
+
+    const notificationId = await Notifications.scheduleNotificationAsync({
+      identifier,
+      content: {
+        title,
+        body,
+        sound: isAlarm ? 'default' : undefined,
+        priority: isAlarm ? 'max' : 'high',
+        data: { type: identifier.includes('sunrise') ? 'sunrise' : 'sunset', isAlarm },
+        categoryIdentifier: 'sunrise-sunset',
+      },
+      trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.DATE,
+        date: triggerDate,
+        channelId: Platform.OS === 'android' ? 'sunrise-sunset-alarms' : undefined,
+      } as Notifications.DateTriggerInput,
+    });
+
+    console.log(`📅 Scheduled notification: ${title} at ${triggerDate.toLocaleString()} (ID: ${notificationId})`);
+    scheduledNotificationIds.push(notificationId);
+    return notificationId;
+  } catch (error) {
+    console.error(`❌ Error scheduling notification: ${title}`, error);
+    return null;
+  }
+};
+
 // Schedule sunrise/sunset alarms
 export const scheduleAlarms = async (latitude: number, longitude: number): Promise<void> => {
   try {
     const config = await getAlarmConfig();
     
-    // Clear existing alarms (simplified for in-app system)
-    console.log('⏰ Clearing existing alarms');
+    // Clear existing alarms first
+    await cancelAllAlarms();
+    
+    // Determine if any sunrise/sunset alarms should be scheduled
+    const shouldScheduleSunrise = (config.alarmEnabled && config.sunriseAlarmEnabled) || 
+                                  (config.notificationsEnabled && config.sunriseNotificationEnabled);
+    const shouldScheduleSunset = (config.alarmEnabled && config.sunsetAlarmEnabled) || 
+                                (config.notificationsEnabled && config.sunsetNotificationEnabled);
+    
+    if (!shouldScheduleSunrise && !shouldScheduleSunset) {
+      console.log('⏰ No alarms or notifications enabled, skipping scheduling');
+      return;
+    }
+
+    // Determine if this should be a loud alarm or silent notification
+    const isAlarm = config.alarmEnabled;
     
     // Calculate sun times for today and tomorrow
     const today = new Date();
@@ -73,56 +200,60 @@ export const scheduleAlarms = async (latitude: number, longitude: number): Promi
     const now = new Date();
     
     // Schedule today's alarms if they haven't passed
-    if (config.sunriseEnabled) {
+    if (shouldScheduleSunrise) {
       const sunriseAlarmTime = new Date(todaySunTimes.sunrise);
       sunriseAlarmTime.setMinutes(sunriseAlarmTime.getMinutes() - config.sunriseOffset);
       
       if (sunriseAlarmTime > now) {
-        scheduleNotification(
+        await scheduleNotification(
           'sunrise-today',
-          'Sunrise Alert',
+          '🌅 Sunrise Alert',
           `Sunrise in ${config.sunriseOffset} minutes! Time for morning prayers.`,
-          sunriseAlarmTime
+          sunriseAlarmTime,
+          isAlarm
         );
       }
     }
     
-    if (config.sunsetEnabled) {
+    if (shouldScheduleSunset) {
       const sunsetAlarmTime = new Date(todaySunTimes.sunset);
       sunsetAlarmTime.setMinutes(sunsetAlarmTime.getMinutes() - config.sunsetOffset);
       
       if (sunsetAlarmTime > now) {
-        scheduleNotification(
+        await scheduleNotification(
           'sunset-today',
           'Sunset Alert',
           `Sunset in ${config.sunsetOffset} minutes! Time for evening prayers.`,
-          sunsetAlarmTime
+          sunsetAlarmTime,
+          isAlarm
         );
       }
     }
     
     // Schedule tomorrow's alarms
-    if (config.sunriseEnabled) {
+    if (shouldScheduleSunrise) {
       const tomorrowSunriseAlarmTime = new Date(tomorrowSunTimes.sunrise);
       tomorrowSunriseAlarmTime.setMinutes(tomorrowSunriseAlarmTime.getMinutes() - config.sunriseOffset);
       
-      scheduleNotification(
+      await scheduleNotification(
         'sunrise-tomorrow',
         'Sunrise Alert',
         `Sunrise in ${config.sunriseOffset} minutes! Time for morning prayers.`,
-        tomorrowSunriseAlarmTime
+        tomorrowSunriseAlarmTime,
+        isAlarm
       );
     }
     
-    if (config.sunsetEnabled) {
+    if (shouldScheduleSunset) {
       const tomorrowSunsetAlarmTime = new Date(tomorrowSunTimes.sunset);
       tomorrowSunsetAlarmTime.setMinutes(tomorrowSunsetAlarmTime.getMinutes() - config.sunsetOffset);
       
-      scheduleNotification(
+      await scheduleNotification(
         'sunset-tomorrow',
-        'Sunset Alert',
+        '🌇 Sunset Alert',
         `Sunset in ${config.sunsetOffset} minutes! Time for evening prayers.`,
-        tomorrowSunsetAlarmTime
+        tomorrowSunsetAlarmTime,
+        isAlarm
       );
     }
     
@@ -132,15 +263,16 @@ export const scheduleAlarms = async (latitude: number, longitude: number): Promi
   }
 };
 
-// Schedule a single notification (simplified for in-app system)
-const scheduleNotification = (id: string, title: string, message: string, date: Date) => {
-  console.log(`📅 Scheduled alarm: ${title} at ${date.toLocaleString()}`);
-  console.log(`📝 Alarm message: ${message}`);
-};
-
-// Cancel all alarms
-export const cancelAllAlarms = (): void => {
-  console.log('🔕 All alarms cancelled');
+// Cancel all scheduled alarms
+export const cancelAllAlarms = async (): Promise<void> => {
+  try {
+    // Cancel all scheduled notifications
+    await Notifications.cancelAllScheduledNotificationsAsync();
+    scheduledNotificationIds = [];
+    console.log('🔕 All alarms cancelled');
+  } catch (error) {
+    console.error('Error cancelling alarms:', error);
+  }
 };
 
 // Get next scheduled alarm info
@@ -151,6 +283,13 @@ export const getNextAlarmInfo = async (latitude: number, longitude: number): Pro
 } | null> => {
   try {
     const config = await getAlarmConfig();
+    
+    // Determine if any sunrise/sunset alarms should be scheduled
+    const shouldScheduleSunrise = (config.alarmEnabled && config.sunriseAlarmEnabled) || 
+                                  (config.notificationsEnabled && config.sunriseNotificationEnabled);
+    const shouldScheduleSunset = (config.alarmEnabled && config.sunsetAlarmEnabled) || 
+                                (config.notificationsEnabled && config.sunsetNotificationEnabled);
+    
     const today = new Date();
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -162,7 +301,7 @@ export const getNextAlarmInfo = async (latitude: number, longitude: number): Pro
     const alarms = [];
     
     // Check today's alarms
-    if (config.sunriseEnabled) {
+    if (shouldScheduleSunrise) {
       const sunriseAlarmTime = new Date(todaySunTimes.sunrise);
       sunriseAlarmTime.setMinutes(sunriseAlarmTime.getMinutes() - config.sunriseOffset);
       if (sunriseAlarmTime > now) {
@@ -174,7 +313,7 @@ export const getNextAlarmInfo = async (latitude: number, longitude: number): Pro
       }
     }
     
-    if (config.sunsetEnabled) {
+    if (shouldScheduleSunset) {
       const sunsetAlarmTime = new Date(todaySunTimes.sunset);
       sunsetAlarmTime.setMinutes(sunsetAlarmTime.getMinutes() - config.sunsetOffset);
       if (sunsetAlarmTime > now) {
@@ -187,7 +326,7 @@ export const getNextAlarmInfo = async (latitude: number, longitude: number): Pro
     }
     
     // Check tomorrow's alarms
-    if (config.sunriseEnabled) {
+    if (shouldScheduleSunrise) {
       const tomorrowSunriseAlarmTime = new Date(tomorrowSunTimes.sunrise);
       tomorrowSunriseAlarmTime.setMinutes(tomorrowSunriseAlarmTime.getMinutes() - config.sunriseOffset);
       alarms.push({
@@ -197,7 +336,7 @@ export const getNextAlarmInfo = async (latitude: number, longitude: number): Pro
       });
     }
     
-    if (config.sunsetEnabled) {
+    if (shouldScheduleSunset) {
       const tomorrowSunsetAlarmTime = new Date(tomorrowSunTimes.sunset);
       tomorrowSunsetAlarmTime.setMinutes(tomorrowSunsetAlarmTime.getMinutes() - config.sunsetOffset);
       alarms.push({
@@ -216,14 +355,76 @@ export const getNextAlarmInfo = async (latitude: number, longitude: number): Pro
   }
 };
 
-// Schedule alarms for the next 7 days (simplified implementation)
-export const scheduleAlarmsForNext7Days = async (): Promise<void> => {
-  console.log('📅 Scheduling alarms for next 7 days');
-  // In a full implementation, this would schedule actual notifications
-  // For now, we just log the intent
+// Schedule alarms for the next 3 days
+export const scheduleAlarmsForNext3Days = async (latitude: number, longitude: number): Promise<void> => {
+  try {
+    console.log('📅 Scheduling alarms for next 3 days');
+    
+    const config = await getAlarmConfig();
+    
+    // Clear existing alarms first
+    await cancelAllAlarms();
+    
+    // Determine if any sunrise/sunset alarms should be scheduled
+    const shouldScheduleSunrise = (config.alarmEnabled && config.sunriseAlarmEnabled) || 
+                                  (config.notificationsEnabled && config.sunriseNotificationEnabled);
+    const shouldScheduleSunset = (config.alarmEnabled && config.sunsetAlarmEnabled) || 
+                                (config.notificationsEnabled && config.sunsetNotificationEnabled);
+    
+    if (!shouldScheduleSunrise && !shouldScheduleSunset) {
+      console.log('⏰ No alarms or notifications enabled, skipping scheduling');
+      return;
+    }
+
+    const isAlarm = config.alarmEnabled;
+    const now = new Date();
+    
+    // Schedule for today and next 2 days
+    for (let dayOffset = 0; dayOffset < 3; dayOffset++) {
+      const date = new Date(now);
+      date.setDate(date.getDate() + dayOffset);
+      
+      const sunTimes = await calculateSunTimes(latitude, longitude, date);
+      const dayLabel = dayOffset === 0 ? 'today' : dayOffset === 1 ? 'tomorrow' : `day${dayOffset}`;
+      
+      if (shouldScheduleSunrise) {
+        const sunriseAlarmTime = new Date(sunTimes.sunrise);
+        sunriseAlarmTime.setMinutes(sunriseAlarmTime.getMinutes() - config.sunriseOffset);
+        
+        if (sunriseAlarmTime > now) {
+          await scheduleNotification(
+            `sunrise-${dayLabel}`,
+            '🌅 Sunrise Alert',
+            `Sunrise in ${config.sunriseOffset} minutes! Time for morning prayers.`,
+            sunriseAlarmTime,
+            isAlarm
+          );
+        }
+      }
+      
+      if (shouldScheduleSunset) {
+        const sunsetAlarmTime = new Date(sunTimes.sunset);
+        sunsetAlarmTime.setMinutes(sunsetAlarmTime.getMinutes() - config.sunsetOffset);
+        
+        if (sunsetAlarmTime > now) {
+          await scheduleNotification(
+            `sunset-${dayLabel}`,
+            '🌇 Sunset Alert',
+            `Sunset in ${config.sunsetOffset} minutes! Time for evening prayers.`,
+            sunsetAlarmTime,
+            isAlarm
+          );
+        }
+      }
+    }
+    
+    console.log('✅ Alarms for next 3 days scheduled successfully');
+  } catch (error) {
+    console.error('❌ Error scheduling alarms for 3 days:', error);
+  }
 };
 
-// Get scheduled notifications (simplified implementation)
+// Get all scheduled notifications
 export const getScheduledNotifications = async (): Promise<Array<{
   id: string;
   title: string;
@@ -231,34 +432,50 @@ export const getScheduledNotifications = async (): Promise<Array<{
   date: Date;
 }>> => {
   try {
-    const config = await getAlarmConfig();
-    const notifications: Array<{
-      id: string;
-      title: string;
-      body: string;
-      date: Date;
-    }> = [];
+    const notifications = await Notifications.getAllScheduledNotificationsAsync();
     
-    // Calculate how many alarms would be scheduled for 7 days
-    let count = 0;
-    if (config.sunriseEnabled) count += 7;
-    if (config.sunsetEnabled) count += 7;
-    
-    // Return mock notifications for display purposes
-    for (let i = 0; i < count; i++) {
-      notifications.push({
-        id: `alarm-${i}`,
-        title: i % 2 === 0 ? '🌅 Sunrise Alert' : '🌇 Sunset Alert',
-        body: 'Time for prayers',
-        date: new Date(Date.now() + i * 12 * 60 * 60 * 1000), // Mock dates
-      });
-    }
-    
-    return notifications;
+    return notifications.map(notification => ({
+      id: notification.identifier,
+      title: notification.content.title || 'Alarm',
+      body: notification.content.body || '',
+      date: notification.trigger && 'date' in notification.trigger 
+        ? new Date(notification.trigger.date as number) 
+        : new Date(),
+    }));
   } catch (error) {
     console.error('Error getting scheduled notifications:', error);
     return [];
   }
 };
 
-export type { AlarmConfig }; 
+// Add notification listeners
+export const addNotificationReceivedListener = (
+  callback: (notification: Notifications.Notification) => void
+): Notifications.EventSubscription => {
+  return Notifications.addNotificationReceivedListener(callback);
+};
+
+export const addNotificationResponseReceivedListener = (
+  callback: (response: Notifications.NotificationResponse) => void
+): Notifications.EventSubscription => {
+  return Notifications.addNotificationResponseReceivedListener(callback);
+};
+
+// Send an immediate test notification
+export const sendTestNotification = async (): Promise<void> => {
+  try {
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title: '🧪 Test Notification',
+        body: 'Notifications are working correctly!',
+        sound: 'default',
+      },
+      trigger: null, // Immediate notification
+    });
+    console.log('✅ Test notification sent');
+  } catch (error) {
+    console.error('❌ Error sending test notification:', error);
+  }
+};
+
+export type { AlarmConfig };

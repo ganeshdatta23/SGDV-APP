@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, StyleSheet,  } from 'react-native';
 import { Magnetometer } from 'expo-sensors';
 import * as Haptics from 'expo-haptics';
 import * as Location from 'expo-location';

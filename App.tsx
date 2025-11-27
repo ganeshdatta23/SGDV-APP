@@ -185,8 +185,21 @@ function App(): React.JSX.Element {
     
     setupAudio();
     
-    // Initialize notifications
-    initializeNotifications();
+    // Initialize notifications (async)
+    const setupNotifications = async () => {
+      try {
+        const initialized = await initializeNotifications();
+        if (initialized) {
+          console.log('✅ Notifications ready');
+        } else {
+          console.log('⚠️ Notifications not available - permissions may be denied');
+        }
+      } catch (error) {
+        console.error('❌ Failed to initialize notifications:', error);
+      }
+    };
+    
+    setupNotifications();
     
     loadLocation();
   }, []);
@@ -333,7 +346,7 @@ function App(): React.JSX.Element {
             {currentTab === 'home' 
               ? 'Offer your prayers to the direction of Appaji' 
               : currentTab === 'sun'
-              ? 'Set alarms for sunrise and sunset times'
+              ? ''
               : currentTab === 'events'
               ? 'Stay updated with upcoming programs'
               : 'Customize your experience'}

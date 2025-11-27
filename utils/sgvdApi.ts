@@ -35,8 +35,8 @@ const USE_HARDCODED_TEST_TIME = true; // TODO: Set to false when API is ready
 // Get hardcoded test times (2-3 minutes from current time for easy testing)
 const getHardcodedTestTimes = (): { sunrise: Date; sunset: Date } => {
   const now = new Date();
-  const testSunrise = new Date(now.getTime() + 1 * 60 * 1000); // 2 minutes from now
-  const testSunset = new Date(now.getTime() + 2 * 60 * 1000); // 3 minutes from now
+  const testSunrise = new Date(now.getTime() + 3 * 60 * 1000); // 2 minutes from now
+  const testSunset = new Date(now.getTime() + 4 * 60 * 1000); // 3 minutes from now
   return { sunrise: testSunrise, sunset: testSunset };
 };
 

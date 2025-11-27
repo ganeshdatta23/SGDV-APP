@@ -221,8 +221,12 @@ export const DarshanOverlay: React.FC<DarshanOverlayProps> = ({
     } else {
       // Mute
       setIsMuted(true);
-      audioPlayer.pause();
-      console.log('🔇 Audio muted');
+      try {
+        audioPlayer.pause();
+        console.log('🔇 Audio muted');
+      } catch (error) {
+        console.log('⚠️ Could not pause audio (player may be disposed)');
+      }
     }
   };
 
@@ -240,8 +244,12 @@ export const DarshanOverlay: React.FC<DarshanOverlayProps> = ({
       } else {
         // Stop audio when overlay is not visible (dealigned)
         if (audioPlayer && audioPlayer.playing) {
-          audioPlayer.pause();
-          console.log('🔇 Audio stopped - overlay dealigned');
+          try {
+            audioPlayer.pause();
+            console.log('🔇 Audio stopped - overlay dealigned');
+          } catch (error) {
+            console.log('⚠️ Could not pause audio (player may be disposed)');
+          }
         }
       }
     };
