@@ -8,6 +8,8 @@ interface AlarmConfig {
   sunriseOffset: number; // minutes before sunrise
   sunsetOffset: number; // minutes before sunset
   alarmEnabled: boolean; // Loud alarm mode
+  sunriseAlarmEnabled: boolean; // Sunrise alarm
+  sunsetAlarmEnabled: boolean; // Sunset alarm
   notificationsEnabled: boolean; // Silent notifications
   sunriseNotificationEnabled: boolean; // Sunrise notifications
   sunsetNotificationEnabled: boolean; // Sunset notifications
@@ -19,6 +21,8 @@ const DEFAULT_ALARM_CONFIG: AlarmConfig = {
   sunriseOffset: 2, // 2 minutes before sunrise
   sunsetOffset: 2, // 2 minutes before sunset
   alarmEnabled: false,
+  sunriseAlarmEnabled: false,
+  sunsetAlarmEnabled: false,
   notificationsEnabled: false,
   sunriseNotificationEnabled: false,
   sunsetNotificationEnabled: false,
@@ -76,7 +80,7 @@ export const scheduleAlarms = async (latitude: number, longitude: number): Promi
       if (sunriseAlarmTime > now) {
         scheduleNotification(
           'sunrise-today',
-          '🌅 Sunrise Alert',
+          'Sunrise Alert',
           `Sunrise in ${config.sunriseOffset} minutes! Time for morning prayers.`,
           sunriseAlarmTime
         );
@@ -90,7 +94,7 @@ export const scheduleAlarms = async (latitude: number, longitude: number): Promi
       if (sunsetAlarmTime > now) {
         scheduleNotification(
           'sunset-today',
-          '🌇 Sunset Alert',
+          'Sunset Alert',
           `Sunset in ${config.sunsetOffset} minutes! Time for evening prayers.`,
           sunsetAlarmTime
         );
@@ -104,7 +108,7 @@ export const scheduleAlarms = async (latitude: number, longitude: number): Promi
       
       scheduleNotification(
         'sunrise-tomorrow',
-        '🌅 Sunrise Alert',
+        'Sunrise Alert',
         `Sunrise in ${config.sunriseOffset} minutes! Time for morning prayers.`,
         tomorrowSunriseAlarmTime
       );
@@ -116,7 +120,7 @@ export const scheduleAlarms = async (latitude: number, longitude: number): Promi
       
       scheduleNotification(
         'sunset-tomorrow',
-        '🌇 Sunset Alert',
+        'Sunset Alert',
         `Sunset in ${config.sunsetOffset} minutes! Time for evening prayers.`,
         tomorrowSunsetAlarmTime
       );

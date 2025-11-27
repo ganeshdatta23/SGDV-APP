@@ -88,6 +88,15 @@ export default function SunCycleView({ latitude, longitude }: SunCycleViewProps)
   const updateConfig = async (newConfig: Partial<AlarmConfig>) => {
     if (!config) return;
 
+    // If alarm mode is being enabled, automatically enable both sunrise and sunset alarms
+    if (newConfig.alarmEnabled === true && !config.alarmEnabled) {
+      newConfig = {
+        ...newConfig,
+        sunriseAlarmEnabled: true,
+        sunsetAlarmEnabled: true,
+      };
+    }
+
     const updatedConfig = { ...config, ...newConfig };
     setConfig(updatedConfig);
     await saveAlarmConfig(updatedConfig);
@@ -179,9 +188,6 @@ export default function SunCycleView({ latitude, longitude }: SunCycleViewProps)
           NEXT {sunTimes.nextEventType === 'sunrise' ? 'SUNRISE' : 'SUNSET'}
         </Text>
         <Text style={styles.countdownTime}>{formatSunTime(sunTimes.nextEvent)}</Text>
-        <Text style={styles.countdownSubtext}>
-          {sunTimes.nextEventType === 'sunrise' ? '🌅' : '🌇'}
-        </Text>
       </View>
 
       {/* Sun Times Display */}
@@ -206,7 +212,7 @@ export default function SunCycleView({ latitude, longitude }: SunCycleViewProps)
         <View style={styles.controlRow}>
           <View style={styles.controlLabel}>
             <Ionicons name="alarm" size={24} color="#FF6B35" />
-            <Text style={styles.controlText}>Alarm Mode (Loud)</Text>
+            <Text style={styles.controlText}>Alarm </Text>
           </View>
           <Switch
             value={config.alarmEnabled}
@@ -215,6 +221,39 @@ export default function SunCycleView({ latitude, longitude }: SunCycleViewProps)
             thumbColor={config.alarmEnabled ? '#FFFFFF' : '#f4f3f4'}
           />
         </View>
+
+        {/* Nested Alarm Options */}
+        {config.alarmEnabled && (
+          <View style={styles.nestedControlsAlarm}>
+            {/* Sunrise Toggle */}
+            <View style={styles.controlRow}>
+              <View style={styles.controlLabel}>
+                <Ionicons name="sunny-outline" size={22} color="#FF6B35" />
+                <Text style={styles.controlTextNested}>Sunrise Alarm</Text>
+              </View>
+              <Switch
+                value={config.sunriseAlarmEnabled}
+                onValueChange={(value) => updateConfig({ sunriseAlarmEnabled: value })}
+                trackColor={{ false: '#767577', true: '#FF6B35' }}
+                thumbColor={config.sunriseAlarmEnabled ? '#FFFFFF' : '#f4f3f4'}
+              />
+            </View>
+
+            {/* Sunset Toggle */}
+            <View style={styles.controlRow}>
+              <View style={styles.controlLabel}>
+                <Ionicons name="moon-outline" size={22} color="#FF6B35" />
+                <Text style={styles.controlTextNested}>Sunset Alarm</Text>
+              </View>
+              <Switch
+                value={config.sunsetAlarmEnabled}
+                onValueChange={(value) => updateConfig({ sunsetAlarmEnabled: value })}
+                trackColor={{ false: '#767577', true: '#FF6B35' }}
+                thumbColor={config.sunsetAlarmEnabled ? '#FFFFFF' : '#f4f3f4'}
+              />
+            </View>
+          </View>
+        )}
 
         {/* Test Alarm Button */}
         {config.alarmEnabled && (
@@ -480,6 +519,12 @@ const styles = StyleSheet.create({
     paddingLeft: 16,
     borderLeftWidth: 2,
     borderLeftColor: 'rgba(253, 184, 19, 0.3)',
+  },
+  nestedControlsAlarm: {
+    marginLeft: 20,
+    paddingLeft: 16,
+    borderLeftWidth: 2,
+    borderLeftColor: 'rgba(255, 107, 53, 0.3)',
   },
   testButton: {
     flexDirection: 'row',

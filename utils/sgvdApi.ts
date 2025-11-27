@@ -25,6 +25,21 @@ const FALLBACK_LOCATION = {
 const FALLBACK_SUNRISE_HOUR = 6;  // 6:00 AM
 const FALLBACK_SUNSET_HOUR = 18;  // 6:00 PM
 
+// ============================================================================
+// TEST MODE - HARDCODED TIMES FOR TESTING
+// ============================================================================
+// Set to true to use hardcoded test times (2-3 minutes from now)
+// Set to false to use actual API times
+const USE_HARDCODED_TEST_TIME = true; // TODO: Set to false when API is ready
+
+// Get hardcoded test times (2-3 minutes from current time for easy testing)
+const getHardcodedTestTimes = (): { sunrise: Date; sunset: Date } => {
+  const now = new Date();
+  const testSunrise = new Date(now.getTime() + 1 * 60 * 1000); // 2 minutes from now
+  const testSunset = new Date(now.getTime() + 2 * 60 * 1000); // 3 minutes from now
+  return { sunrise: testSunrise, sunset: testSunset };
+};
+
 // Cache validity duration (1 minute in milliseconds)
 const CACHE_VALIDITY_MS = 60 * 1000;
 
@@ -135,15 +150,44 @@ const determineNextEvent = (
 ): { nextEvent: Date; nextEventType: 'sunrise' | 'sunset' } => {
   const now = new Date();
   
-  if (now < sunrise) {
-    return { nextEvent: sunrise, nextEventType: 'sunrise' };
-  } else if (now < sunset) {
-    return { nextEvent: sunset, nextEventType: 'sunset' };
-  } else {
-    // Past sunset - estimate tomorrow's sunrise (add 24 hours)
-    const tomorrowSunrise = new Date(sunrise.getTime() + 24 * 60 * 60 * 1000);
+  // Calculate tomorrow's sunrise and sunset
+  const tomorrowSunrise = new Date(sunrise.getTime() + 24 * 60 * 60 * 1000);
+  const tomorrowSunset = new Date(sunset.getTime() + 24 * 60 * 60 * 1000);
+  
+  // Collect all future events (today and tomorrow)
+  const futureEvents: Array<{ time: Date; type: 'sunrise' | 'sunset' }> = [];
+  
+  // Today's sunrise
+  if (sunrise > now) {
+    futureEvents.push({ time: sunrise, type: 'sunrise' });
+  }
+  
+  // Today's sunset
+  if (sunset > now) {
+    futureEvents.push({ time: sunset, type: 'sunset' });
+  }
+  
+  // Tomorrow's sunrise
+  if (tomorrowSunrise > now) {
+    futureEvents.push({ time: tomorrowSunrise, type: 'sunrise' });
+  }
+  
+  // Tomorrow's sunset
+  if (tomorrowSunset > now) {
+    futureEvents.push({ time: tomorrowSunset, type: 'sunset' });
+  }
+  
+  // If no future events found (shouldn't happen, but fallback)
+  if (futureEvents.length === 0) {
     return { nextEvent: tomorrowSunrise, nextEventType: 'sunrise' };
   }
+  
+  // Find the nearest event
+  const nearestEvent = futureEvents.reduce((closest, current) => {
+    return current.time < closest.time ? current : closest;
+  });
+  
+  return { nextEvent: nearestEvent.time, nextEventType: nearestEvent.type };
 };
 
 // Helper function to format time for display
@@ -408,6 +452,37 @@ export async function calculateSunTimes(
   _longitude?: number,
   _date: Date = new Date()
 ): Promise<SunCalculationResult> {
+  // ============================================================================
+  // TEST MODE: Use hardcoded test times for alarm/notification testing
+  // TODO: Remove this block and use API times when ready
+  // ============================================================================
+  if (USE_HARDCODED_TEST_TIME) {
+    console.log('🧪 TEST MODE: Using hardcoded test times for alarms/notifications');
+    const { sunrise, sunset } = getHardcodedTestTimes();
+    const solarNoon = calculateSolarNoon(sunrise, sunset);
+    const { nextEvent, nextEventType } = determineNextEvent(sunrise, sunset);
+    
+    const result: SunCalculationResult = {
+      sunrise,
+      sunset,
+      solarNoon,
+      nextEvent,
+      nextEventType,
+    };
+
+    console.log('🧪 TEST MODE - Hardcoded sun times:', {
+      sunrise: formatSunTime(sunrise),
+      sunset: formatSunTime(sunset),
+      nextEvent: formatSunTime(nextEvent),
+      nextEventType,
+    });
+    
+    return result;
+  }
+  // ============================================================================
+  // END TEST MODE
+  // ============================================================================
+
   try {
     console.log('Fetching sun times from SGVD API');
     

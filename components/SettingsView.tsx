@@ -102,7 +102,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   onThemeChange,
   audioEnabled = true,
   onAudioToggle,
-  audioVolume = 0.7,
+  audioVolume = 1.0,
   onVolumeChange,
   style 
 }) => {

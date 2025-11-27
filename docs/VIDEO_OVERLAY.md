@@ -386,7 +386,7 @@ const [isClosedManually, setIsClosedManually] = useState(false);
 | `audioPlayer` | `AudioPlayer` | **required** | Audio player instance from `useAudioPlayer` |
 | `onClose` | `() => void` | **required** | Callback when close button is pressed |
 | `audioEnabled` | `boolean` | `true` | Enable/disable audio playback |
-| `audioVolume` | `number` | `0.7` | Audio volume (0.0 to 1.0) |
+| `audioVolume` | `number` | `1.0` | Audio volume (0.0 to 1.0) |
 
 ### Video Player Setup
 
@@ -588,7 +588,7 @@ function App() {
         videoPlayer={videoPlayer}
         audioPlayer={audioPlayer}
         audioEnabled={true}
-        audioVolume={0.7}
+        audioVolume={1.0}
         onClose={() => {
           setIsAligned(false);
           setIsClosedManually(true);
@@ -608,7 +608,7 @@ function App() {
 ```tsx
 // Override default audio behavior
 const [audioEnabled, setAudioEnabled] = useState(true);
-const [audioVolume, setAudioVolume] = useState(0.5);
+const [audioVolume, setAudioVolume] = useState(1.0);
 
 <DarshanOverlay
   visible={isAligned}

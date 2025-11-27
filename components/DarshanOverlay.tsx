@@ -33,7 +33,7 @@ const IMAGE_HEIGHT = 384; // 3:4 aspect ratio
  * - audioPlayer: AudioPlayer - the audio player instance for background audio
  * - onClose: () => void - callback function to close the overlay
  * - audioEnabled?: boolean - optional flag to enable/disable audio (defaults to true)
- * - audioVolume?: number - optional volume level for audio (defaults to 0.7)
+ * - audioVolume?: number - optional volume level for audio (defaults to 1.0)
  */
 interface DarshanOverlayProps {
   visible: boolean;
@@ -57,7 +57,7 @@ export const DarshanOverlay: React.FC<DarshanOverlayProps> = ({
   audioPlayer,
   onClose,
   audioEnabled = true,
-  audioVolume = 0.7,
+  audioVolume = 1.0,
 }) => {
   const [isMuted, setIsMuted] = useState(!audioEnabled);
   const [hasPlayedOnce, setHasPlayedOnce] = useState(false);

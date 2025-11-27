@@ -112,7 +112,7 @@ function App(): React.JSX.Element {
   const [audioEnabled, setAudioEnabled] = useState(true);
   
   // Audio volume state (0-1 range)
-  const [audioVolume, setAudioVolume] = useState(0.7);
+  const [audioVolume, setAudioVolume] = useState(1.0);
   
   // Get current background theme based on state
   const currentBgTheme = APP_BACKGROUNDS[currentTheme];
