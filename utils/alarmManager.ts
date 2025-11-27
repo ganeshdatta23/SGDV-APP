@@ -7,13 +7,21 @@ interface AlarmConfig {
   sunsetEnabled: boolean;
   sunriseOffset: number; // minutes before sunrise
   sunsetOffset: number; // minutes before sunset
+  alarmEnabled: boolean; // Loud alarm mode
+  notificationsEnabled: boolean; // Silent notifications
+  sunriseNotificationEnabled: boolean; // Sunrise notifications
+  sunsetNotificationEnabled: boolean; // Sunset notifications
 }
 
 const DEFAULT_ALARM_CONFIG: AlarmConfig = {
   sunriseEnabled: false,
   sunsetEnabled: false,
-  sunriseOffset: 2, // 1 minute before sunrise
-  sunsetOffset: 2, // 1 minute before sunset
+  sunriseOffset: 2, // 2 minutes before sunrise
+  sunsetOffset: 2, // 2 minutes before sunset
+  alarmEnabled: false,
+  notificationsEnabled: false,
+  sunriseNotificationEnabled: false,
+  sunsetNotificationEnabled: false,
 };
 
 // Initialize simple alarm system
@@ -201,6 +209,51 @@ export const getNextAlarmInfo = async (latitude: number, longitude: number): Pro
   } catch (error) {
     console.error('Error getting next alarm info:', error);
     return null;
+  }
+};
+
+// Schedule alarms for the next 7 days (simplified implementation)
+export const scheduleAlarmsForNext7Days = async (): Promise<void> => {
+  console.log('📅 Scheduling alarms for next 7 days');
+  // In a full implementation, this would schedule actual notifications
+  // For now, we just log the intent
+};
+
+// Get scheduled notifications (simplified implementation)
+export const getScheduledNotifications = async (): Promise<Array<{
+  id: string;
+  title: string;
+  body: string;
+  date: Date;
+}>> => {
+  try {
+    const config = await getAlarmConfig();
+    const notifications: Array<{
+      id: string;
+      title: string;
+      body: string;
+      date: Date;
+    }> = [];
+    
+    // Calculate how many alarms would be scheduled for 7 days
+    let count = 0;
+    if (config.sunriseEnabled) count += 7;
+    if (config.sunsetEnabled) count += 7;
+    
+    // Return mock notifications for display purposes
+    for (let i = 0; i < count; i++) {
+      notifications.push({
+        id: `alarm-${i}`,
+        title: i % 2 === 0 ? '🌅 Sunrise Alert' : '🌇 Sunset Alert',
+        body: 'Time for prayers',
+        date: new Date(Date.now() + i * 12 * 60 * 60 * 1000), // Mock dates
+      });
+    }
+    
+    return notifications;
+  } catch (error) {
+    console.error('Error getting scheduled notifications:', error);
+    return [];
   }
 };
 

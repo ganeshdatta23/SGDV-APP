@@ -25,8 +25,8 @@ const FALLBACK_LOCATION = {
 const FALLBACK_SUNRISE_HOUR = 6;  // 6:00 AM
 const FALLBACK_SUNSET_HOUR = 18;  // 6:00 PM
 
-// Cache validity duration (1 hour in milliseconds)
-const CACHE_VALIDITY_MS = 60 * 60 * 1000;
+// Cache validity duration (1 minute in milliseconds)
+const CACHE_VALIDITY_MS = 60 * 1000;
 
 // Events cache validity duration (10 minutes in milliseconds)
 const EVENTS_CACHE_VALIDITY_MS = 10 * 60 * 1000;
@@ -178,11 +178,45 @@ const isCacheValid = (): boolean => {
 // ============================================================================
 
 /**
- * Fetches location data from SGVD Backend API
- * Returns location info including name, coordinates, sunrise/sunset times
+ * Helper function to check if an error is a network error
  */
-export const fetchLocationDirect = async (): Promise<LocationData> => {
-  // Return in-memory cached location if valid
+const isNetworkError = (error: unknown): boolean => {
+  if (error instanceof TypeError) {
+    // TypeError usually indicates network issues (no connection, DNS failure, etc.)
+    const message = error.message.toLowerCase();
+    return message.includes('network request failed') || 
+           message.includes('failed to fetch') ||
+           message.includes('network') ||
+           message.includes('timeout') ||
+           message.includes('connection');
+  }
+  
+  // Also check if error is a string (some React Native versions throw strings)
+  if (typeof error === 'string') {
+    const message = error.toLowerCase();
+    return message.includes('network') || 
+           message.includes('failed to fetch') ||
+           message.includes('timeout') ||
+           message.includes('connection');
+  }
+  
+  // Check if error has a message property
+  if (error && typeof error === 'object' && 'message' in error) {
+    const message = String(error.message).toLowerCase();
+    return message.includes('network') || 
+           message.includes('failed to fetch') ||
+           message.includes('timeout') ||
+           message.includes('connection');
+  }
+  
+  return false;
+};
+
+/**
+ * Helper function to load cached location data
+ */
+const loadCachedLocation = async (): Promise<LocationData | null> => {
+  // Check in-memory cache first
   if (isCacheValid() && cache) {
     console.log('Using in-memory cached location data');
     return cache.location;
@@ -212,13 +246,23 @@ export const fetchLocationDirect = async (): Promise<LocationData> => {
         
         return location;
       } else {
-        console.log('AsyncStorage cache expired, fetching fresh data');
+        console.log('AsyncStorage cache expired');
       }
     }
   } catch (error) {
     console.warn('Failed to read from AsyncStorage:', error);
   }
+  
+  return null;
+};
 
+/**
+ * Fetches location data from SGVD Backend API
+ * Always tries API first, only uses cache if network is unavailable
+ * Returns location info including name, coordinates, sunrise/sunset times
+ */
+export const fetchLocationDirect = async (): Promise<LocationData> => {
+  // Always try API first
   try {
     console.log('SGVD API: Fetching location data');
     
@@ -288,6 +332,18 @@ export const fetchLocationDirect = async (): Promise<LocationData> => {
     
     throw new Error('No location found in API response');
   } catch (error) {
+    // If it's a network error, try to use cache
+    if (isNetworkError(error)) {
+      console.warn('SGVD API: Network error detected, attempting to use cache');
+      const cachedLocation = await loadCachedLocation();
+      
+      if (cachedLocation) {
+        console.log('Using cached location data due to network unavailability');
+        return cachedLocation;
+      }
+    }
+    
+    // If not a network error, or cache unavailable, log and use fallback
     console.error('SGVD API: Error:', error);
     console.log('Using fallback location');
     
@@ -345,32 +401,18 @@ const updateCache = async (location: LocationData): Promise<void> => {
 
 /**
  * Calculate sun times for a given location
- * Uses cached data when available, otherwise fetches from API
+ * Always tries to fetch fresh data from API, uses cache only if network unavailable
  */
 export async function calculateSunTimes(
   _latitude?: number,
   _longitude?: number,
   _date: Date = new Date()
 ): Promise<SunCalculationResult> {
-  // Check cache first
-  if (isCacheValid() && cache) {
-    console.log('Using cached sun times');
-    // Recalculate next event as time passes
-    const { nextEvent, nextEventType } = determineNextEvent(
-      cache.sunTimes.sunrise,
-      cache.sunTimes.sunset
-    );
-    return {
-      ...cache.sunTimes,
-      nextEvent,
-      nextEventType,
-    };
-  }
-
   try {
     console.log('Fetching sun times from SGVD API');
     
     // Fetch location (which includes sun times) - this also updates the cache
+    // fetchLocationDirect now always tries API first, falls back to cache on network errors
     const location = await fetchLocationDirect();
     
     const { sunrise, sunset } = location;
@@ -395,6 +437,20 @@ export async function calculateSunTimes(
     return result;
   } catch (error) {
     console.error('Error calculating sun times:', error);
+    
+    // Try to use cached data if available
+    if (isCacheValid() && cache) {
+      console.log('Using cached sun times as fallback');
+      const { nextEvent, nextEventType } = determineNextEvent(
+        cache.sunTimes.sunrise,
+        cache.sunTimes.sunset
+      );
+      return {
+        ...cache.sunTimes,
+        nextEvent,
+        nextEventType,
+      };
+    }
     
     // Use fallback times
     const { sunrise, sunset } = getFallbackSunTimes();
