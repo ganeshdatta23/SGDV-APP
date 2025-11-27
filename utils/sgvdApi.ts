@@ -150,7 +150,7 @@ const isCacheValid = (): boolean => {
 export const fetchLocationDirect = async (): Promise<LocationData> => {
   // Return in-memory cached location if valid
   if (isCacheValid() && cache) {
-    console.log('📦 Using in-memory cached location data');
+    console.log('Using in-memory cached location data');
     return cache.location;
   }
 
@@ -163,7 +163,7 @@ export const fetchLocationDirect = async (): Promise<LocationData> => {
       const cacheAge = Date.now() - parseInt(cachedTimestamp, 10);
       
       if (cacheAge < CACHE_VALIDITY_MS) {
-        console.log('📦 Using AsyncStorage cached location data');
+        console.log('Using AsyncStorage cached location data');
         const cachedData = JSON.parse(cachedLocationStr);
         
         // Restore Date objects from ISO strings
@@ -178,15 +178,15 @@ export const fetchLocationDirect = async (): Promise<LocationData> => {
         
         return location;
       } else {
-        console.log('⏰ AsyncStorage cache expired, fetching fresh data');
+        console.log('AsyncStorage cache expired, fetching fresh data');
       }
     }
   } catch (error) {
-    console.warn('⚠️ Failed to read from AsyncStorage:', error);
+    console.warn('Failed to read from AsyncStorage:', error);
   }
 
   try {
-    console.log('🔍 SGVD API: Fetching location data');
+    console.log('SGVD API: Fetching location data');
     
     const response = await fetch(SGVD_API_URL, {
       method: 'GET',
@@ -196,20 +196,20 @@ export const fetchLocationDirect = async (): Promise<LocationData> => {
       },
     });
 
-    console.log('📡 SGVD API: Response status:', response.status);
+    console.log('SGVD API: Response status:', response.status);
     
     if (!response.ok) {
-      console.error('❌ SGVD API: Error - Status:', response.status);
+      console.error('SGVD API: Error - Status:', response.status);
       throw new Error(`API returned status ${response.status}`);
     }
 
     const data = await response.json();
-    console.log('📦 SGVD API: Raw response:', JSON.stringify(data, null, 2));
+    console.log('SGVD API: Raw response:', JSON.stringify(data, null, 2));
     
     // The API returns { results: [...] }
     if (data?.results?.length > 0) {
       const locationData = data.results[0];
-      console.log('📍 SGVD API: Location found:', locationData.name);
+      console.log('SGVD API: Location found:', locationData.name);
       
       // Parse the sunrise/sunset times from ISO strings
       const fallbackTimes = getFallbackSunTimes();
@@ -227,7 +227,7 @@ export const fetchLocationDirect = async (): Promise<LocationData> => {
         googleMapsUrl: `https://www.google.com/maps/@${locationData.latitude},${locationData.longitude},17z`
       };
       
-      console.log('✅ SGVD API: Location data ready:', {
+      console.log('SGVD API: Location data ready:', {
         name: location.name,
         coords: `${location.latitude}, ${location.longitude}`,
         sunrise: formatSunTime(location.sunrise),
@@ -242,8 +242,8 @@ export const fetchLocationDirect = async (): Promise<LocationData> => {
     
     throw new Error('No location found in API response');
   } catch (error) {
-    console.error('❌ SGVD API: Error:', error);
-    console.log('🔄 Using fallback location');
+    console.error('SGVD API: Error:', error);
+    console.log('Using fallback location');
     
     const fallbackTimes = getFallbackSunTimes();
     const location: LocationData = {
@@ -287,9 +287,9 @@ const updateCache = async (location: LocationData): Promise<void> => {
     
     await AsyncStorage.setItem(LOCATION_CACHE_KEY, JSON.stringify(locationToStore));
     await AsyncStorage.setItem(LOCATION_TIMESTAMP_KEY, cache.timestamp.toString());
-    console.log('💾 Location cached to AsyncStorage');
+    console.log('Location cached to AsyncStorage');
   } catch (error) {
-    console.warn('⚠️ Failed to save location to AsyncStorage:', error);
+    console.warn('Failed to save location to AsyncStorage:', error);
   }
 };
 
@@ -308,7 +308,7 @@ export async function calculateSunTimes(
 ): Promise<SunCalculationResult> {
   // Check cache first
   if (isCacheValid() && cache) {
-    console.log('📦 Using cached sun times');
+    console.log('Using cached sun times');
     // Recalculate next event as time passes
     const { nextEvent, nextEventType } = determineNextEvent(
       cache.sunTimes.sunrise,
@@ -322,7 +322,7 @@ export async function calculateSunTimes(
   }
 
   try {
-    console.log('🌐 Fetching sun times from SGVD API');
+    console.log('Fetching sun times from SGVD API');
     
     // Fetch location (which includes sun times) - this also updates the cache
     const location = await fetchLocationDirect();
@@ -339,7 +339,7 @@ export async function calculateSunTimes(
       nextEventType,
     };
 
-    console.log('✅ Sun times calculated:', {
+    console.log('Sun times calculated:', {
       sunrise: formatSunTime(sunrise),
       sunset: formatSunTime(sunset),
       nextEvent: formatSunTime(nextEvent),
@@ -348,7 +348,7 @@ export async function calculateSunTimes(
     
     return result;
   } catch (error) {
-    console.error('❌ Error calculating sun times:', error);
+    console.error('Error calculating sun times:', error);
     
     // Use fallback times
     const { sunrise, sunset } = getFallbackSunTimes();
@@ -393,9 +393,9 @@ export async function cleanCache(): Promise<void> {
       EVENTS_CACHE_KEY,
       EVENTS_TIMESTAMP_KEY,
     ]);
-    console.log('🧹 Cache cleared (in-memory and AsyncStorage)');
+    console.log('Cache cleared (in-memory and AsyncStorage)');
   } catch (error) {
-    console.warn('⚠️ Failed to clear AsyncStorage cache:', error);
+    console.warn('Failed to clear AsyncStorage cache:', error);
   }
 }
 
@@ -417,20 +417,20 @@ export async function fetchEvents(): Promise<EventData[]> {
       const cacheAge = Date.now() - parseInt(cachedTimestamp, 10);
       
       if (cacheAge < EVENTS_CACHE_VALIDITY_MS) {
-        console.log('📦 Using cached events data (age: ' + Math.floor(cacheAge / 1000) + 's)');
+        console.log('Using cached events data (age: ' + Math.floor(cacheAge / 1000) + 's)');
         const cachedEvents = JSON.parse(cachedEventsStr) as EventData[];
         return cachedEvents;
       } else {
-        console.log('⏰ Events cache expired, fetching fresh data');
+        console.log('Events cache expired, fetching fresh data');
       }
     }
   } catch (error) {
-    console.warn('⚠️ Failed to read events from AsyncStorage:', error);
+    console.warn('Failed to read events from AsyncStorage:', error);
   }
 
   // Fetch fresh data from API
   try {
-    console.log('📅 SGVD API: Fetching events...');
+    console.log('SGVD API: Fetching events...');
     
     const response = await fetch(SGVD_EVENTS_URL, {
       method: 'GET',
@@ -440,38 +440,38 @@ export async function fetchEvents(): Promise<EventData[]> {
       },
     });
 
-    console.log('📡 SGVD Events API: Response status:', response.status);
+    console.log('SGVD Events API: Response status:', response.status);
     
     if (!response.ok) {
-      console.error('❌ SGVD Events API: Error - Status:', response.status);
+      console.error('SGVD Events API: Error - Status:', response.status);
       throw new Error(`API returned status ${response.status}`);
     }
 
     const data = await response.json();
-    console.log('📦 SGVD Events API: Received', data.length, 'events');
+    console.log('SGVD Events API: Received', data.length, 'events');
     
     // Cache the fresh events data
     try {
       await AsyncStorage.setItem(EVENTS_CACHE_KEY, JSON.stringify(data));
       await AsyncStorage.setItem(EVENTS_TIMESTAMP_KEY, Date.now().toString());
-      console.log('💾 Events cached to AsyncStorage');
+      console.log('Events cached to AsyncStorage');
     } catch (error) {
-      console.warn('⚠️ Failed to cache events to AsyncStorage:', error);
+      console.warn('Failed to cache events to AsyncStorage:', error);
     }
     
     return data as EventData[];
   } catch (error) {
-    console.error('❌ SGVD Events API: Error:', error);
+    console.error('SGVD Events API: Error:', error);
     
     // Try to return stale cache if available
     try {
       const cachedEventsStr = await AsyncStorage.getItem(EVENTS_CACHE_KEY);
       if (cachedEventsStr) {
-        console.log('📦 Returning stale cached events due to API error');
+        console.log('Returning stale cached events due to API error');
         return JSON.parse(cachedEventsStr) as EventData[];
       }
     } catch (cacheError) {
-      console.warn('⚠️ Failed to read stale cache:', cacheError);
+      console.warn('Failed to read stale cache:', cacheError);
     }
     
     return [];
