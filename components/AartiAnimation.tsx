@@ -1,14 +1,24 @@
 import React, { useEffect, useImperativeHandle, forwardRef } from 'react';
-import { View, StyleSheet, Text } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
+  withRepeat,
+  withSequence,
+  cancelAnimation,
 } from 'react-native-reanimated';
+import Svg, { Path, Defs, RadialGradient, Stop } from 'react-native-svg';
 
 interface AartiAnimationProps {
   centerX?: number;
   centerY?: number;
+  /** Length of the flame (scaleY factor), default 1.0 */
+  flameLength?: number;
+  /** Intensity of the flicker (0.0 to 1.0), default 0.5 */
+  flickerIntensity?: number;
+  /** Size of the Diya container in pixels, default 60 */
+  diyaSize?: number;
 }
 
 export interface AartiAnimationRef {
@@ -36,7 +46,13 @@ const ROTATIONS = 3; // Number of complete rotations
  * @returns {React.JSX.Element} - The rendered component
  */
 export const AartiAnimation = forwardRef<AartiAnimationRef, AartiAnimationProps>(
-  ({ centerX = 0, centerY = 0 }, ref) => {
+  ({ 
+    centerX = 0, 
+    centerY = 0,
+    flameLength = 0.7,
+    flickerIntensity = 0.8,
+    diyaSize = 60
+  }, ref) => {
     const [diyas, setDiyas] = React.useState<Diya[]>([]);
 
     // Expose trigger method via ref
@@ -51,8 +67,8 @@ export const AartiAnimation = forwardRef<AartiAnimationRef, AartiAnimationProps>
       const newDiyas: Diya[] = Array.from({ length: DIYA_COUNT }, (_, i) => ({
         id: Date.now() + i,
         startAngle: (i / DIYA_COUNT) * 360, // Evenly distribute around circle
-        radius: BASE_RADIUS + (Math.random() * 20 - 10), // Slight radius variation
-        scale: 0.9 + Math.random() * 0.3, // Random scale between 0.9 and 1.2
+        radius: BASE_RADIUS, // Use fixed radius for cleaner single orbit
+        scale: 1.0, 
       }));
 
       setDiyas(newDiyas);
@@ -66,7 +82,15 @@ export const AartiAnimation = forwardRef<AartiAnimationRef, AartiAnimationProps>
     return (
       <View style={styles.container} pointerEvents="none">
         {diyas.map((diya) => (
-          <DiyaParticle key={diya.id} diya={diya} centerX={centerX} centerY={centerY} />
+          <DiyaParticle 
+            key={diya.id} 
+            diya={diya} 
+            centerX={centerX} 
+            centerY={centerY} 
+            flameLength={flameLength}
+            flickerIntensity={flickerIntensity}
+            diyaSize={diyaSize}
+          />
         ))}
       </View>
     );
@@ -76,17 +100,162 @@ export const AartiAnimation = forwardRef<AartiAnimationRef, AartiAnimationProps>
 AartiAnimation.displayName = 'AartiAnimation';
 
 /**
+ * Custom SVG Diya component with animated flame
+ */
+interface SvgDiyaProps {
+  flameLength: number;
+  flickerIntensity: number;
+  diyaSize: number;
+}
+
+const SvgDiya: React.FC<SvgDiyaProps> = ({ flameLength, flickerIntensity, diyaSize }) => {
+  // Flame animation values
+  const flameScaleX = useSharedValue(1);
+  const flameScaleY = useSharedValue(flameLength);
+  const flameOpacity = useSharedValue(0.9);
+  
+  // Calculate flicker ranges based on intensity
+  const baseScaleY = flameLength;
+  const flickerRange = flickerIntensity * 0.2; // e.g. 0.5 * 0.2 = 0.1 (+/- 10%)
+  
+  useEffect(() => {
+    // Flickering animation loop
+    // Randomize slightly to feel more organic
+    flameScaleX.value = withRepeat(
+      withSequence(
+        withTiming(1.0 + flickerRange, { duration: 100 }),
+        withTiming(1.0 - flickerRange, { duration: 150 }),
+        withTiming(1.0 + flickerRange * 0.5, { duration: 120 }),
+        withTiming(1.0 - flickerRange * 0.8, { duration: 140 })
+      ),
+      -1,
+      true
+    );
+
+    flameScaleY.value = withRepeat(
+      withSequence(
+        withTiming(baseScaleY + flickerRange, { duration: 120 }),
+        withTiming(baseScaleY - flickerRange * 0.5, { duration: 180 }),
+        withTiming(baseScaleY + flickerRange * 0.8, { duration: 150 })
+      ),
+      -1,
+      true
+    );
+    
+    flameOpacity.value = withRepeat(
+      withSequence(
+        withTiming(1.0, { duration: 100 }),
+        withTiming(0.8 - (flickerIntensity * 0.2), { duration: 200 }),
+        withTiming(0.95, { duration: 150 })
+      ),
+      -1,
+      true
+    );
+
+    return () => {
+      cancelAnimation(flameScaleX);
+      cancelAnimation(flameScaleY);
+      cancelAnimation(flameOpacity);
+    };
+  }, [baseScaleY, flickerRange, flickerIntensity]);
+
+  const animatedFlameStyle = useAnimatedStyle(() => ({
+    transform: [
+      { scaleX: flameScaleX.value },
+      { scaleY: flameScaleY.value },
+      { translateY: (1 - flameScaleY.value) * 10 } // Adjust pivot to keep base steady
+    ],
+    opacity: flameOpacity.value,
+  }));
+
+  // Scale SVG contents based on diyaSize
+  // Base SVG is roughly 100x100 coord system
+  // We'll scale the View container instead of SVG internals for simplicity
+  const sizeRatio = diyaSize / 60; // 60 is the base design size
+
+  return (
+    <View style={[styles.diyaContainer, { transform: [{ scale: sizeRatio }] }]}>
+      {/* Flame Layer - Animated View holding SVG */}
+      <Animated.View style={[styles.flameContainer, animatedFlameStyle]}>
+        <Svg width="40" height="50" viewBox="0 0 100 100">
+          <Defs>
+            <RadialGradient id="flameGrad" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+              <Stop offset="0%" stopColor="#FFFF00" stopOpacity="1" />
+              <Stop offset="40%" stopColor="#FFA500" stopOpacity="0.9" />
+              <Stop offset="100%" stopColor="transparent" stopOpacity="0" />
+            </RadialGradient>
+            <RadialGradient id="glowGrad" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+               <Stop offset="0%" stopColor="#FFA500" stopOpacity="0.6" />
+               <Stop offset="100%" stopColor="transparent" stopOpacity="0" />
+            </RadialGradient>
+          </Defs>
+
+          {/* Outer Glow */}
+          <Path
+            d="M50 10 Q70 50 50 80 Q30 50 50 10"
+            fill="url(#glowGrad)"
+            transform="scale(1.5) translate(-17, -15)"
+          />
+
+          {/* Flame Core */}
+          <Path
+            d="M50 15 Q65 50 50 65 Q35 50 50 15"
+            fill="url(#flameGrad)"
+          />
+        </Svg>
+      </Animated.View>
+
+      {/* Base Layer - Static SVG */}
+      <View style={styles.baseContainer}>
+        <Svg width="60" height="40" viewBox="0 0 100 60">
+           {/* Diya Base (Clay Lamp) */}
+          <Path
+            d="M20 30 Q50 60 80 30 L75 30 Q50 50 25 30 Z"
+            fill="#8B4513" // SaddleBrown
+            stroke="#654321"
+            strokeWidth="1"
+          />
+          {/* Rim */}
+          <Path
+            d="M20 30 Q50 40 80 30 Q50 20 20 30"
+            fill="#A0522D" // Sienna
+            stroke="#654321"
+            strokeWidth="1"
+          />
+          {/* Wick */}
+          <Path
+            d="M48 30 L50 15 L52 30 Z" 
+            fill="#2F2F2F"
+          />
+        </Svg>
+      </View>
+    </View>
+  );
+};
+
+interface DiyaParticleProps {
+  diya: Diya;
+  centerX: number;
+  centerY: number;
+  flameLength: number;
+  flickerIntensity: number;
+  diyaSize: number;
+}
+
+/**
  * Individual diya particle component with circular motion
  */
-const DiyaParticle: React.FC<{ diya: Diya; centerX: number; centerY: number }> = ({ 
+const DiyaParticle: React.FC<DiyaParticleProps> = ({ 
   diya, 
   centerX, 
-  centerY 
+  centerY,
+  flameLength,
+  flickerIntensity,
+  diyaSize
 }) => {
   const translateX = useSharedValue(centerX);
   const translateY = useSharedValue(centerY);
   const opacity = useSharedValue(0);
-  const rotation = useSharedValue(0);
 
   useEffect(() => {
     // Circular motion animation
@@ -109,6 +278,8 @@ const DiyaParticle: React.FC<{ diya: Diya; centerX: number; centerY: number }> =
       // Calculate current angle (clockwise = increasing angle)
       // Complete 3 full rotations (1080 degrees)
       const totalRotation = ROTATIONS * 360;
+      
+      // Start from -90 deg (top) or maintain relative start
       currentAngle = diya.startAngle + (progress * totalRotation);
 
       // Convert angle to radians for trigonometry
@@ -122,9 +293,6 @@ const DiyaParticle: React.FC<{ diya: Diya; centerX: number; centerY: number }> =
       translateX.value = x;
       translateY.value = y;
 
-      // Rotate the diya itself slightly for visual effect
-      rotation.value = currentAngle * 0.5;
-
       // Continue animation
       requestAnimationFrame(animate);
     };
@@ -137,16 +305,23 @@ const DiyaParticle: React.FC<{ diya: Diya; centerX: number; centerY: number }> =
       transform: [
         { translateX: translateX.value },
         { translateY: translateY.value },
-        { rotate: `${rotation.value}deg` },
+        // IMPORTANT: No rotation here! The diya stays upright.
         { scale: diya.scale },
       ],
       opacity: opacity.value,
+      // Dynamic centering based on size
+      marginLeft: -diyaSize / 2,
+      marginTop: -diyaSize / 2,
     };
   });
 
   return (
-    <Animated.View style={[styles.diya, animatedStyle]}>
-      <Text style={styles.diyaEmoji}>🪔</Text>
+    <Animated.View style={[styles.diya, animatedStyle, { width: diyaSize, height: diyaSize }]}>
+      <SvgDiya 
+        flameLength={flameLength} 
+        flickerIntensity={flickerIntensity} 
+        diyaSize={diyaSize} 
+      />
     </Animated.View>
   );
 };
@@ -158,16 +333,30 @@ const styles = StyleSheet.create({
   },
   diya: {
     position: 'absolute',
-    width: 30,
-    height: 30,
+    // Center the element on its coordinate - dynamic sizing handled in render
+    justifyContent: 'center',
+    alignItems: 'center',
+    // Margins are now dynamic
+  },
+  diyaContainer: {
+    width: 60, // Base size
+    height: 70, 
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+  },
+  flameContainer: {
+    position: 'absolute',
+    top: 0,
+    zIndex: 10,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  diyaEmoji: {
-    fontSize: 24,
-    textAlign: 'center',
-  },
+  baseContainer: {
+    position: 'absolute',
+    bottom: 5,
+    zIndex: 5,
+  }
 });
 
 export default AartiAnimation;
-
