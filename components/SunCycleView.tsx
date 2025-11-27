@@ -67,6 +67,12 @@ export default function SunCycleView({ latitude, longitude }: SunCycleViewProps)
       // Load sun times
       if (latitude && longitude) {
         const times = await calculateSunTimes(latitude, longitude);
+        console.log('Sun times loaded:', {
+          sunrise: times.sunrise.toLocaleString(),
+          sunset: times.sunset.toLocaleString(),
+          nextEvent: times.nextEvent.toLocaleString(),
+          nextEventType: times.nextEventType,
+        });
         setSunTimes(times);
       }
 
@@ -125,34 +131,14 @@ export default function SunCycleView({ latitude, longitude }: SunCycleViewProps)
       // Before sunrise - sun is below horizon (position 0)
       return 0;
     } else if (now > sunsetTime) {
-      // After sunset - sun is below horizon (position 1)
-      return 1;
+      // After sunset - sun is below horizon (position 0 for next day)
+      return 0;
     } else {
       // During the day - calculate position along arc
       const dayDuration = sunsetTime - sunriseTime;
       const elapsed = now - sunriseTime;
-      return elapsed / dayDuration;
+      return Math.min(Math.max(elapsed / dayDuration, 0), 1);
     }
-  };
-
-  // Calculate countdown to next event
-  const getCountdown = (): string => {
-    if (!sunTimes) return '--:--';
-
-    const now = currentTime.getTime();
-    const nextTime = sunTimes.nextEvent.getTime();
-    const diff = nextTime - now;
-
-    if (diff <= 0) {
-      // If negative, the event has passed, recalculate
-      return '00:00';
-    }
-
-    const totalMinutes = Math.floor(diff / (1000 * 60));
-    const hours = Math.floor(totalMinutes / 60);
-    const minutes = totalMinutes % 60;
-
-    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
   };
 
   // Check if it's currently daytime
@@ -173,7 +159,6 @@ export default function SunCycleView({ latitude, longitude }: SunCycleViewProps)
   }
 
   const sunPosition = getSunPosition();
-  const countdown = getCountdown();
   const daytime = isDaytime();
 
   return (
@@ -188,14 +173,14 @@ export default function SunCycleView({ latitude, longitude }: SunCycleViewProps)
         />
       </View>
 
-      {/* Next Event Countdown */}
+      {/* Next Event Display */}
       <View style={styles.countdownContainer}>
         <Text style={styles.countdownLabel}>
-          Next {sunTimes.nextEventType === 'sunrise' ? 'Sunrise' : 'Sunset'}
+          NEXT {sunTimes.nextEventType === 'sunrise' ? 'SUNRISE' : 'SUNSET'}
         </Text>
-        <Text style={styles.countdownTime}>{countdown}</Text>
+        <Text style={styles.countdownTime}>{formatSunTime(sunTimes.nextEvent)}</Text>
         <Text style={styles.countdownSubtext}>
-          {sunTimes.nextEventType === 'sunrise' ? '🌅' : '🌇'} {formatSunTime(sunTimes.nextEvent)}
+          {sunTimes.nextEventType === 'sunrise' ? '🌅' : '🌇'}
         </Text>
       </View>
 

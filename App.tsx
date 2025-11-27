@@ -15,6 +15,7 @@ import SimpleCompassView, { COMPASS_THEME, ThemeMode } from './components/Compas
 import { BottomNav, Tab } from './components/BottomNav';
 import EventsView from './components/EventsView';
 import SettingsView from './components/SettingsView';
+import SunCycleView from './components/SunCycleView';
 import DarshanOverlay from './components/DarshanOverlay';
 import { fetchLocationDirect, calculateSunTimes } from './utils/sgvdApi';
 import { initializeNotifications, scheduleAlarms } from './utils/alarmManager';
@@ -320,11 +321,19 @@ function App(): React.JSX.Element {
       <View style={styles.header}>
         <View style={styles.titleContainer}>
           <Text style={[styles.title, { color: currentBgTheme.headerTextColor }]}>
-            {currentTab === 'home' ? 'Guru Digvandanam' : currentTab === 'events' ? 'Programs' : 'Settings'}
+            {currentTab === 'home' 
+              ? 'Guru Digvandanam' 
+              : currentTab === 'sun'
+              ? 'Sunrise & Sunset Alarms'
+              : currentTab === 'events' 
+              ? 'Programs' 
+              : 'Settings'}
           </Text>
           <Text style={[styles.subtitle, { color: currentBgTheme.subtitleColor }]}>
             {currentTab === 'home' 
               ? 'Offer your prayers to the direction of Appaji' 
+              : currentTab === 'sun'
+              ? 'Set alarms for sunrise and sunset times'
               : currentTab === 'events'
               ? 'Stay updated with upcoming programs'
               : 'Customize your experience'}
@@ -352,6 +361,13 @@ function App(): React.JSX.Element {
             />
           )}
         </>
+      )}
+
+      {currentTab === 'sun' && targetLocation && (
+        <SunCycleView
+          latitude={targetLocation.latitude}
+          longitude={targetLocation.longitude}
+        />
       )}
 
       {currentTab === 'events' && <EventsView />}

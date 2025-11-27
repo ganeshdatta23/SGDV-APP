@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { COMPASS_THEME, ThemeMode } from './CompassView';
 
 // Tab type for navigation
-export type Tab = 'home' | 'events' | 'settings';
+export type Tab = 'home' | 'sun' | 'events' | 'settings';
 
 interface BottomNavProps {
   currentTab: Tab;
@@ -60,6 +60,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
 
   const navItems: { id: Tab; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
     { id: 'home', label: 'Darshan', icon: 'compass' },
+    { id: 'sun', label: 'Alarm', icon: 'alarm' },
     { id: 'events', label: 'Programs', icon: 'calendar' },
     { id: 'settings', label: 'Settings', icon: 'settings-outline' },
   ];

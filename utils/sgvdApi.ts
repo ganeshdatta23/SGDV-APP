@@ -96,6 +96,32 @@ const getFallbackSunTimes = (): { sunrise: Date; sunset: Date } => {
   return { sunrise, sunset };
 };
 
+/**
+ * Extract time from API date and apply it to today's date
+ * This ensures we always use today's date regardless of what date the API returns
+ */
+const applyTimeToToday = (apiDateString: string): Date => {
+  const apiDate = new Date(apiDateString);
+  const today = new Date();
+  
+  // Extract time components from API date (in UTC)
+  const hours = apiDate.getUTCHours();
+  const minutes = apiDate.getUTCMinutes();
+  const seconds = apiDate.getUTCSeconds();
+  
+  // Create new date with today's date but API's time (in UTC)
+  const result = new Date(Date.UTC(
+    today.getFullYear(),
+    today.getMonth(),
+    today.getDate(),
+    hours,
+    minutes,
+    seconds
+  ));
+  
+  return result;
+};
+
 // Calculate solar noon (midpoint between sunrise and sunset)
 const calculateSolarNoon = (sunrise: Date, sunset: Date): Date => {
   const midpoint = (sunrise.getTime() + sunset.getTime()) / 2;
@@ -136,7 +162,15 @@ const isCacheValid = (): boolean => {
   const today = new Date().toISOString().split('T')[0];
   const now = Date.now();
   
-  return cache.date === today && (now - cache.timestamp) < CACHE_VALIDITY_MS;
+  // Cache is valid if: same day AND within validity period
+  const isSameDay = cache.date === today;
+  const isWithinTime = (now - cache.timestamp) < CACHE_VALIDITY_MS;
+  
+  if (!isSameDay) {
+    console.log('Cache invalid: different day', { cached: cache.date, today });
+  }
+  
+  return isSameDay && isWithinTime;
 };
 
 // ============================================================================
@@ -211,10 +245,22 @@ export const fetchLocationDirect = async (): Promise<LocationData> => {
       const locationData = data.results[0];
       console.log('SGVD API: Location found:', locationData.name);
       
-      // Parse the sunrise/sunset times from ISO strings
+      // Extract time from API and apply to today's date
+      // This ignores the date from API and uses only the time portion
       const fallbackTimes = getFallbackSunTimes();
-      const sunrise = locationData.sunrise ? new Date(locationData.sunrise) : fallbackTimes.sunrise;
-      const sunset = locationData.sunset ? new Date(locationData.sunset) : fallbackTimes.sunset;
+      const sunrise = locationData.sunrise 
+        ? applyTimeToToday(locationData.sunrise) 
+        : fallbackTimes.sunrise;
+      const sunset = locationData.sunset 
+        ? applyTimeToToday(locationData.sunset) 
+        : fallbackTimes.sunset;
+      
+      console.log('SGVD API: Time extraction:', {
+        apiSunrise: locationData.sunrise,
+        appliedSunrise: sunrise.toISOString(),
+        apiSunset: locationData.sunset,
+        appliedSunset: sunset.toISOString(),
+      });
       
       const locationName = locationData.name?.trim() || "Appaji's Location";
       const location: LocationData = {
