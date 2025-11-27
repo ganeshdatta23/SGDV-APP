@@ -17,7 +17,8 @@
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "This app needs your location to show the direction to the sacred place.",
         "NSLocationAlwaysUsageDescription": "This app needs your location to show the direction to the sacred place.",
-        "NSMotionUsageDescription": "This app needs access to your device motion sensors for compass functionality."
+        "NSMotionUsageDescription": "This app needs access to your device motion sensors for compass functionality.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -31,7 +32,11 @@
         "ACCESS_COARSE_LOCATION",
         "VIBRATE",
         "SCHEDULE_EXACT_ALARM",
-        "USE_EXACT_ALARM"
+        "USE_EXACT_ALARM",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
       ]
     },
     "plugins": [
@@ -44,6 +49,11 @@
       ],
       "expo-audio",
       "expo-location"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "bc32d61f-aadb-4483-9b29-4e1cd983c923"
+      }
+    }
   }
 }

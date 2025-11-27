@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, LayoutAnimation, Platform, UIManager } from 'react-native';
+import Slider from '@react-native-community/slider';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemeMode } from './CompassView';
 
@@ -14,21 +15,21 @@ export const THEME_INFO: Record<ThemeMode, {
   colors: string[]; 
   description: string;
 }> = {
-  light: {
-    name: 'Sunrise',
-    colors: ['#FF6B35', '#F7931E', '#FFD700'],
-    description: 'Warm orange & gold tones',
-  },
-  dark: {
-    name: 'Midnight',
-    colors: ['#292524', '#1c1917', '#FCD34D'],
-    description: 'Dark stone with gold accents',
-  },
-  cosmic: {
-    name: 'Cosmic',
-    colors: ['#b45309', '#4c0519', '#fbbf24'],
-    description: 'Amber & rose galaxy vibes',
-  },
+    cosmic: {
+      name: 'Cosmic',
+      colors: ['#b45309', '#4c0519', '#fbbf24'],
+      description: 'Amber & rose galaxy vibes',
+    },
+    dark: {
+        name: 'Midnight',
+        colors: ['#292524', '#1c1917', '#FCD34D'],
+        description: 'Dark stone with gold accents',
+    },
+    light: {
+      name: 'Sunrise',
+      colors: ['#FF6B35', '#F7931E', '#FFD700'],
+      description: 'Warm orange & gold tones',
+    },
 };
 
 // Theme colors for settings view
@@ -81,20 +82,42 @@ const SETTINGS_THEMES: Record<ThemeMode, {
 interface SettingsViewProps {
   currentTheme: ThemeMode;
   onThemeChange: (theme: ThemeMode) => void;
+  audioEnabled?: boolean;
+  onAudioToggle?: (enabled: boolean) => void;
+  audioVolume?: number;
+  onVolumeChange?: (volume: number) => void;
   style?: object;
 }
+
+// Helper function to get the appropriate volume icon based on volume level
+const getVolumeIcon = (volume: number): keyof typeof Ionicons.glyphMap => {
+  if (volume === 0) return 'volume-mute';
+  if (volume < 0.33) return 'volume-low';
+  if (volume < 0.67) return 'volume-medium';
+  return 'volume-high';
+};
 
 export const SettingsView: React.FC<SettingsViewProps> = ({ 
   currentTheme, 
   onThemeChange,
+  audioEnabled = true,
+  onAudioToggle,
+  audioVolume = 0.7,
+  onVolumeChange,
   style 
 }) => {
-  const [isThemeExpanded, setIsThemeExpanded] = useState(false); // Start expanded
+  const [isThemeExpanded, setIsThemeExpanded] = useState(false);
+  const [isSoundExpanded, setIsSoundExpanded] = useState(false);
   const theme = SETTINGS_THEMES[currentTheme];
 
   const toggleThemeSection = () => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setIsThemeExpanded(!isThemeExpanded);
+  };
+
+  const toggleSoundSection = () => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setIsSoundExpanded(!isSoundExpanded);
   };
 
   const handleThemeSelect = (selectedTheme: ThemeMode) => {
@@ -105,16 +128,17 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   };
 
   return (
-    <ScrollView 
-      style={[styles.container, style]} 
-      contentContainerStyle={styles.contentContainer}
-      showsVerticalScrollIndicator={false}
-    >
-      {/* Appearance Section */}
-      <View style={[styles.section, { backgroundColor: theme.sectionBg, borderColor: theme.sectionBorder }]}>
-        <Text style={[styles.sectionHeader, { color: theme.sectionTitle }]}>
-          APPEARANCE
-        </Text>
+    <View style={[styles.wrapper, style]}>
+      <ScrollView 
+        style={styles.container} 
+        contentContainerStyle={styles.contentContainer}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Appearance Section */}
+        <View style={[styles.section, { backgroundColor: theme.sectionBg, borderColor: theme.sectionBorder }]}>
+          <Text style={[styles.sectionHeader, { color: theme.sectionTitle }]}>
+            APPEARANCE
+          </Text>
 
         {/* Theme Selector Row */}
         <TouchableOpacity 
@@ -207,23 +231,85 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         )}
       </View>
 
-      {/* Version Info */}
+      {/* Sound Section */}
+      <View style={[styles.section, { backgroundColor: theme.sectionBg, borderColor: theme.sectionBorder }]}>
+        <Text style={[styles.sectionHeader, { color: theme.sectionTitle }]}>
+          SOUND
+        </Text>
+
+        {/* Darshan Audio Volume Row */}
+        <TouchableOpacity 
+          style={styles.settingRow}
+          onPress={toggleSoundSection}
+          activeOpacity={0.7}
+        >
+          <View style={styles.settingLeft}>
+            <View style={[styles.iconContainer, { backgroundColor: theme.accent + '20' }]}>
+              <Ionicons 
+                name={getVolumeIcon(audioVolume)} 
+                size={24} 
+                color={theme.accent} 
+              />
+            </View>
+            <View style={styles.settingInfo}>
+              <Text style={[styles.settingTitle, { color: theme.itemText }]}>
+                Darshan Audio Volume
+              </Text>
+              <Text style={[styles.settingSubtitle, { color: theme.itemSubtext }]}>
+                {Math.round(audioVolume * 100)}%
+              </Text>
+            </View>
+          </View>
+          <Ionicons 
+            name={isSoundExpanded ? 'chevron-up' : 'chevron-down'} 
+            size={20} 
+            color={theme.chevron} 
+          />
+        </TouchableOpacity>
+
+        {/* Expanded Volume Slider */}
+        {isSoundExpanded && (
+          <View style={styles.sliderContainer}>
+            <Slider
+              style={styles.slider}
+              minimumValue={0}
+              maximumValue={1}
+              step={0.01}
+              value={audioVolume}
+              onValueChange={(value) => {
+                if (onVolumeChange) {
+                  onVolumeChange(value);
+                }
+              }}
+              minimumTrackTintColor={theme.accent}
+              maximumTrackTintColor={theme.sectionBorder}
+              thumbTintColor={theme.accent}
+            />
+          </View>
+        )}
+        </View>
+      </ScrollView>
+
+      {/* Version Info - Fixed at bottom */}
       <View style={styles.versionContainer}>
         <Text style={[styles.versionText, { color: theme.itemSubtext }]}>
           Guru Digvandanam v1.0.0
         </Text>
       </View>
-    </ScrollView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
+  wrapper: {
+    flex: 1,
+  },
   container: {
     flex: 1,
   },
   contentContainer: {
     padding: 16,
-    paddingBottom: 120, // Space for bottom nav
+    paddingBottom: 10,
   },
   section: {
     borderRadius: 16,
@@ -304,9 +390,18 @@ const styles = StyleSheet.create({
   themeDescription: {
     fontSize: 13,
   },
+  sliderContainer: {
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+  },
+  slider: {
+    width: '100%',
+    height: 40,
+  },
   versionContainer: {
     alignItems: 'center',
-    paddingVertical: 24,
+    paddingVertical: 10,
+    paddingBottom: 60, // Space for bottom nav
   },
   versionText: {
     fontSize: 12,

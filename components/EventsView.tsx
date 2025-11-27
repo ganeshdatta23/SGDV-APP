@@ -142,8 +142,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 100, // Space for bottom nav
+    paddingTop: 10,
   },
   title: {
     fontSize: 28,
@@ -157,7 +156,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 20,
+    paddingBottom: 100,
     gap: 12,
   },
   card: {

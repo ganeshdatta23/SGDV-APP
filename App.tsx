@@ -5,7 +5,7 @@
  */
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { StatusBar, StyleSheet, Text, View, Image, TouchableOpacity, AppState } from 'react-native';
+import { StatusBar, StyleSheet, Text, View, AppState } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { RadialGradient } from 'react-native-gradients';
@@ -15,6 +15,7 @@ import SimpleCompassView, { COMPASS_THEME, ThemeMode } from './components/Compas
 import { BottomNav, Tab } from './components/BottomNav';
 import EventsView from './components/EventsView';
 import SettingsView from './components/SettingsView';
+import DarshanOverlay from './components/DarshanOverlay';
 import { fetchLocationDirect, calculateSunTimes } from './utils/sgvdApi';
 import { initializeNotifications, scheduleAlarms } from './utils/alarmManager';
 
@@ -105,6 +106,12 @@ function App(): React.JSX.Element {
   
   // Theme state - allows dynamic theme switching
   const [currentTheme, setCurrentTheme] = useState<ThemeMode>(COMPASS_THEME);
+  
+  // Audio enabled state - can be toggled in settings
+  const [audioEnabled, setAudioEnabled] = useState(true);
+  
+  // Audio volume state (0-1 range)
+  const [audioVolume, setAudioVolume] = useState(0.7);
   
   // Get current background theme based on state
   const currentBgTheme = APP_BACKGROUNDS[currentTheme];
@@ -219,39 +226,18 @@ function App(): React.JSX.Element {
     playVideo();
   }, [isAligned, appStateVisible, videoPlayer]);
 
-  // Play / pause audio depending on alignment and app state
+  // Pause audio when app goes to background (DarshanOverlay handles playback)
   useEffect(() => {
     if (!audioPlayer) {
       return;
     }
 
-    const playAudio = async () => {
-      try {
-        // Only play if aligned AND app is in foreground
-        if (isAligned && appStateVisible === 'active') {
-          console.log('🎵 Playing darshan audio...');
-          audioPlayer.loop = true;
-          audioPlayer.volume = 0.8;
-          // Use seekTo() instead of setting currentTime directly
-          await audioPlayer.seekTo(0);
-          audioPlayer.play();
-          console.log('✅ Sound playback started');
-        } else {
-          // Pause audio if not aligned or app is in background
-          if (audioPlayer.playing) {
-            audioPlayer.pause();
-            if (appStateVisible !== 'active') {
-              console.log('🎵 Audio paused - app in background');
-            }
-          }
-        }
-      } catch (error) {
-        console.log('❌ Audio playback error:', error);
-      }
-    };
-
-    playAudio();
-  }, [isAligned, appStateVisible, audioPlayer]);
+    // Pause audio if app is in background
+    if (appStateVisible !== 'active' && audioPlayer.playing) {
+      audioPlayer.pause();
+      console.log('🎵 Audio paused - app in background');
+    }
+  }, [appStateVisible, audioPlayer]);
 
   // Calculate and display next sunrise/sunset using new API
   useEffect(() => {
@@ -303,6 +289,11 @@ function App(): React.JSX.Element {
     } else if (!aligned) {
       console.log('❌ Setting aligned to FALSE - Video overlay will hide');
       setIsAligned(false);
+      // Stop audio when dealigned
+      if (audioPlayer && audioPlayer.playing) {
+        audioPlayer.pause();
+        console.log('🔇 Audio stopped - dealigned');
+      }
       // Reset manual close state when alignment is lost
       if (isClosedManually) {
         setIsClosedManually(false);
@@ -369,6 +360,10 @@ function App(): React.JSX.Element {
         <SettingsView 
           currentTheme={currentTheme}
           onThemeChange={setCurrentTheme}
+          audioEnabled={audioEnabled}
+          onAudioToggle={setAudioEnabled}
+          audioVolume={audioVolume}
+          onVolumeChange={setAudioVolume}
         />
       )}
 
@@ -379,32 +374,23 @@ function App(): React.JSX.Element {
         currentTheme={currentTheme}
       />
 
-      {/* Darshan overlay */}
-      {isAligned && (
-        <View style={styles.overlay} pointerEvents="box-none">
-          {/* Background video */}
-          <VideoView
-            player={videoPlayer}
-            style={StyleSheet.absoluteFill}
-            contentFit="cover"
-            nativeControls={false}
-          />
-          {/* Swamiji image overlay */}
-          <Image
-            source={require('./assets/images/swamiji-darshan.png')}
-            style={styles.darshanImage}
-            resizeMode="contain"
-          />
-          {/* Close button to exit overlay - requires fresh realignment */}
-          <TouchableOpacity style={styles.closeBtn} onPress={() => {
-            console.log('🔴 Close button pressed - stopping audio and requiring fresh alignment');
-            setIsAligned(false);
-            setIsClosedManually(true);
-          }}>
-            <Text style={styles.closeText}>✕</Text>
-          </TouchableOpacity>
-        </View>
-      )}
+      {/* Darshan overlay with golden aura */}
+      <DarshanOverlay
+        visible={isAligned}
+        videoPlayer={videoPlayer}
+        audioPlayer={audioPlayer}
+        audioEnabled={audioEnabled}
+        audioVolume={audioVolume}
+        onClose={() => {
+          console.log('🔴 Close button pressed - stopping audio and requiring fresh alignment');
+          setIsAligned(false);
+          setIsClosedManually(true);
+          // Pause audio when closing
+          if (audioPlayer) {
+            audioPlayer.pause();
+          }
+        }}
+      />
 
     </>
   );
@@ -492,28 +478,6 @@ const styles = StyleSheet.create({
     textShadowColor: 'rgba(0, 0, 0, 0.3)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
-  },
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 999,
-  },
-  darshanImage: {
-    width: '80%',
-    height: '50%',
-  },
-  closeBtn: {
-    position: 'absolute',
-    top: 40,
-    right: 20,
-    padding: 8,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    borderRadius: 20,
-  },
-  closeText: {
-    color: '#fff',
-    fontSize: 18,
   },
 });
 
