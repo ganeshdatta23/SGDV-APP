@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, Dimensions } from 'react-native';
+import { compassViewStyles as styles } from '../src/styles/CompassViewStyles';
 import { Magnetometer } from 'expo-sensors';
 import * as Haptics from 'expo-haptics';
 import * as Location from 'expo-location';
@@ -30,14 +31,14 @@ export interface CompassConfig {
   // Size & Layout
   compassSizeRatio: number;          // Ratio of screen size (0.72 = 72% of screen)
   centerHubSizeRatio: number;        // Ratio of compass radius (0.35 = 35% of radius)
-  
+
   // Tick Marks
   cardinalTickLength: number;        // Length of N, E, S, W ticks (from edge)
   semiCardinalTickLength: number;    // Length of 30° ticks
   minorTickLength: number;           // Length of 5° ticks
   cardinalTickWidth: number;         // Stroke width for cardinal ticks
   minorTickWidth: number;            // Stroke width for minor ticks
-  
+
   // Font Sizes
   cardinalNorthFontSize: number;     // North marker font size
   cardinalOtherFontSize: number;     // E, S, W font size
@@ -48,7 +49,7 @@ export interface CompassConfig {
   turnInstructionTextSize: number;   // Turn instruction text size
   statusTextSize: number;            // Bottom status text size
   locationTextSize: number;          // Location name text size
-  
+
   // Spacing & Padding
   turnContainerPaddingH: number;     // Horizontal padding for turn instruction
   turnContainerPaddingV: number;     // Vertical padding for turn instruction
@@ -58,11 +59,11 @@ export interface CompassConfig {
   statusContainerPaddingV: number;   // Vertical padding for status
   statusContainerMargin: number;     // Margin from edges
   statusContainerBottom: number;     // Distance from bottom
-  
+
   // Glow Effects
   glowRingOffset: number;            // Distance of glow ring from compass edge
   glowRingWidth: number;             // Stroke width of glow effect
-  
+
   // Sensor & Animation
   facingThresholdDegrees: number;    // Degrees to consider "aligned" (20 = ±20°)
   compassRefreshInterval: number;    // Milliseconds between updates
@@ -71,7 +72,7 @@ export interface CompassConfig {
   rotationSpringStiffness: number;   // Spring animation stiffness
   magnetometerSpringDamping: number; // Magnetometer spring damping
   magnetometerSpringStiffness: number; // Magnetometer spring stiffness
-  
+
   // Border Radii
   turnContainerRadius: number;       // Border radius for turn instruction
   statusContainerRadius: number;     // Border radius for status container
@@ -82,14 +83,14 @@ export const DEFAULT_COMPASS_CONFIG: CompassConfig = {
   // Size & Layout
   compassSizeRatio: 0.67,
   centerHubSizeRatio: 0.35,
-  
+
   // Tick Marks
   cardinalTickLength: 20,
   semiCardinalTickLength: 12,
   minorTickLength: 6,
   cardinalTickWidth: 2.5,
   minorTickWidth: 0.8,
-  
+
   // Font Sizes
   cardinalNorthFontSize: 18,
   cardinalOtherFontSize: 14,
@@ -100,7 +101,7 @@ export const DEFAULT_COMPASS_CONFIG: CompassConfig = {
   turnInstructionTextSize: 16,
   statusTextSize: 10,
   locationTextSize: 15,
-  
+
   // Spacing & Padding
   turnContainerPaddingH: 22,
   turnContainerPaddingV: 12,
@@ -110,11 +111,11 @@ export const DEFAULT_COMPASS_CONFIG: CompassConfig = {
   statusContainerPaddingV: 16,
   statusContainerMargin: 20,
   statusContainerBottom: 40,
-  
+
   // Glow Effects
   glowRingOffset: 5,
   glowRingWidth: 3,
-  
+
   // Sensor & Animation
   facingThresholdDegrees: 20,
   compassRefreshInterval: 30,
@@ -123,7 +124,7 @@ export const DEFAULT_COMPASS_CONFIG: CompassConfig = {
   rotationSpringStiffness: 1000,
   magnetometerSpringDamping: 20,
   magnetometerSpringStiffness: 100,
-  
+
   // Border Radii
   turnContainerRadius: 50,
   statusContainerRadius: 30,
@@ -242,7 +243,7 @@ interface CompassViewProps {
 // Utility function to convert quaternion to rotation matrix
 const quaternionToRotationMatrix = (qx: number, qy: number, qz: number, qw: number) => {
   'worklet';
-  
+
   // Normalize quaternion
   const norm = Math.sqrt(qx * qx + qy * qy + qz * qz + qw * qw);
   const x = qx / norm;
@@ -263,20 +264,20 @@ const quaternionToRotationMatrix = (qx: number, qy: number, qz: number, qw: numb
 // Extract yaw (heading) from rotation matrix with tilt compensation
 const extractYawFromMatrix = (matrix: number[]) => {
   'worklet';
-  
+
   // Rotation matrix layout:
   // [m0  m1  m2]   [R00 R01 R02]
   // [m3  m4  m5] = [R10 R11 R12]
   // [m6  m7  m8]   [R20 R21 R22]
-  
+
   // Extract pitch and roll first for proper tilt compensation
   const pitch = Math.asin(-matrix[6]); // -R20
   const roll = Math.atan2(matrix[7], matrix[8]); // R21 / R22
-  
+
   // Tilt-compensated heading (yaw) calculation
   // Use a more robust formula that handles device orientation properly
   let yaw: number;
-  
+
   // Check for gimbal lock (when pitch is close to ±90°)
   if (Math.abs(matrix[6]) > 0.998) {
     // Gimbal lock case: use alternative calculation
@@ -285,7 +286,7 @@ const extractYawFromMatrix = (matrix: number[]) => {
     // Normal case: standard tilt-compensated heading
     yaw = Math.atan2(matrix[3], matrix[0]);
   }
-  
+
   return (yaw * 180 / Math.PI + 360) % 360;
 };
 
@@ -293,18 +294,18 @@ const extractYawFromMatrix = (matrix: number[]) => {
 const smoothAngle = (currentAngle: number, targetAngle: number, alpha: number) => {
   'worklet';
   let delta = targetAngle - currentAngle;
-  
+
   // Handle wraparound
   if (delta > 180) delta -= 360;
   if (delta < -180) delta += 360;
-  
+
   return (currentAngle + alpha * delta + 360) % 360;
 };
 
-export default function CompassView({ 
-  targetHeading: propTargetHeading = 45, 
-  targetLocation = null, 
-  onAlignmentChange, 
+export default function CompassView({
+  targetHeading: propTargetHeading = 45,
+  targetLocation = null,
+  onAlignmentChange,
   hideStatusWhenAligned = false,
   sensorType = 'rotation',
   theme = COMPASS_THEME,
@@ -312,23 +313,23 @@ export default function CompassView({
 }: CompassViewProps) {
   // Merge user config with defaults
   const config = { ...DEFAULT_COMPASS_CONFIG, ...userConfig };
-  
+
   // Get theme colors
   const colors = THEMES[theme];
   const [userLocation, setUserLocation] = useState<Coordinates | null>(null);
   const [isRotationSensorAvailable, setIsRotationSensorAvailable] = useState(true);
   const [currentSensorType, setCurrentSensorType] = useState<'rotation' | 'magnetometer'>(sensorType);
-  
+
   // Track if we've already triggered haptics for current alignment
   const hasTriggeredHapticsRef = useRef(false);
-  
+
   // Shared values for reanimated
   const heading = useSharedValue<number | null>(null);
   const dialRotation = useSharedValue(0);
   const smoothedHeading = useSharedValue<number | null>(null);
   const cumulativeRotation = useSharedValue(0); // Track total rotation (can exceed 360°)
   const targetHeadingSv = useSharedValue(0); // Target heading for pointer rotation
-  
+
   // Magnetometer fallback states
   const [magnetometerHeading, setMagnetometerHeading] = useState<number | null>(null);
   const [currentHeadingState, setCurrentHeadingState] = useState<number | null>(null);
@@ -350,7 +351,7 @@ export default function CompassView({
     try {
       const sensorData = rotationSensor.sensor.value;
       const { qx, qy, qz, qw } = sensorData;
-      
+
       // Check if we have valid quaternion data
       if (qx === 0 && qy === 0 && qz === 0 && qw === 0) {
         return null;
@@ -358,10 +359,10 @@ export default function CompassView({
 
       // Convert quaternion to rotation matrix
       const matrix = quaternionToRotationMatrix(qx, qy, qz, qw);
-      
+
       // Extract yaw (heading) from rotation matrix
       const yaw = extractYawFromMatrix(matrix);
-      
+
       return yaw;
     } catch (error) {
       console.warn('Rotation sensor error:', error);
@@ -375,7 +376,7 @@ export default function CompassView({
   // Update heading and smooth it
   useDerivedValue(() => {
     const newHeading = rotationHeading.value;
-    
+
     if (newHeading !== null && isRotationSensorAvailable && currentSensorType === 'rotation') {
       if (smoothedHeading.value === null) {
         // Initialize on first reading
@@ -384,19 +385,19 @@ export default function CompassView({
       } else {
         // Store previous smoothed value
         const prevSmoothed = smoothedHeading.value;
-        
+
         // Smooth the heading
         smoothedHeading.value = smoothAngle(smoothedHeading.value, newHeading, config.smoothingAlpha);
-        
+
         // Calculate delta accounting for wraparound
         let delta = smoothedHeading.value - prevSmoothed;
         if (delta > 180) delta -= 360;
         if (delta < -180) delta += 360;
-        
+
         // Add delta to cumulative rotation (accumulates past 360°)
         cumulativeRotation.value -= delta;
       }
-      
+
       heading.value = smoothedHeading.value;
 
       // dialRotation.value = cumulativeRotation.value;
@@ -457,19 +458,19 @@ export default function CompassView({
         // Compute the shortest angular distance (-180..180] then apply smoothing.
         const difference = ((rawHeading - prev + 540) % 360) - 180;
         smoothedMagHeading = (prev + config.smoothingAlpha * difference + 360) % 360;
-        
+
         // Calculate delta accounting for wraparound
         let delta = smoothedMagHeading - prev;
         if (delta > 180) delta -= 360;
         if (delta < -180) delta += 360;
-        
+
         // Add delta to cumulative rotation (accumulates past 360°)
         cumulativeMagRotation.current -= delta;
       }
 
       prevHeadingRef.current = smoothedMagHeading;
       setMagnetometerHeading(smoothedMagHeading);
-      
+
       // Update reanimated values
       heading.value = smoothedMagHeading;
       dialRotation.value = withSpring(cumulativeMagRotation.current, {
@@ -506,7 +507,7 @@ export default function CompassView({
 
     const startLocationUpdates = async () => {
       if (!targetLocation) return; // No need to request location if we only have static heading
-      
+
       const hasPermission = await requestLocationPermission();
       if (!hasPermission) {
         console.warn('Permission to access location was denied');
@@ -582,7 +583,7 @@ export default function CompassView({
   const currentHeading = currentSensorType === 'rotation' ? currentHeadingState : magnetometerHeading;
 
   // Determine if facing target direction
-  const isFacingTarget = 
+  const isFacingTarget =
     effectiveTargetHeading !== null && currentHeading !== null &&
     Math.min(
       Math.abs(effectiveTargetHeading - currentHeading),
@@ -594,7 +595,7 @@ export default function CompassView({
     if (onAlignmentChange) {
       onAlignmentChange(isFacingTarget);
     }
-    
+
     // Handle haptics - only trigger once when first becoming aligned
     if (isFacingTarget && !hasTriggeredHapticsRef.current) {
       // Trigger haptic feedback
@@ -602,7 +603,7 @@ export default function CompassView({
         Haptics.NotificationFeedbackType.Success
       );
       hasTriggeredHapticsRef.current = true;
-      
+
       // Reset haptics flag after 2 seconds
       setTimeout(() => {
         hasTriggeredHapticsRef.current = false;
@@ -644,29 +645,29 @@ export default function CompassView({
   // Generate degree markings (72 ticks, every 5°)
   const renderDegreeMarkings = () => {
     const markings = [];
-    
+
     for (let i = 0; i < 72; i++) {
       const angle = i * 5;
       const isCardinal = i % 18 === 0; // N, E, S, W (0°, 90°, 180°, 270°)
       const isSemi = i % 6 === 0 && !isCardinal; // Every 30° that's not cardinal
-      
+
       // Tick lengths from outer edge
       const outerRadius = compassRadius - 2;
-      const innerRadius = isCardinal 
+      const innerRadius = isCardinal
         ? outerRadius - config.cardinalTickLength  // Cardinal ticks longest
-        : isSemi 
+        : isSemi
           ? outerRadius - config.semiCardinalTickLength  // Semi ticks medium
           : outerRadius - config.minorTickLength;  // Minor ticks shortest
-      
+
       const startX = centerX + outerRadius * Math.sin((angle * Math.PI) / 180);
       const startY = centerY - outerRadius * Math.cos((angle * Math.PI) / 180);
       const endX = centerX + innerRadius * Math.sin((angle * Math.PI) / 180);
       const endY = centerY - innerRadius * Math.cos((angle * Math.PI) / 180);
-      
+
       // Colors - use theme colors
       const strokeColor = isCardinal ? colors.tickMajor : colors.tickMinor;
       const strokeWidth = isCardinal ? config.cardinalTickWidth : config.minorTickWidth;
-      
+
       markings.push(
         <Line
           key={`mark-${i}`}
@@ -717,15 +718,15 @@ export default function CompassView({
         }
       ]}>
         {instruction.icon && (
-          <Ionicons 
-            name={instruction.icon} 
-            size={config.turnInstructionIconSize} 
-            color={isFacingTarget ? colors.emerald : colors.gold} 
+          <Ionicons
+            name={instruction.icon}
+            size={config.turnInstructionIconSize}
+            color={isFacingTarget ? colors.emerald : colors.gold}
           />
         )}
         <Text style={[
           styles.turnText,
-          { 
+          {
             color: isFacingTarget ? colors.emerald : colors.gold,
             fontSize: config.turnInstructionTextSize,
           }
@@ -774,7 +775,7 @@ export default function CompassView({
               stroke={colors.dialStroke}
               strokeWidth="1"
             />
-            
+
             {/* Degree markings */}
             <G transform={`translate(25, 25)`}>
               {renderDegreeMarkings()}
@@ -936,14 +937,14 @@ export default function CompassView({
             elevation: 5,
           }
         ]}>
-          <Ionicons 
-            name="location" 
-            size={20} 
-            color={colors.gold} 
+          <Ionicons
+            name="location"
+            size={20}
+            color={colors.gold}
           />
           <Text style={[
             styles.locationText,
-            { 
+            {
               color: colors.statusText,
               fontSize: 18,
               fontWeight: '700',
@@ -964,72 +965,3 @@ export default function CompassView({
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: 'transparent',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 0,
-  },
-  turnContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    borderWidth: 1,
-    marginTop: -45,
-    // Padding, margins, colors, and sizing applied dynamically via inline styles
-  },
-  turnIcon: {
-    fontWeight: 'bold',
-    // Font size and color applied dynamically
-  },
-  turnText: {
-    textAlign: 'center',
-    fontWeight: '700',
-    letterSpacing: 2,
-    // Font size and color applied dynamically
-  },
-  compassContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginVertical: 0,
-    position: 'relative',
-    // Margin bottom applied dynamically via inline styles
-  },
-  phoneMarker: {
-    position: 'absolute',
-    top: -25,
-    zIndex: 10,
-  },
-  compassDial: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  pointerLayer: {
-    position: 'absolute',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  centerHubLayer: {
-    position: 'absolute',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  compass: {
-    backgroundColor: 'transparent',
-  },
-  locationContainer: {
-    position: 'absolute',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    gap: 8,
-  },
-  locationText: {
-    textAlign: 'center',
-    fontWeight: '500',
-    letterSpacing: 0.5,
-  },
-}); 

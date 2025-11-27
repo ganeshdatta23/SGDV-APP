@@ -1,5 +1,6 @@
 import React, { useEffect, useImperativeHandle, forwardRef } from 'react';
 import { View, StyleSheet, Text } from 'react-native';
+import { flowerAnimationStyles as styles } from '../src/styles/FlowerAnimationStyles';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -58,7 +59,7 @@ export const FlowerAnimation = forwardRef<FlowerAnimationRef, FlowerAnimationPro
     const triggerAnimation = () => {
       // Color variants for natural variety
       const colorVariants: Array<'red' | 'pink' | 'deepRed' | 'coral'> = ['red', 'pink', 'deepRed', 'coral'];
-      
+
       // Generate flower particles with random properties
       const newFlowers: Flower[] = Array.from({ length: FLOWER_COUNT }, (_, i) => ({
         id: Date.now() + i,
@@ -132,7 +133,7 @@ const FlowerParticle: React.FC<{ flower: Flower; groundY?: number }> = ({ flower
           const distanceFromCenter = currentX - centerX;
           const attractionForce = -distanceFromCenter * 0.003; // Gentle pull toward center
           velocityX += attractionForce;
-          
+
           // Add stronger damping when falling to reduce crossing
           velocityX *= 0.95;
         } else {
@@ -195,23 +196,5 @@ const FlowerParticle: React.FC<{ flower: Flower; groundY?: number }> = ({ flower
     </Animated.View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    ...StyleSheet.absoluteFillObject,
-    zIndex: 1000,
-  },
-  flower: {
-    position: 'absolute',
-    width: 30,
-    height: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  flowerEmoji: {
-    fontSize: 24,
-    textAlign: 'center',
-  },
-});
 
 export default FlowerAnimation;

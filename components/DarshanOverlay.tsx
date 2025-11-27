@@ -9,6 +9,7 @@ import {
   Dimensions,
   Platform,
 } from 'react-native';
+import { darshanOverlayStyles as styles } from '../src/styles/DarshanOverlayStyles';
 import { VideoView, VideoPlayer } from 'expo-video';
 import { AudioPlayer } from 'expo-audio';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -61,7 +62,7 @@ export const DarshanOverlay: React.FC<DarshanOverlayProps> = ({
 }) => {
   const [isMuted, setIsMuted] = useState(!audioEnabled);
   const [hasPlayedOnce, setHasPlayedOnce] = useState(false);
-  
+
   // Animated values for golden aura pulse effect
   const pulseAnim1 = useRef(new Animated.Value(0.5)).current;
   const pulseAnim2 = useRef(new Animated.Value(0.3)).current;
@@ -71,7 +72,7 @@ export const DarshanOverlay: React.FC<DarshanOverlayProps> = ({
 
   // Ref for flower animation
   const flowerAnimationRef = useRef<FlowerAnimationRef>(null);
-  
+
   // Ref for aarti animation
   const aartiAnimationRef = useRef<AartiAnimationRef>(null);
 
@@ -205,7 +206,7 @@ export const DarshanOverlay: React.FC<DarshanOverlayProps> = ({
       await audioPlayer.seekTo(0);
       audioPlayer.play();
       console.log(`🔊 Audio unmuted and playing at volume ${audioVolume}`);
-      
+
       // Also play the video when audio is manually turned on
       if (videoPlayer && visible) {
         try {
@@ -245,7 +246,7 @@ export const DarshanOverlay: React.FC<DarshanOverlayProps> = ({
         }
       }
     };
-    
+
     resetAudioState();
   }, [visible, audioEnabled, audioPlayer]);
 
@@ -342,7 +343,7 @@ export const DarshanOverlay: React.FC<DarshanOverlayProps> = ({
              We use absolute positioned SVGs for the glow layers.
              RadialGradient allows us to have a true center-out fade.
           */}
-          
+
           {/* Outer soft glow - large amber/orange - INCREASED INTENSITY */}
           <Animated.View style={[StyleSheet.absoluteFill, { opacity: pulseAnim1 }]}>
             <Svg height="100%" width="100%" viewBox="0 0 100 100">
@@ -478,7 +479,7 @@ export const DarshanOverlay: React.FC<DarshanOverlayProps> = ({
       <AartiAnimation
         ref={aartiAnimationRef}
         centerX={SCREEN_WIDTH / 2}
-        centerY={SCREEN_HEIGHT / 2  - 80}
+        centerY={SCREEN_HEIGHT / 2 - 80}
         flameLength={0.8}        // Add this line
         flickerIntensity={0.8}    // Add this line
         diyaSize={80}             // Add this line     
@@ -493,78 +494,5 @@ export const DarshanOverlay: React.FC<DarshanOverlayProps> = ({
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 999,
-    backgroundColor: '#000',
-  },
-  dimmingOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
-  },
-  centerContent: {
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  auraContainer: {
-    width: 600, // Increased size even further for massive glow spread
-    height: 600,
-    justifyContent: 'center',
-    alignItems: 'center',
-    position: 'relative',
-  },
-  darshanImage: {
-    width: IMAGE_WIDTH,
-    height: IMAGE_HEIGHT,
-    zIndex: 10,
-    // Optional: subtle shadow on the image itself to separate it from the glow
-    shadowColor: '#fbbf24',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.3,
-    shadowRadius: 20,
-  },
-  controlButtonsContainer: {
-    position: 'absolute',
-    bottom: 100,
-    flexDirection: 'row',
-    alignSelf: 'center',
-    gap: 20,
-  },
-  controlButton: {
-    padding: 4,
-  },
-  controlButtonInner: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    borderWidth: 2,
-    borderColor: 'rgba(251, 191, 36, 0.6)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#fbbf24',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.5,
-    shadowRadius: 10,
-    elevation: 10,
-  },
-  closeBtn: {
-    position: 'absolute',
-    top: 60,
-    right: 20,
-    width: 44,
-    height: 44,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    borderRadius: 22,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-  },
-});
 
 export default DarshanOverlay;

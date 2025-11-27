@@ -1,10 +1,10 @@
 import React from 'react';
-import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { View, TouchableOpacity, Text } from 'react-native';
+import { bottomNavStyles as styles } from '../src/styles/BottomNavStyles';
 import { Ionicons } from '@expo/vector-icons';
-import { COMPASS_THEME, ThemeMode } from './CompassView';
 
-// Tab type for navigation
-export type Tab = 'home' | 'events' | 'settings';
+import { COMPASS_THEME } from '../src/constants/theme';
+import { Tab, ThemeMode } from '../src/types';
 
 interface BottomNavProps {
   currentTab: Tab;
@@ -51,8 +51,8 @@ const NAV_THEMES: Record<ThemeMode, {
   },
 };
 
-export const BottomNav: React.FC<BottomNavProps> = ({ 
-  currentTab, 
+export const BottomNav: React.FC<BottomNavProps> = ({
+  currentTab,
   onTabChange,
   currentTheme = COMPASS_THEME,
 }) => {
@@ -68,7 +68,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
     <View style={[styles.container, { backgroundColor: currentNavTheme.background, borderTopColor: currentNavTheme.borderColor }]}>
       {navItems.map((item) => {
         const isActive = currentTab === item.id;
-        
+
         return (
           <TouchableOpacity
             key={item.id}
@@ -79,8 +79,8 @@ export const BottomNav: React.FC<BottomNavProps> = ({
             {/* Active indicator with glow */}
             {isActive && (
               <View style={[
-                styles.activeIndicator, 
-                { 
+                styles.activeIndicator,
+                {
                   backgroundColor: currentNavTheme.activeGlow,
                   shadowColor: currentNavTheme.activeGlow,
                   shadowOffset: { width: 0, height: 0 },
@@ -90,15 +90,15 @@ export const BottomNav: React.FC<BottomNavProps> = ({
                 }
               ]} />
             )}
-            
+
             <View style={[styles.iconContainer, { transform: [{ translateY: isActive ? -2 : 0 }] }]}>
-              <Ionicons 
-                name={item.icon} 
-                size={isActive ? 26 : 24} 
+              <Ionicons
+                name={item.icon}
+                size={isActive ? 26 : 24}
                 color={isActive ? currentNavTheme.activeIcon : currentNavTheme.inactiveIcon}
               />
             </View>
-            
+
             <Text style={[
               styles.label,
               { color: isActive ? currentNavTheme.activeText : currentNavTheme.inactiveText }
@@ -111,43 +111,5 @@ export const BottomNav: React.FC<BottomNavProps> = ({
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-around',
-    height: 80,
-    paddingBottom: 20,
-    borderTopWidth: 1,
-    zIndex: 100,
-  },
-  navItem: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: '100%',
-    position: 'relative',
-  },
-  activeIndicator: {
-    position: 'absolute',
-    top: 0,
-    width: 60,
-    height: 4,
-    borderRadius: 2,
-  },
-  iconContainer: {
-    marginBottom: 4,
-  },
-  label: {
-    fontSize: 10,
-    fontWeight: '500',
-    letterSpacing: 0.5,
-  },
-});
 
 export default BottomNav;

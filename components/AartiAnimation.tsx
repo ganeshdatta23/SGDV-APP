@@ -1,5 +1,6 @@
 import React, { useEffect, useImperativeHandle, forwardRef } from 'react';
 import { View, StyleSheet } from 'react-native';
+import { aartiAnimationStyles as styles } from '../src/styles/AartiAnimationStyles';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -50,8 +51,8 @@ const ROTATIONS = 3; // Number of complete rotations
  * @returns {React.JSX.Element} - The rendered component
  */
 export const AartiAnimation = forwardRef<AartiAnimationRef, AartiAnimationProps>(
-  ({ 
-    centerX = 0, 
+  ({
+    centerX = 0,
     centerY = 0,
     flameLength = 0.5,
     flickerIntensity = 0.8,
@@ -74,7 +75,7 @@ export const AartiAnimation = forwardRef<AartiAnimationRef, AartiAnimationProps>
         id: Date.now() + i,
         startAngle: (i / DIYA_COUNT) * 360, // Evenly distribute around circle
         radius: radius, // Use provided radius for circular path
-        scale: 1.0, 
+        scale: 1.0,
       }));
 
       setDiyas(newDiyas);
@@ -88,11 +89,11 @@ export const AartiAnimation = forwardRef<AartiAnimationRef, AartiAnimationProps>
     return (
       <View style={styles.container} pointerEvents="none">
         {diyas.map((diya) => (
-          <DiyaParticle 
-            key={diya.id} 
-            diya={diya} 
-            centerX={centerX} 
-            centerY={centerY} 
+          <DiyaParticle
+            key={diya.id}
+            diya={diya}
+            centerX={centerX}
+            centerY={centerY}
             flameLength={flameLength}
             flickerIntensity={flickerIntensity}
             diyaSize={diyaSize}
@@ -121,11 +122,11 @@ const SvgDiya: React.FC<SvgDiyaProps> = ({ flameLength, flickerIntensity, diyaSi
   const flameScaleX = useSharedValue(1);
   const flameScaleY = useSharedValue(flameLength);
   const flameOpacity = useSharedValue(0.9);
-  
+
   // Calculate flicker ranges based on intensity
   const baseScaleY = flameLength;
   const flickerRange = flickerIntensity * 0.2; // e.g. 0.5 * 0.2 = 0.1 (+/- 10%)
-  
+
   useEffect(() => {
     // Flickering animation loop
     // Randomize slightly to feel more organic
@@ -149,7 +150,7 @@ const SvgDiya: React.FC<SvgDiyaProps> = ({ flameLength, flickerIntensity, diyaSi
       -1,
       true
     );
-    
+
     flameOpacity.value = withRepeat(
       withSequence(
         withTiming(1.0, { duration: 100 }),
@@ -193,8 +194,8 @@ const SvgDiya: React.FC<SvgDiyaProps> = ({ flameLength, flickerIntensity, diyaSi
               <Stop offset="100%" stopColor="transparent" stopOpacity="0" />
             </RadialGradient>
             <RadialGradient id="glowGrad" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
-               <Stop offset="0%" stopColor="#FFA500" stopOpacity="0.6" />
-               <Stop offset="100%" stopColor="transparent" stopOpacity="0" />
+              <Stop offset="0%" stopColor="#FFA500" stopOpacity="0.6" />
+              <Stop offset="100%" stopColor="transparent" stopOpacity="0" />
             </RadialGradient>
           </Defs>
 
@@ -216,7 +217,7 @@ const SvgDiya: React.FC<SvgDiyaProps> = ({ flameLength, flickerIntensity, diyaSi
       {/* Base Layer - Static SVG */}
       <View style={[styles.baseContainer, { bottom: flameBaseGap }]}>
         <Svg width="60" height="40" viewBox="0 0 100 60">
-           {/* Diya Base (Clay Lamp) */}
+          {/* Diya Base (Clay Lamp) */}
           <Path
             d="M20 30 Q50 60 80 30 L75 30 Q50 50 25 30 Z"
             fill="#8B4513" // SaddleBrown
@@ -232,7 +233,7 @@ const SvgDiya: React.FC<SvgDiyaProps> = ({ flameLength, flickerIntensity, diyaSi
           />
           {/* Wick */}
           <Path
-            d="M48 30 L50 15 L52 30 Z" 
+            d="M48 30 L50 15 L52 30 Z"
             fill="#2F2F2F"
           />
         </Svg>
@@ -254,9 +255,9 @@ interface DiyaParticleProps {
 /**
  * Individual diya particle component with circular motion
  */
-const DiyaParticle: React.FC<DiyaParticleProps> = ({ 
-  diya, 
-  centerX, 
+const DiyaParticle: React.FC<DiyaParticleProps> = ({
+  diya,
+  centerX,
   centerY,
   flameLength,
   flickerIntensity,
@@ -288,7 +289,7 @@ const DiyaParticle: React.FC<DiyaParticleProps> = ({
       // Calculate current angle (clockwise = increasing angle)
       // Complete 3 full rotations (1080 degrees)
       const totalRotation = ROTATIONS * 360;
-      
+
       // Start from -90 deg (top) or maintain relative start
       currentAngle = diya.startAngle + (progress * totalRotation);
 
@@ -327,47 +328,14 @@ const DiyaParticle: React.FC<DiyaParticleProps> = ({
 
   return (
     <Animated.View style={[styles.diya, animatedStyle, { width: diyaSize, height: diyaSize }]}>
-      <SvgDiya 
-        flameLength={flameLength} 
-        flickerIntensity={flickerIntensity} 
+      <SvgDiya
+        flameLength={flameLength}
+        flickerIntensity={flickerIntensity}
         diyaSize={diyaSize}
         flameBaseGap={flameBaseGap}
       />
     </Animated.View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    ...StyleSheet.absoluteFillObject,
-    zIndex: 1000,
-  },
-  diya: {
-    position: 'absolute',
-    // Center the element on its coordinate - dynamic sizing handled in render
-    justifyContent: 'center',
-    alignItems: 'center',
-    // Margins are now dynamic
-  },
-  diyaContainer: {
-    width: 60, // Base size
-    height: 70, 
-    justifyContent: 'center',
-    alignItems: 'center',
-    position: 'relative',
-  },
-  flameContainer: {
-    position: 'absolute',
-    top: 0,
-    zIndex: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  baseContainer: {
-    position: 'absolute',
-    // bottom is now dynamic via inline style
-    zIndex: 5,
-  }
-});
 
 export default AartiAnimation;
