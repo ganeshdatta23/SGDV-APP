@@ -228,63 +228,72 @@ export const THEME_INFO: Record<ThemeMode, { name: string; description: string; 
 
 export const SETTINGS_THEMES: Record<ThemeMode, any> = {
     light: {
-        sectionBg: 'rgba(255, 255, 255, 0.9)',
-        sectionBorder: '#fed7aa', // orange-200
-        sectionTitle: '#c2410c', // orange-700
-        itemText: '#431407', // orange-950
-        itemSubtext: '#9a3412', // orange-800
-        accent: '#ea580c', // orange-600
-        chevron: '#fdba74', // orange-300
-        selectedBg: '#fff7ed', // orange-50
+        sectionBg: 'rgba(255, 255, 255, 0.15)', // Transparent for glass effect
+        sectionBorder: 'rgba(255, 255, 255, 0.3)',
+        sectionTitle: '#FFFFFF',
+        itemText: '#FFFFFF',
+        itemSubtext: 'rgba(255, 255, 255, 0.7)',
+        accent: '#FFD700',
+        chevron: 'rgba(255, 255, 255, 0.5)',
+        selectedBg: 'rgba(255, 215, 0, 0.15)',
     },
     dark: {
-        sectionBg: 'rgba(28, 25, 23, 0.95)', // stone-950
-        sectionBorder: '#44403c', // stone-700
-        sectionTitle: '#e7e5e4', // stone-200
-        itemText: '#fafaf9', // stone-50
-        itemSubtext: '#a8a29e', // stone-400
-        accent: '#fbbf24', // amber-400
-        chevron: '#57534e', // stone-600
-        selectedBg: 'rgba(251, 191, 36, 0.1)',
+        sectionBg: 'rgba(28, 25, 23, 0.6)', // Transparent for glass effect
+        sectionBorder: '#44403c',
+        sectionTitle: '#e7e5e4',
+        itemText: '#e7e5e4',
+        itemSubtext: '#a8a29e',
+        accent: '#FCD34D',
+        chevron: '#78716c',
+        selectedBg: 'rgba(252, 211, 77, 0.1)',
     },
     cosmic: {
-        sectionBg: 'rgba(2, 6, 23, 0.8)', // slate-950/80
-        sectionBorder: 'rgba(251, 191, 36, 0.3)', // amber-400/30
-        sectionTitle: '#fbbf24', // amber-400
-        itemText: '#fef3c7', // amber-100
-        itemSubtext: '#d97706', // amber-600
-        accent: '#fbbf24', // amber-400
-        chevron: '#78350f', // amber-900
+        sectionBg: 'rgba(76, 5, 25, 0.5)', // Transparent for glass effect
+        sectionBorder: 'rgba(251, 191, 36, 0.3)',
+        sectionTitle: '#fef3c7',
+        itemText: '#fef3c7',
+        itemSubtext: 'rgba(254, 243, 199, 0.7)',
+        accent: '#fbbf24',
+        chevron: 'rgba(251, 191, 36, 0.5)',
         selectedBg: 'rgba(251, 191, 36, 0.15)',
     },
 };
 
 export const EVENTS_THEMES: Record<ThemeMode, any> = {
     light: {
-        cardBg: 'rgba(255, 255, 255, 0.9)',
-        dateText: '#ea580c', // orange-600
-        titleText: '#431407', // orange-950
-        timeText: '#9a3412', // orange-800
-        locationText: '#9a3412', // orange-800
-        descriptionText: '#7c2d12', // orange-900
-        divider: '#fed7aa', // orange-200
+        title: '#FFFFFF',
+        cardBg: 'rgba(255, 255, 255, 0.15)', // Transparent for glass effect
+        cardBorder: 'rgba(255, 255, 255, 0.3)',
+        eventTitle: '#FFFFFF',
+        eventSubtext: 'rgba(255, 255, 255, 0.7)',
+        dateBg: 'rgba(0, 0, 0, 0.3)',
+        dateBorder: 'rgba(255, 255, 255, 0.2)',
+        dateText: '#FFFFFF',
+        loadingColor: '#FFFFFF',
+        emptyText: 'rgba(255, 255, 255, 0.6)',
     },
     dark: {
-        cardBg: 'rgba(28, 25, 23, 0.95)', // stone-950
-        dateText: '#fbbf24', // amber-400
-        titleText: '#fafaf9', // stone-50
-        timeText: '#d6d3d1', // stone-300
-        locationText: '#a8a29e', // stone-400
-        descriptionText: '#d6d3d1', // stone-300
-        divider: '#44403c', // stone-700
+        title: '#e7e5e4',
+        cardBg: 'rgba(28, 25, 23, 0.6)', // Transparent for glass effect
+        cardBorder: '#44403c',
+        eventTitle: '#e7e5e4',
+        eventSubtext: '#a8a29e',
+        dateBg: '#1c1917',
+        dateBorder: '#44403c',
+        dateText: '#FCD34D',
+        loadingColor: '#FCD34D',
+        emptyText: '#78716c',
     },
     cosmic: {
-        cardBg: 'rgba(2, 6, 23, 0.8)', // slate-950
-        dateText: '#fbbf24', // amber-400
-        titleText: '#fef3c7', // amber-100
-        timeText: '#e2e8f0', // slate-200
-        locationText: '#cbd5e1', // slate-300
-        descriptionText: '#cbd5e1', // slate-300
-        divider: 'rgba(251, 191, 36, 0.3)', // amber-400/30
+        title: '#FFFFFF',
+        cardBg: 'rgba(76, 5, 25, 0.5)', // Rose-950 with transparency for glass effect
+        cardBorder: 'rgba(251, 191, 36, 0.3)', // Amber-400 border
+        eventTitle: '#fef3c7', // Amber-100
+        eventSubtext: 'rgba(254, 243, 199, 0.7)', // Amber-100 faded
+        dateBg: 'rgba(2, 6, 23, 0.8)', // Slate-950
+        dateBorder: 'rgba(251, 191, 36, 0.4)', // Amber-400 border
+        dateText: '#fbbf24', // Amber-400
+        loadingColor: '#fbbf24', // Amber-400
+        emptyText: 'rgba(254, 243, 199, 0.5)', // Amber-100 faded
     },
 };
