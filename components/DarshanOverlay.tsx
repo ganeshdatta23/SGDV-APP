@@ -15,6 +15,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import Svg, { Defs, RadialGradient, Stop, Rect, Circle } from 'react-native-svg';
 import { FlowerAnimation, FlowerAnimationRef } from './FlowerAnimation';
+import { AartiAnimation, AartiAnimationRef } from './AartiAnimation';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -70,6 +71,9 @@ export const DarshanOverlay: React.FC<DarshanOverlayProps> = ({
 
   // Ref for flower animation
   const flowerAnimationRef = useRef<FlowerAnimationRef>(null);
+  
+  // Ref for aarti animation
+  const aartiAnimationRef = useRef<AartiAnimationRef>(null);
 
   // Start pulse animations
   useEffect(() => {
@@ -248,6 +252,14 @@ export const DarshanOverlay: React.FC<DarshanOverlayProps> = ({
     }
   };
 
+  // Handle aarti button press - trigger aarti animation
+  const handleAartiPress = () => {
+    if (aartiAnimationRef.current) {
+      aartiAnimationRef.current.trigger();
+      console.log('🪔 Aarti animation triggered');
+    }
+  };
+
   if (!visible) return null;
 
   // Animated Svg component for pulsing effect
@@ -396,7 +408,7 @@ export const DarshanOverlay: React.FC<DarshanOverlayProps> = ({
         </View>
       </Animated.View>
 
-      {/* Control buttons - Audio toggle and Pooja */}
+      {/* Control buttons - Audio toggle, Pooja, and Aarti */}
       <View style={styles.controlButtonsContainer}>
         <TouchableOpacity
           style={styles.controlButton}
@@ -425,6 +437,20 @@ export const DarshanOverlay: React.FC<DarshanOverlayProps> = ({
             />
           </View>
         </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.controlButton}
+          onPress={handleAartiPress}
+          activeOpacity={0.7}
+        >
+          <View style={styles.controlButtonInner}>
+            <Ionicons
+              name="flame"
+              size={24}
+              color="#fbbf24"
+            />
+          </View>
+        </TouchableOpacity>
       </View>
 
       {/* Flower Animation */}
@@ -433,7 +459,13 @@ export const DarshanOverlay: React.FC<DarshanOverlayProps> = ({
         startX={SCREEN_WIDTH / 2}
         startY={SCREEN_HEIGHT - 128}
         groundY={(SCREEN_HEIGHT + IMAGE_HEIGHT) / 2 - 20}
-        stayOnGroundSeconds={5}
+      />
+
+      {/* Aarti Animation */}
+      <AartiAnimation
+        ref={aartiAnimationRef}
+        centerX={SCREEN_WIDTH / 2}
+        centerY={SCREEN_HEIGHT / 2}
       />
 
       {/* Close button */}
