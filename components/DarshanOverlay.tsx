@@ -211,16 +211,25 @@ export const DarshanOverlay: React.FC<DarshanOverlayProps> = ({
 
   // Reset state when overlay becomes visible again
   useEffect(() => {
-    if (visible) {
-      setHasPlayedOnce(false);
-      setIsMuted(!audioEnabled);
-    } else {
-      // Stop audio when overlay is not visible (dealigned)
-      if (audioPlayer && audioPlayer.playing) {
-        audioPlayer.pause();
-        console.log('🔇 Audio stopped - overlay dealigned');
+    const resetAudioState = async () => {
+      if (visible) {
+        setHasPlayedOnce(false);
+        setIsMuted(!audioEnabled);
+        // Always seek to beginning when overlay becomes visible
+        if (audioPlayer) {
+          await audioPlayer.seekTo(0);
+          console.log('⏮️ Audio reset to position 0 - ready for fresh playback');
+        }
+      } else {
+        // Stop audio when overlay is not visible (dealigned)
+        if (audioPlayer && audioPlayer.playing) {
+          audioPlayer.pause();
+          console.log('🔇 Audio stopped - overlay dealigned');
+        }
       }
-    }
+    };
+    
+    resetAudioState();
   }, [visible, audioEnabled, audioPlayer]);
 
   // Update audio volume dynamically when it changes
