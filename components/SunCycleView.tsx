@@ -21,6 +21,7 @@ import {
   scheduleAlarmsForNext3Days,
   getScheduledNotifications,
   sendTestNotification,
+  sendTestAlarm,
   AlarmConfig,
 } from '../utils/alarmManager';
 
@@ -308,6 +309,17 @@ export default function SunCycleView({ latitude, longitude }: SunCycleViewProps)
           <Ionicons name="notifications-outline" size={24} color="#FFFFFF" />
           <Text style={styles.testButtonText}>Send Test Notification</Text>
         </TouchableOpacity>
+
+        {/* Test Alarm Button - schedules alarm for 5 seconds from now */}
+        <TouchableOpacity
+          style={styles.testAlarmButton}
+          onPress={async () => {
+            await sendTestAlarm();
+          }}
+        >
+          <Ionicons name="alarm-outline" size={24} color="#FFFFFF" />
+          <Text style={styles.testButtonText}>Test Alarm (5 sec)</Text>
+        </TouchableOpacity>
       </View>
     </ScrollView>
   );
@@ -474,6 +486,15 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     marginTop: 16,
+  },
+  testAlarmButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FF6B35',
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 12,
   },
 });
 

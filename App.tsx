@@ -5,7 +5,7 @@
  */
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { StatusBar, StyleSheet, Text, View, AppState } from 'react-native';
+import { StatusBar, StyleSheet, Text, View, AppState, TouchableOpacity, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { RadialGradient } from 'react-native-gradients';
@@ -18,7 +18,7 @@ import SettingsView from './components/SettingsView';
 import SunCycleView from './components/SunCycleView';
 import DarshanOverlay from './components/DarshanOverlay';
 import { fetchLocationDirect, calculateSunTimes } from './utils/sgvdApi';
-import { initializeNotifications, scheduleAlarms } from './utils/alarmManager';
+import { initializeNotifications, scheduleAlarms, addNotificationReceivedListener, addNotificationResponseReceivedListener } from './utils/alarmManager';
 
 // ============================================================================
 // APP BACKGROUND THEMES (synced with CompassView theme)
@@ -128,6 +128,12 @@ function App(): React.JSX.Element {
 
   // Audio player setup for expo-audio
   const audioPlayer = useAudioPlayer(require('./assets/audio/background-music.mp3'));
+  
+  // Alarm audio player for sunrise/sunset alarms
+  const alarmPlayer = useAudioPlayer(require('./assets/audio/alarm-sound.mp3'));
+  
+  // Track if alarm is currently playing
+  const [isAlarmPlaying, setIsAlarmPlaying] = useState(false);
 
   // App state tracking for background/foreground
   const appState = useRef(AppState.currentState);
@@ -170,14 +176,14 @@ function App(): React.JSX.Element {
 
     console.log('🚀 App.tsx: Component mounted, starting location load...');
     
-    // Initialize audio mode
+    // Initialize audio mode - enable background playback for alarms
     const setupAudio = async () => {
       try {
         await setAudioModeAsync({
           playsInSilentMode: true,
-          shouldPlayInBackground: false,
+          shouldPlayInBackground: true, // Enable background audio for alarms
         });
-        console.log('✅ Audio mode configured');
+        console.log('✅ Audio mode configured with background playback');
       } catch (error) {
         console.log('❌ Failed to configure audio mode', error);
       }
@@ -203,6 +209,127 @@ function App(): React.JSX.Element {
     
     loadLocation();
   }, []);
+  
+  // Reference for alarm auto-stop timeout
+  const alarmTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Max alarm duration: 1 minute (60000 ms)
+  const ALARM_MAX_DURATION = 60000;
+  
+  // Function to start playing the alarm
+  const startAlarm = useCallback(() => {
+    if (alarmPlayer && !isAlarmPlaying) {
+      try {
+        alarmPlayer.loop = true;
+        alarmPlayer.volume = 1.0;
+        alarmPlayer.play();
+        setIsAlarmPlaying(true);
+        console.log('🔊 Alarm sound started');
+        
+        // Also start playing background music if audio is enabled
+        if (audioPlayer && audioEnabled) {
+          try {
+            audioPlayer.loop = true;
+            audioPlayer.volume = audioVolume;
+            audioPlayer.play();
+            console.log('🎵 Background music started for alarm');
+          } catch (error) {
+            console.log('⚠️ Could not start background music:', error);
+          }
+        }
+        
+        // Auto-stop after 1 minute
+        alarmTimeoutRef.current = setTimeout(() => {
+          console.log('⏱️ Alarm auto-stopped after 1 minute');
+          if (alarmPlayer) {
+            try {
+              alarmPlayer.pause();
+              setIsAlarmPlaying(false);
+            } catch (error) {
+              console.log('⚠️ Could not auto-stop alarm:', error);
+            }
+          }
+          // Also stop background music
+          if (audioPlayer && audioPlayer.playing) {
+            try {
+              audioPlayer.pause();
+              console.log('🎵 Background music stopped');
+            } catch (error) {
+              console.log('⚠️ Could not stop background music:', error);
+            }
+          }
+        }, ALARM_MAX_DURATION);
+        
+      } catch (error) {
+        console.error('❌ Failed to play alarm sound:', error);
+      }
+    }
+  }, [alarmPlayer, isAlarmPlaying, audioPlayer, audioEnabled, audioVolume]);
+  
+  // Listen for alarm notifications (when app is in foreground)
+  useEffect(() => {
+    const subscription = addNotificationReceivedListener((notification) => {
+      console.log('🔔 Notification received:', notification);
+      
+      // Check if this is an alarm notification
+      const data = notification.request.content.data;
+      if (data && data.isAlarm) {
+        console.log('⏰ Alarm notification received - playing alarm sound!');
+        startAlarm();
+      }
+    });
+    
+    return () => {
+      subscription.remove();
+    };
+  }, [startAlarm]);
+  
+  // Listen for notification taps (when user opens app from notification)
+  useEffect(() => {
+    const subscription = addNotificationResponseReceivedListener((response) => {
+      console.log('👆 Notification tapped:', response);
+      
+      // Check if this is an alarm notification
+      const data = response.notification.request.content.data;
+      if (data && data.isAlarm) {
+        console.log('⏰ Alarm notification tapped - playing alarm sound!');
+        startAlarm();
+      }
+    });
+    
+    return () => {
+      subscription.remove();
+    };
+  }, [startAlarm]);
+  
+  // Function to stop the alarm
+  const stopAlarm = useCallback(() => {
+    // Clear the auto-stop timeout
+    if (alarmTimeoutRef.current) {
+      clearTimeout(alarmTimeoutRef.current);
+      alarmTimeoutRef.current = null;
+    }
+    
+    if (alarmPlayer && isAlarmPlaying) {
+      try {
+        alarmPlayer.pause();
+        setIsAlarmPlaying(false);
+        console.log('🔕 Alarm stopped');
+      } catch (error) {
+        console.log('⚠️ Could not stop alarm:', error);
+      }
+    }
+    
+    // Also stop background music if it's playing
+    if (audioPlayer && audioPlayer.playing) {
+      try {
+        audioPlayer.pause();
+        console.log('🎵 Background music stopped');
+      } catch (error) {
+        console.log('⚠️ Could not stop background music:', error);
+      }
+    }
+  }, [alarmPlayer, isAlarmPlaying, audioPlayer]);
 
   // Play / pause video depending on alignment and app state
   useEffect(() => {
@@ -421,6 +548,25 @@ function App(): React.JSX.Element {
         }}
       />
 
+      {/* Alarm Overlay - shows when alarm is playing */}
+      <Modal
+        visible={isAlarmPlaying}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={stopAlarm}
+      >
+        <View style={styles.alarmOverlay}>
+          <View style={styles.alarmCard}>
+            <Text style={styles.alarmIcon}>⏰</Text>
+            <Text style={styles.alarmTitle}>Alarm!</Text>
+            <Text style={styles.alarmMessage}>Time for your prayers</Text>
+            <TouchableOpacity style={styles.stopAlarmButton} onPress={stopAlarm}>
+              <Text style={styles.stopAlarmText}>Stop Alarm</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
     </>
   );
 
@@ -507,6 +653,52 @@ const styles = StyleSheet.create({
     textShadowColor: 'rgba(0, 0, 0, 0.3)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
+  },
+  alarmOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  alarmCard: {
+    backgroundColor: '#1a1a2e',
+    borderRadius: 24,
+    padding: 40,
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#FF6B35',
+    shadowColor: '#FF6B35',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  alarmIcon: {
+    fontSize: 80,
+    marginBottom: 16,
+  },
+  alarmTitle: {
+    fontSize: 36,
+    fontWeight: '700',
+    color: '#FF6B35',
+    marginBottom: 8,
+  },
+  alarmMessage: {
+    fontSize: 18,
+    color: '#FFFFFF',
+    marginBottom: 32,
+    opacity: 0.8,
+  },
+  stopAlarmButton: {
+    backgroundColor: '#FF6B35',
+    paddingHorizontal: 48,
+    paddingVertical: 16,
+    borderRadius: 30,
+  },
+  stopAlarmText: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#FFFFFF',
   },
 });
 

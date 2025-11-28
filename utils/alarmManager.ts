@@ -6,7 +6,6 @@ import { calculateSunTimes } from './sgvdApi';
 // Configure how notifications are displayed when app is in foreground
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
-    shouldShowAlert: true,
     shouldPlaySound: true,
     shouldSetBadge: true,
     shouldShowBanner: true,
@@ -207,7 +206,7 @@ export const scheduleAlarms = async (latitude: number, longitude: number): Promi
       if (sunriseAlarmTime > now) {
         await scheduleNotification(
           'sunrise-today',
-          '🌅 Sunrise Alert',
+          'Sunrise Alert',
           `Sunrise in ${config.sunriseOffset} minutes! Time for morning prayers.`,
           sunriseAlarmTime,
           isAlarm
@@ -250,7 +249,7 @@ export const scheduleAlarms = async (latitude: number, longitude: number): Promi
       
       await scheduleNotification(
         'sunset-tomorrow',
-        '🌇 Sunset Alert',
+        'Sunset Alert',
         `Sunset in ${config.sunsetOffset} minutes! Time for evening prayers.`,
         tomorrowSunsetAlarmTime,
         isAlarm
@@ -269,7 +268,7 @@ export const cancelAllAlarms = async (): Promise<void> => {
     // Cancel all scheduled notifications
     await Notifications.cancelAllScheduledNotificationsAsync();
     scheduledNotificationIds = [];
-    console.log('🔕 All alarms cancelled');
+  console.log('🔕 All alarms cancelled');
   } catch (error) {
     console.error('Error cancelling alarms:', error);
   }
@@ -358,7 +357,7 @@ export const getNextAlarmInfo = async (latitude: number, longitude: number): Pro
 // Schedule alarms for the next 3 days
 export const scheduleAlarmsForNext3Days = async (latitude: number, longitude: number): Promise<void> => {
   try {
-    console.log('📅 Scheduling alarms for next 3 days');
+  console.log('📅 Scheduling alarms for next 3 days');
     
     const config = await getAlarmConfig();
     
@@ -394,7 +393,7 @@ export const scheduleAlarmsForNext3Days = async (latitude: number, longitude: nu
         if (sunriseAlarmTime > now) {
           await scheduleNotification(
             `sunrise-${dayLabel}`,
-            '🌅 Sunrise Alert',
+            'Sunrise Alert',
             `Sunrise in ${config.sunriseOffset} minutes! Time for morning prayers.`,
             sunriseAlarmTime,
             isAlarm
@@ -409,7 +408,7 @@ export const scheduleAlarmsForNext3Days = async (latitude: number, longitude: nu
         if (sunsetAlarmTime > now) {
           await scheduleNotification(
             `sunset-${dayLabel}`,
-            '🌇 Sunset Alert',
+            'Sunset Alert',
             `Sunset in ${config.sunsetOffset} minutes! Time for evening prayers.`,
             sunsetAlarmTime,
             isAlarm
@@ -478,4 +477,31 @@ export const sendTestNotification = async (): Promise<void> => {
   }
 };
 
-export type { AlarmConfig };
+// Send a test alarm (scheduled for 5 seconds from now)
+export const sendTestAlarm = async (): Promise<void> => {
+  try {
+    const triggerDate = new Date();
+    triggerDate.setSeconds(triggerDate.getSeconds() + 5);
+    
+    await Notifications.scheduleNotificationAsync({
+      identifier: 'test-alarm',
+      content: {
+        title: '⏰ Test Alarm',
+        body: 'This is a test alarm! The alarm sound should be playing.',
+        sound: 'default',
+        priority: 'max',
+        data: { type: 'test', isAlarm: true },
+      },
+      trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.DATE,
+        date: triggerDate,
+        channelId: Platform.OS === 'android' ? 'sunrise-sunset-alarms' : undefined,
+      } as Notifications.DateTriggerInput,
+    });
+    console.log('✅ Test alarm scheduled for 5 seconds from now');
+  } catch (error) {
+    console.error('❌ Error scheduling test alarm:', error);
+  }
+};
+
+export type { AlarmConfig }; 
