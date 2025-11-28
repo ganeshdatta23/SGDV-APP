@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
 import { fetchEvents, EventData } from '../utils/sgvdApi';
-import { COMPASS_THEME } from './CompassView';
+import { ThemeMode } from './CompassView';
 
 // Theme colors synced with CompassView
 const EVENTS_THEMES = {
@@ -43,13 +43,14 @@ const EVENTS_THEMES = {
   },
 };
 
-const currentEventsTheme = EVENTS_THEMES[COMPASS_THEME];
-
 interface EventsViewProps {
   style?: object;
+  theme?: ThemeMode;
 }
 
-export const EventsView: React.FC<EventsViewProps> = ({ style }) => {
+export const EventsView: React.FC<EventsViewProps> = ({ style, theme = 'cosmic' }) => {
+  // Use the passed theme or default to cosmic
+  const currentEventsTheme = EVENTS_THEMES[theme];
   const [events, setEvents] = useState<EventData[]>([]);
   const [loading, setLoading] = useState(true);
 

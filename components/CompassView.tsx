@@ -15,11 +15,58 @@ import Animated, {
   SensorType,
   runOnJS,
   useAnimatedReaction,
+  useAnimatedProps,
+  type SharedValue,
 } from 'react-native-reanimated';
 import { Coordinates, calculateBearing, calculateDistance } from '../utils/locationUtils';
 
 const AnimatedG = Animated.createAnimatedComponent(G);
 const { width, height } = Dimensions.get('window');
+
+interface CardinalDirectionProps {
+  dir: string;
+  x: number;
+  y: number;
+  rotation: SharedValue<number>;
+  color: string;
+  fontSize: number;
+  fontWeight: string;
+}
+
+const CardinalDirection = ({ dir, x, y, rotation, color, fontSize, fontWeight }: CardinalDirectionProps) => {
+  const animatedProps = useAnimatedProps(() => {
+    return {
+      rotation: -rotation.value,
+    };
+  });
+
+  return (
+    <AnimatedG
+      animatedProps={animatedProps}
+      originX={x}
+      originY={y}
+    >
+      <SvgText
+        x={x}
+        y={y}
+        fontSize={fontSize}
+        fill={color}
+        textAnchor="middle"
+        fontWeight={fontWeight as any}
+        alignmentBaseline="middle"
+      >
+        {dir}
+      </SvgText>
+    </AnimatedG>
+  );
+};
+
+// ============================================================================
+// TESTING CONFIGURATION
+// ============================================================================
+// Change this to 'magnetometer' to force using the magnetometer for testing
+// Change to 'rotation' for default behavior (smoother, uses rotation vector)
+export const TEST_SENSOR_TYPE: 'rotation' | 'magnetometer' = 'rotation';
 
 // ============================================================================
 // COMPASS CONFIGURATION
@@ -118,7 +165,7 @@ export const DEFAULT_COMPASS_CONFIG: CompassConfig = {
   // Sensor & Animation
   facingThresholdDegrees: 20,
   compassRefreshInterval: 30,
-  smoothingAlpha: 0.8,
+  smoothingAlpha: 1,
   rotationSpringDamping: 1000,
   rotationSpringStiffness: 1000,
   magnetometerSpringDamping: 20,
@@ -306,7 +353,7 @@ export default function CompassView({
   targetLocation = null, 
   onAlignmentChange, 
   hideStatusWhenAligned = false,
-  sensorType = 'rotation',
+  sensorType = TEST_SENSOR_TYPE,
   theme = COMPASS_THEME,
   config: userConfig,
 }: CompassViewProps) {
@@ -441,8 +488,8 @@ export default function CompassView({
       lastUpdateTime.current = now;
 
       // Calculate heading from magnetometer data
-      // Fix coordinate system: atan2(-x, y) for correct magnetic north alignment
-      const angle = Math.atan2(-x, y) * (180 / Math.PI);
+      // Standard formula: atan2(y, x) gives heading where 0° is North
+      const angle = Math.atan2(y, x) * (180 / Math.PI);
       const rawHeading = (angle + 360) % 360;
 
       // --- Exponential smoothing to reduce noise & jitter ---
@@ -480,6 +527,11 @@ export default function CompassView({
 
     return () => subscription.remove();
   }, [currentSensorType, heading, dialRotation]);
+
+  // Log which sensor type is being used in the final step
+  useEffect(() => {
+    console.log(`[CompassView] Using ${currentSensorType} sensorType in final step`);
+  }, [currentSensorType]);
 
   // Auto-fallback mechanism: if rotation sensor fails, switch to magnetometer
   useEffect(() => {
@@ -693,7 +745,7 @@ export default function CompassView({
     if (absDelta <= config.facingThresholdDegrees) {
       return { text: "Aligned", icon: "checkmark-circle" };
     }
-    if (delta < 0) {
+    if (delta > 0) {
       return { text: "TURN RIGHT", icon: "arrow-redo" };
     }
     return { text: "TURN LEFT", icon: "arrow-undo" };

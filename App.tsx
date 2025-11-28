@@ -510,7 +510,7 @@ function App(): React.JSX.Element {
         />
       )}
 
-      {currentTab === 'events' && <EventsView />}
+      {currentTab === 'events' && <EventsView theme={currentTheme} />}
 
       {currentTab === 'settings' && (
         <SettingsView 
