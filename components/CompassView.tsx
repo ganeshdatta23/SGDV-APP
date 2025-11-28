@@ -6,15 +6,10 @@ import * as Location from 'expo-location';
 import { Ionicons } from '@expo/vector-icons';
 import Svg, { Circle, Text as SvgText, Line, Polygon, G, Path, Defs, LinearGradient, Stop, RadialGradient } from 'react-native-svg';
 import Animated, {
-  useAnimatedSensor,
   useAnimatedStyle,
-  useDerivedValue,
   useSharedValue,
   withSpring,
   withTiming,
-  SensorType,
-  runOnJS,
-  useAnimatedReaction,
   useAnimatedProps,
   type SharedValue,
 } from 'react-native-reanimated';
@@ -64,9 +59,8 @@ const CardinalDirection = ({ dir, x, y, rotation, color, fontSize, fontWeight }:
 // ============================================================================
 // TESTING CONFIGURATION
 // ============================================================================
-// Change this to 'magnetometer' to force using the magnetometer for testing
-// Change to 'rotation' for default behavior (smoother, uses rotation vector)
-export const TEST_SENSOR_TYPE: 'rotation' | 'magnetometer' = 'rotation';
+// Using only Magnetometer for compass heading
+export const TEST_SENSOR_TYPE = 'magnetometer';
 
 // ============================================================================
 // COMPASS CONFIGURATION
@@ -114,8 +108,6 @@ export interface CompassConfig {
   facingThresholdDegrees: number;    // Degrees to consider "aligned" (20 = ±20°)
   compassRefreshInterval: number;    // Milliseconds between updates
   smoothingAlpha: number;            // 0-1, smoothing factor (0.8 = 80% new, 20% old)
-  rotationSpringDamping: number;     // Spring animation damping
-  rotationSpringStiffness: number;   // Spring animation stiffness
   magnetometerSpringDamping: number; // Magnetometer spring damping
   magnetometerSpringStiffness: number; // Magnetometer spring stiffness
   
@@ -166,10 +158,8 @@ export const DEFAULT_COMPASS_CONFIG: CompassConfig = {
   facingThresholdDegrees: 20,
   compassRefreshInterval: 30,
   smoothingAlpha: 1,
-  rotationSpringDamping: 1000,
-  rotationSpringStiffness: 1000,
-  magnetometerSpringDamping: 20,
-  magnetometerSpringStiffness: 100,
+  magnetometerSpringDamping: 200, // Controls oscillation damping in spring animation (1 = critically damped, no oscillation)
+  magnetometerSpringStiffness: 1000, // Controls spring stiffness/speed (very high = instant response, no spring effect)
   
   // Border Radii
   turnContainerRadius: 50,
@@ -276,8 +266,6 @@ interface CompassViewProps {
   onAlignmentChange?: (aligned: boolean) => void;
   /** Hide status container when aligned (for video overlay) */
   hideStatusWhenAligned?: boolean;
-  /** Choose sensor type: 'rotation' (default) or 'magnetometer' */
-  sensorType?: 'rotation' | 'magnetometer';
   /** Theme mode override - defaults to COMPASS_THEME global */
   theme?: ThemeMode;
   /** Compass configuration - customize sizes, fonts, spacing, etc. */
@@ -285,56 +273,6 @@ interface CompassViewProps {
 }
 
 // These constants are now moved to config, kept here for backward compatibility if needed
-
-// Utility function to convert quaternion to rotation matrix
-const quaternionToRotationMatrix = (qx: number, qy: number, qz: number, qw: number) => {
-  'worklet';
-  
-  // Normalize quaternion
-  const norm = Math.sqrt(qx * qx + qy * qy + qz * qz + qw * qw);
-  const x = qx / norm;
-  const y = qy / norm;
-  const z = qz / norm;
-  const w = qw / norm;
-
-  // Convert to 3x3 rotation matrix
-  const matrix = [
-    1 - 2 * (y * y + z * z), 2 * (x * y - z * w), 2 * (x * z + y * w),
-    2 * (x * y + z * w), 1 - 2 * (x * x + z * z), 2 * (y * z - x * w),
-    2 * (x * z - y * w), 2 * (y * z + x * w), 1 - 2 * (x * x + y * y)
-  ];
-
-  return matrix;
-};
-
-// Extract yaw (heading) from rotation matrix with tilt compensation
-const extractYawFromMatrix = (matrix: number[]) => {
-  'worklet';
-  
-  // Rotation matrix layout:
-  // [m0  m1  m2]   [R00 R01 R02]
-  // [m3  m4  m5] = [R10 R11 R12]
-  // [m6  m7  m8]   [R20 R21 R22]
-  
-  // Extract pitch and roll first for proper tilt compensation
-  const pitch = Math.asin(-matrix[6]); // -R20
-  const roll = Math.atan2(matrix[7], matrix[8]); // R21 / R22
-  
-  // Tilt-compensated heading (yaw) calculation
-  // Use a more robust formula that handles device orientation properly
-  let yaw: number;
-  
-  // Check for gimbal lock (when pitch is close to ±90°)
-  if (Math.abs(matrix[6]) > 0.998) {
-    // Gimbal lock case: use alternative calculation
-    yaw = Math.atan2(-matrix[1], matrix[4]);
-  } else {
-    // Normal case: standard tilt-compensated heading
-    yaw = Math.atan2(matrix[3], matrix[0]);
-  }
-  
-  return (yaw * 180 / Math.PI + 360) % 360;
-};
 
 // Smooth angle transitions to handle 0/360 degree wraparound
 const smoothAngle = (currentAngle: number, targetAngle: number, alpha: number) => {
@@ -353,7 +291,6 @@ export default function CompassView({
   targetLocation = null, 
   onAlignmentChange, 
   hideStatusWhenAligned = false,
-  sensorType = TEST_SENSOR_TYPE,
   theme = COMPASS_THEME,
   config: userConfig,
 }: CompassViewProps) {
@@ -363,8 +300,6 @@ export default function CompassView({
   // Get theme colors
   const colors = THEMES[theme];
   const [userLocation, setUserLocation] = useState<Coordinates | null>(null);
-  const [isRotationSensorAvailable, setIsRotationSensorAvailable] = useState(true);
-  const [currentSensorType, setCurrentSensorType] = useState<'rotation' | 'magnetometer'>(sensorType);
   
   // Track if we've already triggered haptics for current alignment
   const hasTriggeredHapticsRef = useRef(false);
@@ -372,110 +307,16 @@ export default function CompassView({
   // Shared values for reanimated
   const heading = useSharedValue<number | null>(null);
   const dialRotation = useSharedValue(0);
-  const smoothedHeading = useSharedValue<number | null>(null);
-  const cumulativeRotation = useSharedValue(0); // Track total rotation (can exceed 360°)
   const targetHeadingSv = useSharedValue(0); // Target heading for pointer rotation
   
-  // Magnetometer fallback states
+  // Magnetometer states
   const [magnetometerHeading, setMagnetometerHeading] = useState<number | null>(null);
-  const [currentHeadingState, setCurrentHeadingState] = useState<number | null>(null);
   const prevHeadingRef = useRef<number | null>(null);
   const cumulativeMagRotation = useRef<number>(0); // Track cumulative rotation for magnetometer
   const lastUpdateTime = useRef<number>(0);
 
-  // Try to use rotation sensor first
-  const rotationSensor = useAnimatedSensor(SensorType.ROTATION, {
-    interval: 20,
-  });
-
-  // Process rotation sensor data
-  const rotationHeading = useDerivedValue(() => {
-    if (!isRotationSensorAvailable || currentSensorType !== 'rotation') {
-      return null;
-    }
-
-    try {
-      const sensorData = rotationSensor.sensor.value;
-      const { qx, qy, qz, qw } = sensorData;
-      
-      // Check if we have valid quaternion data
-      if (qx === 0 && qy === 0 && qz === 0 && qw === 0) {
-        return null;
-      }
-
-      // Convert quaternion to rotation matrix
-      const matrix = quaternionToRotationMatrix(qx, qy, qz, qw);
-      
-      // Extract yaw (heading) from rotation matrix
-      const yaw = extractYawFromMatrix(matrix);
-      
-      return yaw;
-    } catch (error) {
-      console.warn('Rotation sensor error:', error);
-      // Switch to magnetometer fallback
-      runOnJS(setIsRotationSensorAvailable)(false);
-      runOnJS(setCurrentSensorType)('magnetometer');
-      return null;
-    }
-  }, [isRotationSensorAvailable, currentSensorType]);
-
-  // Update heading and smooth it
-  useDerivedValue(() => {
-    const newHeading = rotationHeading.value;
-    
-    if (newHeading !== null && isRotationSensorAvailable && currentSensorType === 'rotation') {
-      if (smoothedHeading.value === null) {
-        // Initialize on first reading
-        smoothedHeading.value = newHeading;
-        cumulativeRotation.value = -newHeading;
-      } else {
-        // Store previous smoothed value
-        const prevSmoothed = smoothedHeading.value;
-        
-        // Smooth the heading
-        smoothedHeading.value = smoothAngle(smoothedHeading.value, newHeading, config.smoothingAlpha);
-        
-        // Calculate delta accounting for wraparound
-        let delta = smoothedHeading.value - prevSmoothed;
-        if (delta > 180) delta -= 360;
-        if (delta < -180) delta += 360;
-        
-        // Add delta to cumulative rotation (accumulates past 360°)
-        cumulativeRotation.value -= delta;
-      }
-      
-      heading.value = smoothedHeading.value;
-
-      // dialRotation.value = cumulativeRotation.value;
-
-      // Animate the compass dial rotation with spring physics
-      // damping: Controls how quickly the oscillation settles (higher = less bouncy, more controlled)
-      // stiffness: Controls how quickly the animation responds to changes (higher = faster response)
-      // These values provide smooth, responsive rotation without excessive bounce
-      dialRotation.value = withSpring(cumulativeRotation.value, {
-        damping: config.rotationSpringDamping,
-        stiffness: config.rotationSpringStiffness,
-      });
-    }
-  }, [rotationHeading, isRotationSensorAvailable, currentSensorType]);
-
-  // Sync heading shared value to React state for render logic
-  useAnimatedReaction(
-    () => heading.value,
-    (currentValue) => {
-      if (currentValue !== null) {
-        runOnJS(setCurrentHeadingState)(currentValue);
-      }
-    },
-    [heading]
-  );
-
-  // Magnetometer fallback
+  // Magnetometer for compass heading
   useEffect(() => {
-    if (currentSensorType !== 'magnetometer') {
-      return;
-    }
-
     // Set update interval for magnetometer
     Magnetometer.setUpdateInterval(config.compassRefreshInterval);
 
@@ -489,7 +330,7 @@ export default function CompassView({
 
       // Calculate heading from magnetometer data
       // Standard formula: atan2(y, x) gives heading where 0° is North
-      const angle = Math.atan2(y, x) * (180 / Math.PI);
+      const angle = -Math.atan2(x, y) * (180 / Math.PI);
       const rawHeading = (angle + 360) % 360;
 
       // --- Exponential smoothing to reduce noise & jitter ---
@@ -526,20 +367,7 @@ export default function CompassView({
     });
 
     return () => subscription.remove();
-  }, [currentSensorType, heading, dialRotation]);
-
-  // Log which sensor type is being used in the final step
-  useEffect(() => {
-    console.log(`[CompassView] Using ${currentSensorType} sensorType in final step`);
-  }, [currentSensorType]);
-
-  // Auto-fallback mechanism: if rotation sensor fails, switch to magnetometer
-  useEffect(() => {
-    if (sensorType === 'rotation' && !isRotationSensorAvailable) {
-      console.log('Rotation sensor unavailable, falling back to magnetometer');
-      setCurrentSensorType('magnetometer');
-    }
-  }, [isRotationSensorAvailable, sensorType]);
+  }, [heading, dialRotation]);
 
   // Request location permissions using expo-location
   const requestLocationPermission = async () => {
@@ -624,14 +452,14 @@ export default function CompassView({
   useEffect(() => {
     if (effectiveTargetHeading !== null) {
       targetHeadingSv.value = withSpring(effectiveTargetHeading, {
-        damping: config.rotationSpringDamping,
-        stiffness: config.rotationSpringStiffness,
+        damping: config.magnetometerSpringDamping,
+        stiffness: config.magnetometerSpringStiffness,
       });
     }
   }, [effectiveTargetHeading, targetHeadingSv]);
 
-  // Get current heading value for calculations - use state instead of shared value
-  const currentHeading = currentSensorType === 'rotation' ? currentHeadingState : magnetometerHeading;
+  // Get current heading value for calculations
+  const currentHeading = magnetometerHeading;
 
   // Determine if facing target direction
   const isFacingTarget = 
