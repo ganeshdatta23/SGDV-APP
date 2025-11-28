@@ -667,10 +667,10 @@ export default function CompassView({
               const svgCenter = (compassSize + 50) / 2;
               // Position each cardinal label on the compass ring
               const positions = {
-                N: { x: svgCenter, y: svgCenter - compassRadius + 45 },
-                E: { x: svgCenter + compassRadius - 40, y: svgCenter + 6 },
-                S: { x: svgCenter, y: svgCenter + compassRadius - 30 },
-                W: { x: svgCenter - compassRadius + 40, y: svgCenter + 6 },
+                N: { x: svgCenter, y: svgCenter - compassRadius + 40 },
+                E: { x: svgCenter + compassRadius - 40, y: svgCenter },
+                S: { x: svgCenter, y: svgCenter + compassRadius - 40 },
+                W: { x: svgCenter - compassRadius + 40, y: svgCenter },
               };
               const pos = positions[dir];
               
