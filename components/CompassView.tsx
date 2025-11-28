@@ -31,19 +31,21 @@ interface CardinalDirectionProps {
 const CardinalDirection = ({ dir, x, y, rotation, color, fontSize, fontWeight }: CardinalDirectionProps) => {
   const animatedProps = useAnimatedProps(() => {
     return {
-      rotation: -rotation.value,
+      transform: [
+        { translateX: x },
+        { translateY: y },
+        { rotate: `${-rotation.value}deg` },
+      ] as any,
     };
-  });
+  }, [x, y]);
 
   return (
     <AnimatedG
       animatedProps={animatedProps}
-      originX={x}
-      originY={y}
     >
       <SvgText
-        x={x}
-        y={y}
+        x={0}
+        y={0}
         fontSize={fontSize}
         fill={color}
         textAnchor="middle"
@@ -660,53 +662,31 @@ export default function CompassView({
               {renderDegreeMarkings()}
             </G>
 
-            {/* Cardinal directions */}
-            <G transform={`translate(25, 25)`}>
-              {/* N - Red with glow effect */}
-              <SvgText
-                x={centerX}
-                y={centerY - compassRadius + 45}
-                fontSize={config.cardinalNorthFontSize}
-                fill={colors.northColor}
-                textAnchor="middle"
-                fontWeight="bold"
-              >
-                N
-              </SvgText>
-              {/* E */}
-              <SvgText
-                x={centerX + compassRadius - 40}
-                y={centerY + 6}
-                fontSize={config.cardinalOtherFontSize}
-                fill={colors.cardinalColor}
-                textAnchor="middle"
-                fontWeight="600"
-              >
-                E
-              </SvgText>
-              {/* S */}
-              <SvgText
-                x={centerX}
-                y={centerY + compassRadius - 30}
-                fontSize={config.cardinalOtherFontSize}
-                fill={colors.cardinalColor}
-                textAnchor="middle"
-                fontWeight="600"
-              >
-                S
-              </SvgText>
-              {/* W */}
-              <SvgText
-                x={centerX - compassRadius + 40}
-                y={centerY + 6}
-                fontSize={config.cardinalOtherFontSize}
-                fill={colors.cardinalColor}
-                textAnchor="middle"
-                fontWeight="600"
-              >
-                W
-              </SvgText>
-            </G>
+            {/* Cardinal directions with counter-rotation to stay upright */}
+            {(['N', 'E', 'S', 'W'] as const).map((dir) => {
+              const svgCenter = (compassSize + 50) / 2;
+              // Position each cardinal label on the compass ring
+              const positions = {
+                N: { x: svgCenter, y: svgCenter - compassRadius + 45 },
+                E: { x: svgCenter + compassRadius - 40, y: svgCenter + 6 },
+                S: { x: svgCenter, y: svgCenter + compassRadius - 30 },
+                W: { x: svgCenter - compassRadius + 40, y: svgCenter + 6 },
+              };
+              const pos = positions[dir];
+              
+              return (
+                <CardinalDirection
+                  key={dir}
+                  dir={dir}
+                  x={pos.x}
+                  y={pos.y}
+                  rotation={dialRotation}
+                  color={dir === 'N' ? colors.northColor : colors.cardinalColor}
+                  fontSize={dir === 'N' ? config.cardinalNorthFontSize : config.cardinalOtherFontSize}
+                  fontWeight={dir === 'N' ? 'bold' : '600'}
+                />
+              );
+            })}
           </Svg>
         </Animated.View>
 
