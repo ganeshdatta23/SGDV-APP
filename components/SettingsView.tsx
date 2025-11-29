@@ -347,14 +347,17 @@ const styles = StyleSheet.create({
   },
   settingInfo: {
     flex: 1,
+    paddingRight: 8,
   },
   settingTitle: {
     fontSize: 16,
     fontWeight: '600',
     marginBottom: 2,
+    flexWrap: 'wrap',
   },
   settingSubtitle: {
     fontSize: 13,
+    flexWrap: 'wrap',
   },
   themeOptions: {
     paddingHorizontal: 16,
@@ -381,14 +384,17 @@ const styles = StyleSheet.create({
   },
   themeInfo: {
     flex: 1,
+    paddingRight: 8,
   },
   themeName: {
     fontSize: 16,
     fontWeight: '600',
     marginBottom: 2,
+    flexWrap: 'wrap',
   },
   themeDescription: {
     fontSize: 13,
+    flexWrap: 'wrap',
   },
   sliderContainer: {
     paddingHorizontal: 16,

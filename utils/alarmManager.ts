@@ -35,9 +35,9 @@ const DEFAULT_ALARM_CONFIG: AlarmConfig = {
   alarmEnabled: false,
   sunriseAlarmEnabled: false,
   sunsetAlarmEnabled: false,
-  notificationsEnabled: false,
-  sunriseNotificationEnabled: false,
-  sunsetNotificationEnabled: false,
+  notificationsEnabled: true, // Notifications enabled by default
+  sunriseNotificationEnabled: true, // Sunrise notifications enabled by default
+  sunsetNotificationEnabled: true, // Sunset notifications enabled by default
 };
 
 // Store notification IDs for cleanup

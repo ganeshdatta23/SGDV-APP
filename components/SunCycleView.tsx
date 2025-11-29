@@ -182,7 +182,7 @@ export default function SunCycleView({ latitude, longitude }: SunCycleViewProps)
         <View style={styles.controlRow}>
           <View style={styles.controlLabel}>
             <Ionicons name="alarm" size={24} color="#FF6B35" />
-            <Text style={styles.controlText}>Alarm </Text>
+            <Text style={styles.controlText}>Alarm</Text>
           </View>
           <Switch
             value={config.alarmEnabled}
@@ -422,17 +422,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
+    paddingRight: 8,
   },
   controlText: {
     fontSize: 16,
     color: '#FFFFFF',
     marginLeft: 12,
+    flexWrap: 'wrap',
+    flex: 1,
   },
   controlTextNested: {
     fontSize: 15,
     color: '#FFFFFF',
     marginLeft: 12,
     opacity: 0.9,
+    flexWrap: 'wrap',
+    flex: 1,
   },
   nestedControls: {
     marginLeft: 20,

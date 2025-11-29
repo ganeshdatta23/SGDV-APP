@@ -302,13 +302,13 @@ const loadCachedLocation = async (): Promise<LocationData | null> => {
 
 /**
  * Fetches location data from SGVD Backend API
- * Always tries API first, only uses cache if network is unavailable
+ * Fallback chain: API -> Cache -> Hardcoded fallback
  * Returns location info including name, coordinates, sunrise/sunset times
  */
 export const fetchLocationDirect = async (): Promise<LocationData> => {
-  // Always try API first
+  // STEP 1: Try API first
   try {
-    console.log('SGVD API: Fetching location data');
+    console.log('🌐 STEP 1: Fetching location data from API...');
     
     const response = await fetch(SGVD_API_URL, {
       method: 'GET',
@@ -331,7 +331,7 @@ export const fetchLocationDirect = async (): Promise<LocationData> => {
     // The API returns { results: [...] }
     if (data?.results?.length > 0) {
       const locationData = data.results[0];
-      console.log('SGVD API: Location found:', locationData.name);
+      console.log('✅ STEP 1 SUCCESS: Location found from API:', locationData.name);
       
       // Extract time from API and apply to today's date
       // This ignores the date from API and uses only the time portion
@@ -375,22 +375,32 @@ export const fetchLocationDirect = async (): Promise<LocationData> => {
     }
     
     throw new Error('No location found in API response');
-  } catch (error) {
-    // If it's a network error, try to use cache
-    if (isNetworkError(error)) {
-      console.warn('SGVD API: Network error detected, attempting to use cache');
+  } catch (apiError) {
+    // STEP 2: API failed - try internal cache (in-memory + AsyncStorage)
+    console.warn('❌ STEP 1 FAILED: API error:', apiError);
+    console.log('💾 STEP 2: Checking internal cache...');
+    
+    try {
       const cachedLocation = await loadCachedLocation();
       
       if (cachedLocation) {
-        console.log('Using cached location data due to network unavailability');
+        console.log('✅ STEP 2 SUCCESS: Using cached location data');
+        console.log('Cached location:', {
+          name: cachedLocation.name,
+          coords: `${cachedLocation.latitude}, ${cachedLocation.longitude}`,
+          sunrise: formatSunTime(cachedLocation.sunrise),
+          sunset: formatSunTime(cachedLocation.sunset)
+        });
         return cachedLocation;
       }
+      
+      console.log('❌ STEP 2 FAILED: No valid cache found');
+    } catch (cacheError) {
+      console.warn('❌ STEP 2 FAILED: Cache read error:', cacheError);
     }
     
-    // If not a network error, or cache unavailable, log and use fallback
-    console.error('SGVD API: Error:', error);
-    console.log('Using fallback location');
-    
+    // STEP 3: Both API and cache failed - use hardcoded fallback
+    console.log('🏠 STEP 3: Using hardcoded fallback location');
     const fallbackTimes = getFallbackSunTimes();
     const location: LocationData = {
       ...FALLBACK_LOCATION,
@@ -398,6 +408,13 @@ export const fetchLocationDirect = async (): Promise<LocationData> => {
       sunrise: fallbackTimes.sunrise,
       sunset: fallbackTimes.sunset,
     };
+    
+    console.log('✅ STEP 3 SUCCESS: Fallback location loaded:', {
+      name: location.name,
+      coords: `${location.latitude}, ${location.longitude}`,
+      sunrise: formatSunTime(location.sunrise),
+      sunset: formatSunTime(location.sunset)
+    });
     
     return location;
   }

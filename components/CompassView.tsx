@@ -782,10 +782,12 @@ export default function CompassView({
             backgroundColor: colors.turnContainerBg,
             borderColor: colors.turnContainerBorder,
             borderWidth: 1,
-            paddingHorizontal: 25,
-            paddingVertical: 12,
+            paddingHorizontal: 20,
+            paddingVertical: 14,
             borderRadius: config.turnContainerRadius,
             bottom: config.statusContainerBottom + 40,
+            maxWidth: width * 0.93,
+            alignSelf: 'center',
             shadowColor: "#000",
             shadowOffset: {
               width: 0,
@@ -800,24 +802,43 @@ export default function CompassView({
             name="location" 
             size={20} 
             color={colors.gold} 
+            style={{ flexShrink: 0, marginTop: 2 }}
           />
-          <Text style={[
-            styles.locationText,
-            { 
-              color: colors.statusText,
-              fontSize: 18,
-              fontWeight: '700',
-              textTransform: 'none',
-              letterSpacing: 0.5,
-            }
-          ]}>
-            {targetLocation.address}
+          <View style={{ flex: 1, paddingRight: 4 }}>
+            <Text 
+              style={[
+                styles.locationText,
+                { 
+                  color: colors.statusText,
+                  fontSize: 17,
+                  fontWeight: '700',
+                  textTransform: 'none',
+                  letterSpacing: 0.5,
+                }
+              ]}
+              numberOfLines={3}
+              ellipsizeMode="tail"
+            >
+              {targetLocation.address}
+            </Text>
             {distanceToTarget && (
-              <Text style={{ fontWeight: '400', fontSize: 16, textTransform: 'none', opacity: 0.9 }}>
-                {` - ${distanceToTarget}km away`}
+              <Text 
+                style={[
+                  styles.locationText,
+                  { 
+                    color: colors.statusText,
+                    fontWeight: '400', 
+                    fontSize: 15, 
+                    textTransform: 'none', 
+                    opacity: 0.9,
+                    marginTop: 4,
+                  }
+                ]}
+              >
+                {`${distanceToTarget}km away`}
               </Text>
             )}
-          </Text>
+          </View>
         </View>
       )}
     </View>

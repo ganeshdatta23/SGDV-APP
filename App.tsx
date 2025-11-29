@@ -155,17 +155,23 @@ function App(): React.JSX.Element {
     const loadLocation = async () => {
       try {
         console.log('🔍 App.tsx: Starting location fetch process...');
-        console.log('🔍 App.tsx: About to call fetchLocationDirect()');
+        console.log('🔍 App.tsx: Calling fetchLocationDirect() with fallback chain (API -> Cache -> Hardcoded)');
+        
+        // fetchLocationDirect() always returns a valid location through its fallback chain:
+        // 1. Try API first
+        // 2. If API fails, check internal cache (in-memory + AsyncStorage)
+        // 3. If cache fails, use hardcoded fallback location
         const location = await fetchLocationDirect();
-        console.log('🔍 App.tsx: fetchLocationDirect returned:', location);
-        if (location) {
-          console.log('✅ App.tsx: Target location loaded successfully:', location);
-          setTargetLocation(location);
-        } else {
-          console.log('❌ App.tsx: fetchLocationDirect returned null/undefined');
-        }
+        
+        console.log('✅ App.tsx: Target location loaded successfully:', {
+          name: location.name,
+          coords: `${location.latitude}, ${location.longitude}`,
+          address: location.address,
+        });
+        setTargetLocation(location);
       } catch (error) {
-        console.error('❌ App.tsx: Failed to load target location:', error);
+        // This should never happen since fetchLocationDirect has complete fallback chain
+        console.error('❌ App.tsx: Unexpected error loading location:', error);
         if (error instanceof Error) {
           console.error('❌ App.tsx: Error details:', error.message, error.stack);
         } else {
@@ -618,13 +624,16 @@ const styles = StyleSheet.create({
   },
   titleContainer: {
     alignItems: 'center',
-    flex: 1
+    flex: 1,
+    paddingHorizontal: 16,
   },
   subtitle: {
-    fontSize: 17,
+    fontSize: 16,
     textAlign: 'center',
     marginTop: 8,
     fontWeight: '400',
+    lineHeight: 22,
+    paddingHorizontal: 8,
     // Color applied dynamically via inline styles
   },
   headerRow: {

@@ -131,17 +131,20 @@ export const EventsView: React.FC<EventsViewProps> = ({ style, theme = 'cosmic' 
                   <View style={styles.eventDetails}>
                     <Text 
                       style={[styles.eventTitle, { color: currentEventsTheme.eventTitle }]} 
-                      numberOfLines={isExpanded ? undefined : 2}
+                      numberOfLines={isExpanded ? undefined : 3}
                     >
                       {event.title}
                     </Text>
-                    <Text style={[styles.eventSubtext, { color: currentEventsTheme.eventSubtext }]}>
+                    <Text 
+                      style={[styles.eventSubtext, { color: currentEventsTheme.eventSubtext }]}
+                      numberOfLines={2}
+                    >
                       {event.location_name || 'Location TBA'} • {time}
                     </Text>
                     {event.description && (
                       <Text 
                         style={[styles.eventDescription, { color: currentEventsTheme.eventSubtext }]} 
-                        numberOfLines={isExpanded ? undefined : 2}
+                        numberOfLines={isExpanded ? undefined : 3}
                       >
                         {event.description}
                       </Text>
@@ -236,12 +239,14 @@ const styles = StyleSheet.create({
   },
   eventDetails: {
     flex: 1,
+    paddingRight: 4,
   },
   eventTitle: {
     fontSize: 16,
     fontWeight: '700',
     marginBottom: 4,
     lineHeight: 22,
+    flexWrap: 'wrap',
   },
   eventSubtext: {
     fontSize: 12,
