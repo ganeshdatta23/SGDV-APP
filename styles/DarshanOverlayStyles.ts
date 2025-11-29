@@ -1,0 +1,88 @@
+import { StyleSheet } from 'react-native';
+import {
+  DARSHAN_IMAGE_WIDTH,
+  DARSHAN_IMAGE_HEIGHT,
+  DARSHAN_AURA_CONTAINER_SIZE,
+  DARSHAN_CONTROL_BUTTON_SIZE,
+  DARSHAN_CONTROL_BUTTON_BORDER_RADIUS,
+  DARSHAN_CLOSE_BUTTON_SIZE,
+  DARSHAN_CLOSE_BUTTON_BORDER_RADIUS,
+  DARSHAN_CONTROL_BUTTON_BG_COLOR,
+  DARSHAN_CONTROL_BUTTON_BORDER_COLOR,
+  DARSHAN_CLOSE_BUTTON_BG_COLOR,
+  DARSHAN_CLOSE_BUTTON_BORDER_COLOR,
+  DARSHAN_DIMMING_OVERLAY_COLOR,
+} from '../constants';
+
+export const darshanOverlayStyles = StyleSheet.create({
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 999,
+    backgroundColor: '#000',
+  },
+  dimmingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: DARSHAN_DIMMING_OVERLAY_COLOR,
+  },
+  centerContent: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  auraContainer: {
+    width: DARSHAN_AURA_CONTAINER_SIZE,
+    height: DARSHAN_AURA_CONTAINER_SIZE,
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+  },
+  darshanImage: {
+    width: DARSHAN_IMAGE_WIDTH,
+    height: DARSHAN_IMAGE_HEIGHT,
+    zIndex: 10,
+    shadowColor: '#fbbf24',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+  },
+  controlButtonsContainer: {
+    position: 'absolute',
+    bottom: 100,
+    flexDirection: 'row',
+    alignSelf: 'center',
+    gap: 20,
+  },
+  controlButton: {
+    padding: 4,
+  },
+  controlButtonInner: {
+    width: DARSHAN_CONTROL_BUTTON_SIZE,
+    height: DARSHAN_CONTROL_BUTTON_SIZE,
+    borderRadius: DARSHAN_CONTROL_BUTTON_BORDER_RADIUS,
+    backgroundColor: DARSHAN_CONTROL_BUTTON_BG_COLOR,
+    borderWidth: 2,
+    borderColor: DARSHAN_CONTROL_BUTTON_BORDER_COLOR,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#fbbf24',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 10,
+    elevation: 10,
+  },
+  closeBtn: {
+    position: 'absolute',
+    top: 60,
+    right: 20,
+    width: DARSHAN_CLOSE_BUTTON_SIZE,
+    height: DARSHAN_CLOSE_BUTTON_SIZE,
+    backgroundColor: DARSHAN_CLOSE_BUTTON_BG_COLOR,
+    borderRadius: DARSHAN_CLOSE_BUTTON_BORDER_RADIUS,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: DARSHAN_CLOSE_BUTTON_BORDER_COLOR,
+  },
+});
+

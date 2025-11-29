@@ -1,0 +1,105 @@
+import { StyleSheet } from 'react-native';
+
+export const appStyles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  safeArea: {
+    flex: 1,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+    paddingTop: 60,
+    paddingBottom: 20,
+    paddingHorizontal: 20,
+    backgroundColor: 'transparent',
+  },
+  titleContainer: {
+    alignItems: 'center',
+    flex: 1,
+    paddingHorizontal: 16,
+  },
+  subtitle: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginTop: 8,
+    fontWeight: '400',
+    lineHeight: 22,
+    paddingHorizontal: 8,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+    paddingHorizontal: 10,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: '700',
+    textAlign: 'center',
+    marginBottom: 8,
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
+  },
+  sunEventText: {
+    fontSize: 18,
+    color: '#FFFFFF',
+    textAlign: 'center',
+    marginTop: 12,
+    fontWeight: '500',
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+  },
+  alarmOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  alarmCard: {
+    backgroundColor: '#1a1a2e',
+    borderRadius: 24,
+    padding: 40,
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#FF6B35',
+    shadowColor: '#FF6B35',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  alarmIcon: {
+    fontSize: 80,
+    marginBottom: 16,
+  },
+  alarmTitle: {
+    fontSize: 36,
+    fontWeight: '700',
+    color: '#FF6B35',
+    marginBottom: 8,
+  },
+  alarmMessage: {
+    fontSize: 18,
+    color: '#FFFFFF',
+    marginBottom: 32,
+    opacity: 0.8,
+  },
+  stopAlarmButton: {
+    backgroundColor: '#FF6B35',
+    paddingHorizontal: 48,
+    paddingVertical: 16,
+    borderRadius: 30,
+  },
+  stopAlarmText: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+});
+

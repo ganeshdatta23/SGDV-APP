@@ -47,6 +47,7 @@ npx expo start
    - Install the **Expo Go** app on your mobile device
    - Scan the QR code displayed in the terminal and run it in expo-client app in ios/android
    - Or press `a` for Android emulator, `i` for iOS simulator
+   - 📱 **New to Android emulators?** See [Android Emulator Quick Start](docs/ANDROID_EMULATOR_QUICKSTART.md)
 
 ## 📦 Tech Stack
 
@@ -340,13 +341,344 @@ npx expo start --clear
 # Look for console logs with "🧭" emoji
 ```
 
+## 📱 Android Emulator Testing
+
+> 🚀 **Quick Start**: See [Android Emulator Quick Start Guide](docs/ANDROID_EMULATOR_QUICKSTART.md) for step-by-step setup
+
+### Helper Script
+
+We've included a helper script to make testing easier:
+
+```bash
+# Interactive menu
+./scripts/start-emulators.sh
+
+# Quick start (starts first AVD + Expo)
+./scripts/start-emulators.sh quick
+
+# Start specific emulator
+./scripts/start-emulators.sh start Pixel_8_API_34
+
+# Start multiple emulators
+./scripts/start-emulators.sh start Pixel_4a_API_34 Pixel_8_API_34 Pixel_Tablet
+
+# List all available AVDs
+./scripts/start-emulators.sh list
+
+# Check what's running
+./scripts/start-emulators.sh status
+
+# Kill all emulators
+./scripts/start-emulators.sh kill
+```
+
+### Prerequisites
+
+Ensure you have Android Studio installed:
+
+```bash
+# Install via Homebrew (macOS)
+brew install --cask android-studio
+
+# Or download from: https://developer.android.com/studio
+```
+
+### Environment Setup
+
+Add these to your `~/.zshrc` (macOS) or `~/.bashrc` (Linux):
+
+```bash
+export ANDROID_HOME=$HOME/Library/Android/sdk  # macOS
+# export ANDROID_HOME=$HOME/Android/Sdk        # Linux
+
+export PATH=$PATH:$ANDROID_HOME/emulator
+export PATH=$PATH:$ANDROID_HOME/platform-tools
+export PATH=$PATH:$ANDROID_HOME/tools
+export PATH=$PATH:$ANDROID_HOME/tools/bin
+
+# Reload your shell
+source ~/.zshrc  # or source ~/.bashrc
+```
+
+### Creating Multiple Virtual Devices
+
+1. **Open Android Studio** and launch **AVD Manager**:
+   - Click **"More Actions"** → **"Virtual Device Manager"**
+   - Or use toolbar: **Tools** → **Device Manager**
+
+2. **Recommended Test Devices** (for various screen sizes):
+
+   | Device Type | Model | Screen Size | Resolution | Use Case |
+   |------------|-------|-------------|------------|----------|
+   | Small Phone | Pixel 4a | 5.8" | 1080×2340 | Budget phones |
+   | Standard Phone | Pixel 8 | 6.2" | 1080×2400 | Most common |
+   | Large Phone | Pixel 8 Pro | 6.7" | 1344×2992 | Premium devices |
+   | Tablet | Pixel Tablet | 10.95" | 2560×1600 | Tablet experience |
+   | Foldable | Pixel Fold | 7.6" | 1840×2208 | Foldable screens |
+
+3. **Create Each Device**:
+   - Click **"Create Virtual Device"**
+   - Select device definition (e.g., **Pixel 8**)
+   - Choose system image:
+     - **For Apple Silicon Macs**: Select **arm64-v8a** (ARM) images
+     - **For Intel Macs/PC**: Select **x86_64** images
+     - Recommended: **Android 14 (API 34)** or **Android 13 (API 33)**
+   - Click **"Download"** if the system image isn't installed
+   - Click **"Next"** → Name your device → **"Finish"**
+
+4. **Important for Apple Silicon Macs**:
+   - ⚠️ Only use **ARM64 (arm64-v8a)** system images
+   - x86/x86_64 images will **NOT work** on M1/M2/M3 Macs
+
+### Running Your App on Emulators
+
+#### Method 1: Using Expo CLI (Recommended)
+
+1. **Start Expo development server**:
+```bash
+cd /path/to/SGDV-APP
+npx expo start
+```
+
+2. **Launch emulator(s)**:
+```bash
+# Option A: Press 'a' in the Expo terminal
+# This automatically starts an emulator and installs the app
+
+# Option B: Manually start emulator(s) from command line
+emulator -avd Pixel_8_API_34 &
+emulator -avd Pixel_Tablet_API_34 &
+emulator -avd Pixel_4a_API_34 &
+```
+
+3. **Install app on running emulators**:
+   - Press **`a`** in the Expo terminal
+   - Or scan the QR code using the **Expo Go** app in the emulator
+
+4. **App will automatically reload** when you make code changes!
+
+#### Method 2: Using Android Studio GUI
+
+1. **Open AVD Manager** in Android Studio
+2. **Click the ▶️ Play button** next to each device you want to test
+3. **Start Expo** in your terminal: `npx expo start`
+4. **Press `a`** in the Expo terminal to install on all running emulators
+
+### Testing on Multiple Devices Simultaneously
+
+#### Parallel Testing Setup
+
+1. **Start multiple emulators**:
+```bash
+# Start 3 different screen sizes at once
+emulator -avd Pixel_4a_API_34 &
+sleep 10  # Wait for first to initialize
+emulator -avd Pixel_8_Pro_API_34 &
+sleep 10
+emulator -avd Pixel_Tablet_API_34 &
+```
+
+2. **Verify all devices are connected**:
+```bash
+adb devices
+# Output should show:
+# List of devices attached
+# emulator-5554    device
+# emulator-5556    device
+# emulator-5558    device
+```
+
+3. **Start Expo once** - it automatically detects all emulators:
+```bash
+npx expo start
+# Press 'a' to install on all connected devices
+```
+
+4. **Test specific features** across all devices:
+   - ✅ Compass orientation on different screen sizes
+   - ✅ Video overlay responsiveness
+   - ✅ UI layout and text scaling
+   - ✅ Touch target sizes
+   - ✅ Navigation and animations
+
+#### Install on Specific Device
+
+```bash
+# List all devices with their IDs
+adb devices
+
+# Install on specific device
+adb -s emulator-5554 install app.apk
+
+# Or using Expo on specific device
+npx expo start
+# Then in Expo DevTools, select specific device
+```
+
+### Useful Emulator Commands
+
+```bash
+# List all available AVDs
+emulator -list-avds
+
+# Start specific emulator
+emulator -avd <AVD_NAME> &
+
+# Start with writable system (for testing permissions)
+emulator -avd <AVD_NAME> -writable-system &
+
+# Kill all running emulators
+adb devices | grep emulator | cut -f1 | xargs -I {} adb -s {} emu kill
+
+# Take screenshot from emulator
+adb shell screencap -p /sdcard/screenshot.png
+adb pull /sdcard/screenshot.png
+
+# Check emulator logs
+adb logcat
+
+# Clear app data (reset app state)
+adb shell pm clear com.your.app.package
+```
+
+### Creating Custom Device Profiles
+
+For testing edge cases or specific requirements:
+
+1. **In AVD Manager** → **Create Virtual Device** → **New Hardware Profile**
+2. **Configure custom specs**:
+   - Screen size (e.g., 7.5" for unique tablet)
+   - Resolution (e.g., 1200×2000)
+   - RAM (e.g., 6GB)
+   - Internal storage (e.g., 64GB)
+3. **Save profile** and use it to create AVD
+
+### Performance Optimization for Emulators
+
+```bash
+# Speed up emulator boot
+emulator -avd <AVD_NAME> -no-boot-anim -no-snapshot &
+
+# Increase RAM allocation (in AVD settings)
+# Edit AVD → Show Advanced Settings → RAM: 4096 MB
+
+# Use hardware acceleration (check if enabled)
+emulator -accel-check
+```
+
+### Troubleshooting Emulators
+
+#### Issue: "No system image found"
+**Solution**: Install the correct system image
+```bash
+# Open Android Studio SDK Manager
+# Go to: Tools → SDK Manager → SDK Platforms
+# Check the box for Android 14.0 (API 34) or desired version
+# Switch to "SDK Tools" tab
+# Install: Android Emulator, Android SDK Platform-Tools
+```
+
+#### Issue: "PANIC: Avd's CPU Architecture not supported"
+**Solution**: Apple Silicon Macs need ARM images
+- Delete x86_64 AVDs
+- Create new AVDs with **arm64-v8a** system images only
+
+#### Issue: Emulator is very slow
+**Solutions**:
+```bash
+# 1. Enable hardware acceleration (HAXM for Intel, Hypervisor for ARM)
+# 2. Allocate more RAM in AVD settings (4GB recommended)
+# 3. Use a lower API level (API 30 is faster than API 34)
+# 4. Close other resource-heavy applications
+```
+
+#### Issue: Expo not detecting emulator
+**Solutions**:
+```bash
+# 1. Restart adb server
+adb kill-server && adb start-server
+
+# 2. Check emulator is fully booted
+adb devices  # Should show "device", not "offline"
+
+# 3. Restart Expo
+# Press 'ctrl+c' to stop, then 'npx expo start' again
+```
+
+#### Issue: App crashes on emulator but not on physical device
+**Check**:
+- Sensor availability (magnetometer may not work in emulator)
+- Location services (use mock location in emulator)
+- Memory constraints (emulators have limited RAM)
+
+### Testing Compass & Sensors in Emulator
+
+⚠️ **Note**: Magnetometer may not work reliably in emulators
+
+**Workaround for testing**:
+1. Use emulator's **Extended Controls** (⋮ icon)
+2. Go to **Virtual Sensors** → **Magnetometer**
+3. Manually adjust values to simulate compass rotation
+
+**Mock Location for GPS Testing**:
+```bash
+# Enable mock locations in emulator
+adb shell settings put secure mock_location 1
+
+# Set a test location (Mysore, India - your target location)
+adb shell "am start -a android.intent.action.VIEW \
+  -d 'geo:12.308367,76.645467'"
+```
+
+### Screen Size Testing Matrix
+
+Recommended test scenarios:
+
+| Screen | Width | Height | Orientation | Test Focus |
+|--------|-------|--------|-------------|------------|
+| Small | 360dp | 640dp | Portrait | UI density, text readability |
+| Medium | 375dp | 812dp | Portrait | Standard layout, navigation |
+| Large | 414dp | 896dp | Portrait | Spacing, image quality |
+| Tablet | 800dp | 1280dp | Portrait | Tablet-specific layout |
+| Tablet | 1280dp | 800dp | Landscape | Landscape adaptations |
+
+### Best Practices
+
+1. **Always test on at least 3 screen sizes**: Small, Medium, Large
+2. **Test both orientations**: Portrait and Landscape
+3. **Use Expo Go** for rapid iteration during development
+4. **Create production builds** (`eas build`) for final testing
+5. **Test on physical devices** before release (sensors work better)
+6. **Keep emulators updated** to latest Android versions
+
+### Recommended Testing Workflow
+
+```bash
+# 1. Start your most-used test device
+emulator -avd Pixel_8_API_34 &
+
+# 2. Start Expo in another terminal
+npx expo start
+
+# 3. Make changes → Auto-reload happens
+
+# 4. When ready for multi-device testing:
+# Start additional emulators
+emulator -avd Pixel_4a_API_34 &
+emulator -avd Pixel_Tablet_API_34 &
+
+# 5. Press 'a' in Expo terminal
+# App installs on all devices automatically
+
+# 6. Test feature on all screens simultaneously
+```
+
 ## 📖 Documentation
 
 Additional documentation available in `docs/` folder:
-- **COMPASS_README.md**: Detailed compass component documentation
-- **COMPASS_CONFIG_GUIDE.md**: Full configuration options reference
-- **COMPASS_SENSOR_GUIDE.md**: Sensor calibration and troubleshooting
-- **EXPO_CLEANUP_GUIDE.md**: Migration guide from React Native CLI to Expo
+- **ANDROID_EMULATOR_QUICKSTART.md**: 🚀 Quick guide to set up Android emulators and test on multiple devices
+- **COMPASS.md**: Detailed compass component documentation
+- **VIDEO_OVERLAY.md**: Video overlay and darshan experience documentation
 
 ## 🔐 Build & Deployment
 

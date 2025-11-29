@@ -1,92 +1,23 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, LayoutAnimation, Platform, UIManager } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, LayoutAnimation, Platform, UIManager } from 'react-native';
 import Slider from '@react-native-community/slider';
 import { Ionicons } from '@expo/vector-icons';
-import { ThemeMode } from './CompassView';
+import { SettingsViewProps, ThemeMode } from '../types';
+import {
+  SETTINGS_THEMES,
+  THEME_INFO,
+  TEXT_APPEARANCE,
+  TEXT_SOUND,
+  TEXT_CHOOSE_THEME,
+  TEXT_DARSHAN_AUDIO_VOLUME,
+  APP_NAME,
+  APP_VERSION,
+} from '../constants';
+import { settingsViewStyles } from '../styles/SettingsViewStyles';
 
 // Enable LayoutAnimation on Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
-}
-
-// Theme display names and preview colors
-export const THEME_INFO: Record<ThemeMode, { 
-  name: string; 
-  colors: string[]; 
-  description: string;
-}> = {
-    cosmic: {
-      name: 'Cosmic',
-      colors: ['#b45309', '#4c0519', '#fbbf24'],
-      description: 'Amber & rose galaxy vibes',
-    },
-    dark: {
-        name: 'Midnight',
-        colors: ['#292524', '#1c1917', '#FCD34D'],
-        description: 'Dark stone with gold accents',
-    },
-    light: {
-      name: 'Sunrise',
-      colors: ['#FF6B35', '#F7931E', '#FFD700'],
-      description: 'Warm orange & gold tones',
-    },
-};
-
-// Theme colors for settings view
-const SETTINGS_THEMES: Record<ThemeMode, {
-  title: string;
-  sectionBg: string;
-  sectionBorder: string;
-  sectionTitle: string;
-  itemText: string;
-  itemSubtext: string;
-  accent: string;
-  chevron: string;
-  selectedBg: string;
-}> = {
-  light: {
-    title: '#FFFFFF',
-    sectionBg: 'rgba(255, 255, 255, 0.15)',
-    sectionBorder: 'rgba(255, 255, 255, 0.3)',
-    sectionTitle: '#FFFFFF',
-    itemText: '#FFFFFF',
-    itemSubtext: 'rgba(255, 255, 255, 0.7)',
-    accent: '#FFD700',
-    chevron: 'rgba(255, 255, 255, 0.5)',
-    selectedBg: 'rgba(255, 215, 0, 0.15)',
-  },
-  dark: {
-    title: '#e7e5e4',
-    sectionBg: 'rgba(28, 25, 23, 0.6)',
-    sectionBorder: '#44403c',
-    sectionTitle: '#e7e5e4',
-    itemText: '#e7e5e4',
-    itemSubtext: '#a8a29e',
-    accent: '#FCD34D',
-    chevron: '#78716c',
-    selectedBg: 'rgba(252, 211, 77, 0.1)',
-  },
-  cosmic: {
-    title: '#FFFFFF',
-    sectionBg: 'rgba(76, 5, 25, 0.5)',
-    sectionBorder: 'rgba(251, 191, 36, 0.3)',
-    sectionTitle: '#fef3c7',
-    itemText: '#fef3c7',
-    itemSubtext: 'rgba(254, 243, 199, 0.7)',
-    accent: '#fbbf24',
-    chevron: 'rgba(251, 191, 36, 0.5)',
-    selectedBg: 'rgba(251, 191, 36, 0.15)',
-  },
-};
-
-interface SettingsViewProps {
-  currentTheme: ThemeMode;
-  onThemeChange: (theme: ThemeMode) => void;
-  audioEnabled?: boolean;
-  onAudioToggle?: (enabled: boolean) => void;
-  audioVolume?: number;
-  onVolumeChange?: (volume: number) => void;
-  style?: object;
 }
 
 // Helper function to get the appropriate volume icon based on volume level
@@ -128,33 +59,33 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   };
 
   return (
-    <View style={[styles.wrapper, style]}>
+    <View style={[settingsViewStyles.wrapper, style]}>
       <ScrollView 
-        style={styles.container} 
-        contentContainerStyle={styles.contentContainer}
+        style={settingsViewStyles.container} 
+        contentContainerStyle={settingsViewStyles.contentContainer}
         showsVerticalScrollIndicator={false}
       >
         {/* Appearance Section */}
-        <View style={[styles.section, { backgroundColor: theme.sectionBg, borderColor: theme.sectionBorder }]}>
-          <Text style={[styles.sectionHeader, { color: theme.sectionTitle }]}>
-            APPEARANCE
+        <View style={[settingsViewStyles.section, { backgroundColor: theme.sectionBg, borderColor: theme.sectionBorder }]}>
+          <Text style={[settingsViewStyles.sectionHeader, { color: theme.sectionTitle }]}>
+            {TEXT_APPEARANCE}
           </Text>
 
         {/* Theme Selector Row */}
         <TouchableOpacity 
-          style={styles.settingRow}
+          style={settingsViewStyles.settingRow}
           onPress={toggleThemeSection}
           activeOpacity={0.7}
         >
-          <View style={styles.settingLeft}>
-            <View style={[styles.iconContainer, { backgroundColor: theme.accent + '20' }]}>
+          <View style={settingsViewStyles.settingLeft}>
+            <View style={[settingsViewStyles.iconContainer, { backgroundColor: theme.accent + '20' }]}>
               <Ionicons name="color-palette" size={20} color={theme.accent} />
             </View>
-            <View style={styles.settingInfo}>
-              <Text style={[styles.settingTitle, { color: theme.itemText }]}>
-                Choose Theme
+            <View style={settingsViewStyles.settingInfo}>
+              <Text style={[settingsViewStyles.settingTitle, { color: theme.itemText }]}>
+                {TEXT_CHOOSE_THEME}
               </Text>
-              <Text style={[styles.settingSubtitle, { color: theme.itemSubtext }]}>
+              <Text style={[settingsViewStyles.settingSubtitle, { color: theme.itemSubtext }]}>
                 {THEME_INFO[currentTheme].name}
               </Text>
             </View>
@@ -168,7 +99,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
         {/* Expanded Theme Options */}
         {isThemeExpanded && (
-          <View style={styles.themeOptions}>
+          <View style={settingsViewStyles.themeOptions}>
             {(Object.keys(THEME_INFO) as ThemeMode[]).map((themeKey) => {
               const info = THEME_INFO[themeKey];
               const isSelected = currentTheme === themeKey;
@@ -177,7 +108,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 <TouchableOpacity
                   key={themeKey}
                   style={[
-                    styles.themeOption,
+                    settingsViewStyles.themeOption,
                     { 
                       borderColor: isSelected ? theme.accent : theme.sectionBorder,
                       backgroundColor: isSelected ? theme.selectedBg : 'transparent',
@@ -187,12 +118,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   activeOpacity={0.7}
                 >
                   {/* Color Preview Circles */}
-                  <View style={styles.colorPreview}>
+                  <View style={settingsViewStyles.colorPreview}>
                     {info.colors.map((color, idx) => (
                       <View
                         key={idx}
                         style={[
-                          styles.colorCircle,
+                          settingsViewStyles.colorCircle,
                           { 
                             backgroundColor: color,
                             marginLeft: idx > 0 ? -10 : 0,
@@ -204,14 +135,14 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   </View>
 
                   {/* Theme Name & Description */}
-                  <View style={styles.themeInfo}>
+                  <View style={settingsViewStyles.themeInfo}>
                     <Text style={[
-                      styles.themeName, 
+                      settingsViewStyles.themeName, 
                       { color: isSelected ? theme.accent : theme.itemText }
                     ]}>
                       {info.name}
                     </Text>
-                    <Text style={[styles.themeDescription, { color: theme.itemSubtext }]}>
+                    <Text style={[settingsViewStyles.themeDescription, { color: theme.itemSubtext }]}>
                       {info.description}
                     </Text>
                   </View>
@@ -232,30 +163,30 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       </View>
 
       {/* Sound Section */}
-      <View style={[styles.section, { backgroundColor: theme.sectionBg, borderColor: theme.sectionBorder }]}>
-        <Text style={[styles.sectionHeader, { color: theme.sectionTitle }]}>
-          SOUND
+      <View style={[settingsViewStyles.section, { backgroundColor: theme.sectionBg, borderColor: theme.sectionBorder }]}>
+        <Text style={[settingsViewStyles.sectionHeader, { color: theme.sectionTitle }]}>
+          {TEXT_SOUND}
         </Text>
 
         {/* Darshan Audio Volume Row */}
         <TouchableOpacity 
-          style={styles.settingRow}
+          style={settingsViewStyles.settingRow}
           onPress={toggleSoundSection}
           activeOpacity={0.7}
         >
-          <View style={styles.settingLeft}>
-            <View style={[styles.iconContainer, { backgroundColor: theme.accent + '20' }]}>
+          <View style={settingsViewStyles.settingLeft}>
+            <View style={[settingsViewStyles.iconContainer, { backgroundColor: theme.accent + '20' }]}>
               <Ionicons 
                 name={getVolumeIcon(audioVolume)} 
                 size={24} 
                 color={theme.accent} 
               />
             </View>
-            <View style={styles.settingInfo}>
-              <Text style={[styles.settingTitle, { color: theme.itemText }]}>
-                Darshan Audio Volume
+            <View style={settingsViewStyles.settingInfo}>
+              <Text style={[settingsViewStyles.settingTitle, { color: theme.itemText }]}>
+                {TEXT_DARSHAN_AUDIO_VOLUME}
               </Text>
-              <Text style={[styles.settingSubtitle, { color: theme.itemSubtext }]}>
+              <Text style={[settingsViewStyles.settingSubtitle, { color: theme.itemSubtext }]}>
                 {Math.round(audioVolume * 100)}%
               </Text>
             </View>
@@ -269,9 +200,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
         {/* Expanded Volume Slider */}
         {isSoundExpanded && (
-          <View style={styles.sliderContainer}>
+          <View style={settingsViewStyles.sliderContainer}>
             <Slider
-              style={styles.slider}
+              style={settingsViewStyles.slider}
               minimumValue={0}
               maximumValue={1}
               step={0.01}
@@ -291,129 +222,14 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       </ScrollView>
 
       {/* Version Info - Fixed at bottom */}
-      <View style={styles.versionContainer}>
-        <Text style={[styles.versionText, { color: theme.itemSubtext }]}>
-          Guru Digvandanam v1.0.0
+      <View style={settingsViewStyles.versionContainer}>
+        <Text style={[settingsViewStyles.versionText, { color: theme.itemSubtext }]}>
+          {APP_NAME} v{APP_VERSION}
         </Text>
       </View>
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  wrapper: {
-    flex: 1,
-  },
-  container: {
-    flex: 1,
-  },
-  contentContainer: {
-    padding: 16,
-    paddingBottom: 10,
-  },
-  section: {
-    borderRadius: 16,
-    borderWidth: 1,
-    overflow: 'hidden',
-    marginBottom: 16,
-  },
-  sectionHeader: {
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 1.5,
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 8,
-  },
-  settingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-  },
-  settingLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  iconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 14,
-  },
-  settingInfo: {
-    flex: 1,
-    paddingRight: 8,
-  },
-  settingTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 2,
-    flexWrap: 'wrap',
-  },
-  settingSubtitle: {
-    fontSize: 13,
-    flexWrap: 'wrap',
-  },
-  themeOptions: {
-    paddingHorizontal: 16,
-    paddingBottom: 16,
-    gap: 10,
-  },
-  themeOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 14,
-    borderRadius: 12,
-    borderWidth: 2,
-  },
-  colorPreview: {
-    flexDirection: 'row',
-    marginRight: 14,
-  },
-  colorCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-  },
-  themeInfo: {
-    flex: 1,
-    paddingRight: 8,
-  },
-  themeName: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 2,
-    flexWrap: 'wrap',
-  },
-  themeDescription: {
-    fontSize: 13,
-    flexWrap: 'wrap',
-  },
-  sliderContainer: {
-    paddingHorizontal: 16,
-    paddingBottom: 16,
-  },
-  slider: {
-    width: '100%',
-    height: 40,
-  },
-  versionContainer: {
-    alignItems: 'center',
-    paddingVertical: 10,
-    paddingBottom: 60, // Space for bottom nav
-  },
-  versionText: {
-    fontSize: 12,
-    letterSpacing: 0.5,
-  },
-});
 
 export default SettingsView;
 

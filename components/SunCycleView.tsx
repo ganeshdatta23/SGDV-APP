@@ -7,7 +7,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
-  StyleSheet,
   Switch,
   TouchableOpacity,
   ScrollView,
@@ -22,13 +21,31 @@ import {
   getScheduledNotifications,
   sendTestNotification,
   sendTestAlarm,
-  AlarmConfig,
 } from '../utils/alarmManager';
-
-interface SunCycleViewProps {
-  latitude?: number;
-  longitude?: number;
-}
+import { SunCycleViewProps, AlarmConfig } from '../types';
+import {
+  TEXT_LOADING_SUN_TIMES,
+  TEXT_NEXT_SUNRISE,
+  TEXT_NEXT_SUNSET,
+  TEXT_SUNRISE,
+  TEXT_SUNSET,
+  TEXT_ALARM,
+  TEXT_NOTIFICATIONS,
+  TEXT_SUNRISE_ALARM,
+  TEXT_SUNSET_ALARM,
+  TEXT_SUNRISE_ALERTS,
+  TEXT_SUNSET_ALERTS,
+  TEXT_TEST_ALARM_SOUND,
+  TEXT_STOP_TEST_ALARM,
+  TEXT_SEND_TEST_NOTIFICATION,
+  TEXT_TEST_ALARM_5_SEC,
+  TEXT_ALARM_NOTIFICATION_SETTINGS,
+  SUN_SUNRISE_ICON_COLOR,
+  SUN_SUNSET_ICON_COLOR,
+  SUN_ICON_SIZE,
+  ALARM_TEST_DURATION_MS,
+} from '../constants';
+import { sunCycleViewStyles } from '../styles/SunCycleViewStyles';
 
 export default function SunCycleView({ latitude, longitude }: SunCycleViewProps) {
   const [config, setConfig] = useState<AlarmConfig | null>(null);
@@ -133,7 +150,7 @@ export default function SunCycleView({ latitude, longitude }: SunCycleViewProps)
             console.log('⚠️ Could not pause alarm (player may be disposed)');
             setIsTestingAlarm(false);
           }
-        }, 10000);
+        }, ALARM_TEST_DURATION_MS);
       } catch (error) {
         console.log('⚠️ Could not play alarm:', error);
       }
@@ -142,16 +159,16 @@ export default function SunCycleView({ latitude, longitude }: SunCycleViewProps)
 
   if (!config || !sunTimes) {
     return (
-      <View style={styles.container}>
-        <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>Loading sun times...</Text>
+      <View style={sunCycleViewStyles.container}>
+        <View style={sunCycleViewStyles.loadingContainer}>
+          <Text style={sunCycleViewStyles.loadingText}>{TEXT_LOADING_SUN_TIMES}</Text>
         </View>
       </View>
     );
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
+    <ScrollView style={sunCycleViewStyles.container} contentContainerStyle={sunCycleViewStyles.scrollContent}>
       {/* Next Event Display */}
       <View style={styles.countdownContainer}>
         <Text style={styles.countdownLabel}>

@@ -3,46 +3,41 @@ import {
   View,
   Image,
   TouchableOpacity,
-  StyleSheet,
   Animated,
   Easing,
   Dimensions,
   Platform,
 } from 'react-native';
-import { VideoView, VideoPlayer } from 'expo-video';
-import { AudioPlayer } from 'expo-audio';
+import { VideoView } from 'expo-video';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import Svg, { Defs, RadialGradient, Stop, Rect, Circle } from 'react-native-svg';
-import { FlowerAnimation, FlowerAnimationRef } from './FlowerAnimation';
-import { AartiAnimation, AartiAnimationRef } from './AartiAnimation';
+import Svg, { Defs, RadialGradient, Stop, Rect } from 'react-native-svg';
+import { FlowerAnimation } from './FlowerAnimation';
+import { AartiAnimation } from './AartiAnimation';
+import { DarshanOverlayProps, FlowerAnimationRef, AartiAnimationRef } from '../types';
+import {
+  DARSHAN_IMAGE_WIDTH,
+  DARSHAN_IMAGE_HEIGHT,
+  DARSHAN_FADE_DURATION_MS,
+  DARSHAN_SPRING_FRICTION,
+  DARSHAN_SPRING_TENSION,
+  DARSHAN_PULSE_1_DURATION_MS,
+  DARSHAN_PULSE_2_DURATION_MS,
+  DARSHAN_PULSE_3_DURATION_MS,
+  DARSHAN_PULSE_1_MIN_OPACITY,
+  DARSHAN_PULSE_1_MAX_OPACITY,
+  DARSHAN_PULSE_2_MIN_OPACITY,
+  DARSHAN_PULSE_2_MAX_OPACITY,
+  DARSHAN_PULSE_3_MIN_OPACITY,
+  DARSHAN_PULSE_3_MAX_OPACITY,
+  DARSHAN_PULSE_2_START_DELAY_MS,
+  DARSHAN_PULSE_3_START_DELAY_MS,
+  DARSHAN_CONTROL_BUTTON_ICON_COLOR,
+  DARSHAN_CLOSE_BUTTON_ICON_COLOR,
+} from '../constants';
+import { darshanOverlayStyles } from '../styles/DarshanOverlayStyles';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
-
-const IMAGE_WIDTH = 288; // w-72 in Tailwind (18rem = 288px)
-const IMAGE_HEIGHT = 384; // 3:4 aspect ratio
-
-/**
- * Interface defining the props for the DarshanOverlay component.
- * An interface in TypeScript is a way to define the structure of an object,
- * specifying what properties it should have and their types.
- * 
- * This interface describes the props that the DarshanOverlay component expects:
- * - visible: boolean - controls whether the overlay is shown or hidden
- * - videoPlayer: VideoPlayer - the video player instance for darshan video
- * - audioPlayer: AudioPlayer - the audio player instance for background audio
- * - onClose: () => void - callback function to close the overlay
- * - audioEnabled?: boolean - optional flag to enable/disable audio (defaults to true)
- * - audioVolume?: number - optional volume level for audio (defaults to 1.0)
- */
-interface DarshanOverlayProps {
-  visible: boolean;
-  videoPlayer: VideoPlayer;
-  audioPlayer: AudioPlayer;
-  onClose: () => void;
-  audioEnabled?: boolean;
-  audioVolume?: number;
-}
 
 /**
  * DarshanOverlay component - displays a golden aura around the Swamiji image
@@ -63,9 +58,9 @@ export const DarshanOverlay: React.FC<DarshanOverlayProps> = ({
   const [hasPlayedOnce, setHasPlayedOnce] = useState(false);
   
   // Animated values for golden aura pulse effect
-  const pulseAnim1 = useRef(new Animated.Value(0.5)).current;
-  const pulseAnim2 = useRef(new Animated.Value(0.3)).current;
-  const pulseAnim3 = useRef(new Animated.Value(0.4)).current;
+  const pulseAnim1 = useRef(new Animated.Value(DARSHAN_PULSE_1_MIN_OPACITY)).current;
+  const pulseAnim2 = useRef(new Animated.Value(DARSHAN_PULSE_2_MIN_OPACITY)).current;
+  const pulseAnim3 = useRef(new Animated.Value(DARSHAN_PULSE_3_MIN_OPACITY)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.9)).current;
 
@@ -82,13 +77,13 @@ export const DarshanOverlay: React.FC<DarshanOverlayProps> = ({
       Animated.parallel([
         Animated.timing(fadeAnim, {
           toValue: 1,
-          duration: 1000,
+          duration: DARSHAN_FADE_DURATION_MS,
           useNativeDriver: true,
         }),
         Animated.spring(scaleAnim, {
           toValue: 1,
-          friction: 8,
-          tension: 40,
+          friction: DARSHAN_SPRING_FRICTION,
+          tension: DARSHAN_SPRING_TENSION,
           useNativeDriver: true,
         }),
       ]).start();
@@ -97,14 +92,14 @@ export const DarshanOverlay: React.FC<DarshanOverlayProps> = ({
       const pulse1 = Animated.loop(
         Animated.sequence([
           Animated.timing(pulseAnim1, {
-            toValue: 0.8,
-            duration: 3000,
+            toValue: DARSHAN_PULSE_1_MAX_OPACITY,
+            duration: DARSHAN_PULSE_1_DURATION_MS,
             easing: Easing.inOut(Easing.sin),
             useNativeDriver: true,
           }),
           Animated.timing(pulseAnim1, {
-            toValue: 0.5,
-            duration: 3000,
+            toValue: DARSHAN_PULSE_1_MIN_OPACITY,
+            duration: DARSHAN_PULSE_1_DURATION_MS,
             easing: Easing.inOut(Easing.sin),
             useNativeDriver: true,
           }),
@@ -115,14 +110,14 @@ export const DarshanOverlay: React.FC<DarshanOverlayProps> = ({
       const pulse2 = Animated.loop(
         Animated.sequence([
           Animated.timing(pulseAnim2, {
-            toValue: 0.6,
-            duration: 2500,
+            toValue: DARSHAN_PULSE_2_MAX_OPACITY,
+            duration: DARSHAN_PULSE_2_DURATION_MS,
             easing: Easing.inOut(Easing.sin),
             useNativeDriver: true,
           }),
           Animated.timing(pulseAnim2, {
-            toValue: 0.3,
-            duration: 2500,
+            toValue: DARSHAN_PULSE_2_MIN_OPACITY,
+            duration: DARSHAN_PULSE_2_DURATION_MS,
             easing: Easing.inOut(Easing.sin),
             useNativeDriver: true,
           }),
@@ -133,14 +128,14 @@ export const DarshanOverlay: React.FC<DarshanOverlayProps> = ({
       const pulse3 = Animated.loop(
         Animated.sequence([
           Animated.timing(pulseAnim3, {
-            toValue: 0.7,
-            duration: 2000,
+            toValue: DARSHAN_PULSE_3_MAX_OPACITY,
+            duration: DARSHAN_PULSE_3_DURATION_MS,
             easing: Easing.inOut(Easing.sin),
             useNativeDriver: true,
           }),
           Animated.timing(pulseAnim3, {
-            toValue: 0.4,
-            duration: 2000,
+            toValue: DARSHAN_PULSE_3_MIN_OPACITY,
+            duration: DARSHAN_PULSE_3_DURATION_MS,
             easing: Easing.inOut(Easing.sin),
             useNativeDriver: true,
           }),
@@ -148,8 +143,8 @@ export const DarshanOverlay: React.FC<DarshanOverlayProps> = ({
       );
 
       pulse1.start();
-      setTimeout(() => pulse2.start(), 500);
-      setTimeout(() => pulse3.start(), 1000);
+      setTimeout(() => pulse2.start(), DARSHAN_PULSE_2_START_DELAY_MS);
+      setTimeout(() => pulse3.start(), DARSHAN_PULSE_3_START_DELAY_MS);
 
       return () => {
         pulse1.stop();
@@ -287,23 +282,23 @@ export const DarshanOverlay: React.FC<DarshanOverlayProps> = ({
   const AnimatedSvg = Animated.createAnimatedComponent(Svg);
 
   return (
-    <View style={styles.overlay}>
+    <View style={darshanOverlayStyles.overlay}>
       {/* Background Video */}
       <VideoView
         player={videoPlayer}
-        style={StyleSheet.absoluteFill}
+        style={darshanOverlayStyles.overlay}
         contentFit="cover"
         nativeControls={false}
       />
 
       {/* Dimming overlay for video */}
-      <View style={styles.dimmingOverlay} />
+      <View style={darshanOverlayStyles.dimmingOverlay} />
 
       {/* Vignette effect - gradient from top and bottom */}
       <LinearGradient
         colors={['rgba(0,0,0,0.7)', 'transparent', 'transparent', 'rgba(0,0,0,0.7)']}
         locations={[0, 0.25, 0.75, 1]}
-        style={StyleSheet.absoluteFill}
+        style={darshanOverlayStyles.overlay}
         start={{ x: 0.5, y: 0 }}
         end={{ x: 0.5, y: 1 }}
       />
@@ -311,25 +306,25 @@ export const DarshanOverlay: React.FC<DarshanOverlayProps> = ({
       {/* Radial vignette simulation - corner darkening */}
       <LinearGradient
         colors={['rgba(0,0,0,0.5)', 'transparent']}
-        style={StyleSheet.absoluteFill}
+        style={darshanOverlayStyles.overlay}
         start={{ x: 0, y: 0 }}
         end={{ x: 0.6, y: 0.6 }}
       />
       <LinearGradient
         colors={['rgba(0,0,0,0.5)', 'transparent']}
-        style={StyleSheet.absoluteFill}
+        style={darshanOverlayStyles.overlay}
         start={{ x: 1, y: 0 }}
         end={{ x: 0.4, y: 0.6 }}
       />
       <LinearGradient
         colors={['rgba(0,0,0,0.5)', 'transparent']}
-        style={StyleSheet.absoluteFill}
+        style={darshanOverlayStyles.overlay}
         start={{ x: 0, y: 1 }}
         end={{ x: 0.6, y: 0.4 }}
       />
       <LinearGradient
         colors={['rgba(0,0,0,0.5)', 'transparent']}
-        style={StyleSheet.absoluteFill}
+        style={darshanOverlayStyles.overlay}
         start={{ x: 1, y: 1 }}
         end={{ x: 0.4, y: 0.4 }}
       />
@@ -337,7 +332,7 @@ export const DarshanOverlay: React.FC<DarshanOverlayProps> = ({
       {/* Center content with golden aura */}
       <Animated.View
         style={[
-          styles.centerContent,
+          darshanOverlayStyles.centerContent,
           {
             opacity: fadeAnim,
             transform: [{ scale: scaleAnim }],
@@ -345,14 +340,14 @@ export const DarshanOverlay: React.FC<DarshanOverlayProps> = ({
         ]}
       >
         {/* Golden Aura - SVG Radial Gradients */}
-        <View style={styles.auraContainer}>
+        <View style={darshanOverlayStyles.auraContainer}>
           {/* 
              We use absolute positioned SVGs for the glow layers.
              RadialGradient allows us to have a true center-out fade.
           */}
           
           {/* Outer soft glow - large amber/orange - INCREASED INTENSITY */}
-          <Animated.View style={[StyleSheet.absoluteFill, { opacity: pulseAnim1 }]}>
+          <Animated.View style={[darshanOverlayStyles.overlay, { opacity: pulseAnim1 }]}>
             <Svg height="100%" width="100%" viewBox="0 0 100 100">
               <Defs>
                 <RadialGradient
@@ -375,7 +370,7 @@ export const DarshanOverlay: React.FC<DarshanOverlayProps> = ({
           </Animated.View>
 
           {/* Middle warm glow - golden - INCREASED SPREAD */}
-          <Animated.View style={[StyleSheet.absoluteFill, { opacity: pulseAnim2 }]}>
+          <Animated.View style={[darshanOverlayStyles.overlay, { opacity: pulseAnim2 }]}>
             <Svg height="100%" width="100%" viewBox="0 0 100 100">
               <Defs>
                 <RadialGradient
@@ -398,7 +393,7 @@ export const DarshanOverlay: React.FC<DarshanOverlayProps> = ({
           </Animated.View>
 
           {/* Inner bright glow - bright yellow - INCREASED BRIGHTNESS */}
-          <Animated.View style={[StyleSheet.absoluteFill, { opacity: pulseAnim3 }]}>
+          <Animated.View style={[darshanOverlayStyles.overlay, { opacity: pulseAnim3 }]}>
             <Svg height="100%" width="100%" viewBox="0 0 100 100">
               <Defs>
                 <RadialGradient
@@ -423,52 +418,52 @@ export const DarshanOverlay: React.FC<DarshanOverlayProps> = ({
           {/* Swamiji image */}
           <Image
             source={require('../assets/images/swamiji-darshan.png')}
-            style={styles.darshanImage}
+            style={darshanOverlayStyles.darshanImage}
             resizeMode="contain"
           />
         </View>
       </Animated.View>
 
       {/* Control buttons - Audio toggle, Pooja, and Aarti */}
-      <View style={styles.controlButtonsContainer}>
+      <View style={darshanOverlayStyles.controlButtonsContainer}>
         <TouchableOpacity
-          style={styles.controlButton}
+          style={darshanOverlayStyles.controlButton}
           onPress={toggleAudio}
           activeOpacity={0.7}
         >
-          <View style={styles.controlButtonInner}>
+          <View style={darshanOverlayStyles.controlButtonInner}>
             <Ionicons
               name={isMuted ? 'volume-mute' : 'volume-high'}
               size={24}
-              color="#fbbf24"
+              color={DARSHAN_CONTROL_BUTTON_ICON_COLOR}
             />
           </View>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={styles.controlButton}
+          style={darshanOverlayStyles.controlButton}
           onPress={handlePoojaPress}
           activeOpacity={0.7}
         >
-          <View style={styles.controlButtonInner}>
+          <View style={darshanOverlayStyles.controlButtonInner}>
             <Ionicons
               name="sparkles-outline"
               size={24}
-              color="#fbbf24"
+              color={DARSHAN_CONTROL_BUTTON_ICON_COLOR}
             />
           </View>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={styles.controlButton}
+          style={darshanOverlayStyles.controlButton}
           onPress={handleAartiPress}
           activeOpacity={0.7}
         >
-          <View style={styles.controlButtonInner}>
+          <View style={darshanOverlayStyles.controlButtonInner}>
             <Ionicons
               name="flame"
               size={24}
-              color="#fbbf24"
+              color={DARSHAN_CONTROL_BUTTON_ICON_COLOR}
             />
           </View>
         </TouchableOpacity>
@@ -479,100 +474,27 @@ export const DarshanOverlay: React.FC<DarshanOverlayProps> = ({
         ref={flowerAnimationRef}
         startX={SCREEN_WIDTH / 2}
         startY={SCREEN_HEIGHT - 128}
-        groundY={(SCREEN_HEIGHT + IMAGE_HEIGHT) / 2 - 20}
+        groundY={(SCREEN_HEIGHT + DARSHAN_IMAGE_HEIGHT) / 2 - 20}
       />
 
       {/* Aarti Animation */}
       <AartiAnimation
         ref={aartiAnimationRef}
         centerX={SCREEN_WIDTH / 2}
-        centerY={SCREEN_HEIGHT / 2  - 80}
-        flameLength={0.8}        // Add this line
-        flickerIntensity={0.8}    // Add this line
-        diyaSize={80}             // Add this line     
-        flameBaseGap={15}  // Add this line - smaller values = closer together 
-        radius={130}  // Add this line - radius of the circular path
+        centerY={SCREEN_HEIGHT / 2 - 80}
+        flameLength={0.8}
+        flickerIntensity={0.8}
+        diyaSize={80}
+        flameBaseGap={15}
+        radius={130}
       />
 
       {/* Close button */}
-      <TouchableOpacity style={styles.closeBtn} onPress={onClose} activeOpacity={0.7}>
-        <Ionicons name="close" size={24} color="#ffffff" />
+      <TouchableOpacity style={darshanOverlayStyles.closeBtn} onPress={onClose} activeOpacity={0.7}>
+        <Ionicons name="close" size={24} color={DARSHAN_CLOSE_BUTTON_ICON_COLOR} />
       </TouchableOpacity>
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 999,
-    backgroundColor: '#000',
-  },
-  dimmingOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
-  },
-  centerContent: {
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  auraContainer: {
-    width: 600, // Increased size even further for massive glow spread
-    height: 600,
-    justifyContent: 'center',
-    alignItems: 'center',
-    position: 'relative',
-  },
-  darshanImage: {
-    width: IMAGE_WIDTH,
-    height: IMAGE_HEIGHT,
-    zIndex: 10,
-    // Optional: subtle shadow on the image itself to separate it from the glow
-    shadowColor: '#fbbf24',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.3,
-    shadowRadius: 20,
-  },
-  controlButtonsContainer: {
-    position: 'absolute',
-    bottom: 100,
-    flexDirection: 'row',
-    alignSelf: 'center',
-    gap: 20,
-  },
-  controlButton: {
-    padding: 4,
-  },
-  controlButtonInner: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    borderWidth: 2,
-    borderColor: 'rgba(251, 191, 36, 0.6)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#fbbf24',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.5,
-    shadowRadius: 10,
-    elevation: 10,
-  },
-  closeBtn: {
-    position: 'absolute',
-    top: 60,
-    right: 20,
-    width: 44,
-    height: 44,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    borderRadius: 22,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-  },
-});
 
 export default DarshanOverlay;

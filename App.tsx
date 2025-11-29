@@ -11,14 +11,35 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { RadialGradient } from 'react-native-gradients';
 import { VideoView, useVideoPlayer } from 'expo-video';
 import { useAudioPlayer, setAudioModeAsync } from 'expo-audio';
-import SimpleCompassView, { COMPASS_THEME, ThemeMode } from './components/CompassView';
-import { BottomNav, Tab } from './components/BottomNav';
+import SimpleCompassView from './components/CompassView';
+import { BottomNav } from './components/BottomNav';
 import EventsView from './components/EventsView';
 import SettingsView from './components/SettingsView';
 import SunCycleView from './components/SunCycleView';
 import DarshanOverlay from './components/DarshanOverlay';
 import { fetchLocationDirect, calculateSunTimes } from './utils/sgvdApi';
 import { initializeNotifications, scheduleAlarms, addNotificationReceivedListener, addNotificationResponseReceivedListener } from './utils/alarmManager';
+import { ThemeMode, Tab, TargetLocation, SunEventInfo } from './types';
+import {
+  APP_BACKGROUNDS,
+  COMPASS_THEME,
+  ALARM_MAX_DURATION_MS,
+  VIDEO_PLAYBACK_RATE,
+  VIDEO_LOOP,
+  VIDEO_MUTED,
+  AUDIO_VOLUME_DEFAULT,
+  TEXT_GURU_DIGVANDANAM,
+  TEXT_OFFER_PRAYERS,
+  TEXT_SUNRISE_SUNSET_ALARMS,
+  TEXT_PROGRAMS,
+  TEXT_STAY_UPDATED,
+  TEXT_SETTINGS,
+  TEXT_CUSTOMIZE_EXPERIENCE,
+  TEXT_TIME_FOR_PRAYERS,
+  TEXT_STOP_ALARM,
+  EMOJI_ALARM,
+} from './constants';
+import { appStyles } from './styles/AppStyles';
 
 // ============================================================================
 // APP BACKGROUND THEMES (synced with CompassView theme)
@@ -27,70 +48,12 @@ import { initializeNotifications, scheduleAlarms, addNotificationReceivedListene
 // - light: Orange/amber sunrise gradient
 // - dark: Dark stone/black night gradient  
 // - cosmic: Red-black cosmic gradient (from archive demo_sgvd_ui_5)
-// To switch themes, change COMPASS_THEME in components/CompassView.tsx
+// To switch themes, change COMPASS_THEME in constants.ts
 // Both the compass and app background will automatically update
-
-const APP_BACKGROUNDS = {
-  light: {
-    // Orange/amber gradient (sunrise theme)
-    gradientColors: ['#FF6B35', '#F7931E'] as const,
-    gradientLocations: [0, 1] as const,
-    statusBarStyle: 'light-content' as const,
-    headerTextColor: '#FFFFFF',
-    subtitleColor: '#FFFFFF',
-    buttonBg: 'rgba(255, 255, 255, 0.2)',
-    buttonBorder: 'rgba(255, 255, 255, 0.5)',
-    buttonText: '#FFFFFF',
-    modalBg: 'rgba(0, 30, 60, 0.95)',
-    modalBorder: 'rgba(255, 215, 0, 0.6)',
-    modalTitle: '#FFD700',
-    modalText: '#E6E6FA',
-  },
-  dark: {
-    // Dark stone/black gradient (night theme from archive)
-    // Converted from: bg-[radial-gradient(ellipse_at_top)] from-stone-900/80 via-stone-950 to-black
-    gradientColors: ['#292524', '#1c1917', '#0c0a09', '#000000'] as const,
-    gradientLocations: [0, 0.3, 0.6, 1] as const,
-    statusBarStyle: 'light-content' as const,
-    headerTextColor: '#e7e5e4',
-    subtitleColor: '#a8a29e',
-    buttonBg: 'rgba(28, 25, 23, 0.6)',
-    buttonBorder: '#44403c',
-    buttonText: '#e7e5e4',
-    modalBg: 'rgba(12, 10, 9, 0.95)',
-    modalBorder: '#44403c',
-    modalTitle: '#FCD34D',
-    modalText: '#a8a29e',
-  },
-  cosmic: {
-    // Red-black cosmic gradient (from archive demo_sgvd_ui_5)
-    // Using REAL radial gradient: bg-[radial-gradient(ellipse_at_top)] from-amber-700/90 via-rose-950 to-slate-950
-    // amber-700: #b45309, rose-950: #4c0519, slate-950: #020617
-    isRadial: true, // Flag to use RadialGradient instead of LinearGradient
-    radialColorList: [
-      { offset: '0%', color: '#b45309', opacity: '0.9' },   // amber-700/90 at center
-      { offset: '40%', color: '#4c0519', opacity: '1' },    // rose-950
-      { offset: '100%', color: '#020617', opacity: '1' },   // slate-950 at edges
-    ],
-    // Fallback linear gradient colors (not used when isRadial is true)
-    gradientColors: ['#b45309', '#4c0519', '#020617'] as const,
-    gradientLocations: [0, 0.4, 1] as const,
-    statusBarStyle: 'light-content' as const,
-    headerTextColor: '#FFFFFF',
-    subtitleColor: '#fbbf24', // amber-400 for better contrast
-    buttonBg: 'rgba(76, 5, 25, 0.6)', // rose-950 with opacity
-    buttonBorder: 'rgba(251, 191, 36, 0.5)', // amber-400 border
-    buttonText: '#FFFFFF',
-    modalBg: 'rgba(2, 6, 23, 0.95)', // slate-950 with opacity
-    modalBorder: 'rgba(251, 191, 36, 0.6)', // amber-400 border
-    modalTitle: '#fbbf24', // amber-400
-    modalText: '#fef3c7', // amber-100
-  },
-};
 
 function App(): React.JSX.Element {
   // Dynamic location state
-  const [targetLocation, setTargetLocation] = useState<{latitude: number; longitude: number; address: string; googleMapsUrl: string} | null>(null);
+  const [targetLocation, setTargetLocation] = useState<TargetLocation | null>(null);
   
   // Log targetLocation changes
   useEffect(() => {
@@ -99,7 +62,7 @@ function App(): React.JSX.Element {
   
   // Alignment state
   const [isAligned, setIsAligned] = useState(false);
-  const [nextSunEvent, setNextSunEvent] = useState<{ time: Date; type: 'sunrise' | 'sunset'; isToday: boolean } | null>(null);
+  const [nextSunEvent, setNextSunEvent] = useState<SunEventInfo | null>(null);
   const [isClosedManually, setIsClosedManually] = useState(false);
   
   // Navigation state
@@ -112,7 +75,7 @@ function App(): React.JSX.Element {
   const [audioEnabled, setAudioEnabled] = useState(true);
   
   // Audio volume state (0-1 range)
-  const [audioVolume, setAudioVolume] = useState(1.0);
+  const [audioVolume, setAudioVolume] = useState(AUDIO_VOLUME_DEFAULT);
   
   // Get current background theme based on state
   const currentBgTheme = APP_BACKGROUNDS[currentTheme];
@@ -120,9 +83,9 @@ function App(): React.JSX.Element {
   // Video player setup for expo-video
   const videoSource = require('./assets/videos/darshan-background.mp4');
   const videoPlayer = useVideoPlayer(videoSource, (player) => {
-    player.loop = true;
-    player.muted = true;
-    player.playbackRate = 0.3; // Play video at 0.5x speed
+    player.loop = VIDEO_LOOP;
+    player.muted = VIDEO_MUTED;
+    player.playbackRate = VIDEO_PLAYBACK_RATE;
     // Don't auto-play on mount - will be controlled by alignment state
   });
 
@@ -219,9 +182,6 @@ function App(): React.JSX.Element {
   // Reference for alarm auto-stop timeout
   const alarmTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
-  // Max alarm duration: 1 minute (60000 ms)
-  const ALARM_MAX_DURATION = 60000;
-  
   // Function to start playing the alarm
   const startAlarm = useCallback(() => {
     if (alarmPlayer && !isAlarmPlaying) {
@@ -264,7 +224,7 @@ function App(): React.JSX.Element {
               console.log('⚠️ Could not stop background music:', error);
             }
           }
-        }, ALARM_MAX_DURATION);
+        }, ALARM_MAX_DURATION_MS);
         
       } catch (error) {
         console.error('❌ Failed to play alarm sound:', error);
@@ -464,25 +424,25 @@ function App(): React.JSX.Element {
       />
     
       {/* Header */}
-      <View style={styles.header}>
-        <View style={styles.titleContainer}>
-          <Text style={[styles.title, { color: currentBgTheme.headerTextColor }]}>
+      <View style={appStyles.header}>
+        <View style={appStyles.titleContainer}>
+          <Text style={[appStyles.title, { color: currentBgTheme.headerTextColor }]}>
             {currentTab === 'home' 
-              ? 'Guru Digvandanam' 
+              ? TEXT_GURU_DIGVANDANAM
               : currentTab === 'sun'
-              ? 'Sunrise & Sunset Alarms'
+              ? TEXT_SUNRISE_SUNSET_ALARMS
               : currentTab === 'events' 
-              ? 'Programs' 
-              : 'Settings'}
+              ? TEXT_PROGRAMS
+              : TEXT_SETTINGS}
           </Text>
-          <Text style={[styles.subtitle, { color: currentBgTheme.subtitleColor }]}>
+          <Text style={[appStyles.subtitle, { color: currentBgTheme.subtitleColor }]}>
             {currentTab === 'home' 
-              ? 'Offer your prayers to the direction of Appaji' 
+              ? TEXT_OFFER_PRAYERS
               : currentTab === 'sun'
               ? ''
               : currentTab === 'events'
-              ? 'Stay updated with upcoming programs'
-              : 'Customize your experience'}
+              ? TEXT_STAY_UPDATED
+              : TEXT_CUSTOMIZE_EXPERIENCE}
           </Text>
         </View>
       </View>
@@ -561,13 +521,13 @@ function App(): React.JSX.Element {
         animationType="fade"
         onRequestClose={stopAlarm}
       >
-        <View style={styles.alarmOverlay}>
-          <View style={styles.alarmCard}>
-            <Text style={styles.alarmIcon}>⏰</Text>
-            <Text style={styles.alarmTitle}>Alarm!</Text>
-            <Text style={styles.alarmMessage}>Time for your prayers</Text>
-            <TouchableOpacity style={styles.stopAlarmButton} onPress={stopAlarm}>
-              <Text style={styles.stopAlarmText}>Stop Alarm</Text>
+        <View style={appStyles.alarmOverlay}>
+          <View style={appStyles.alarmCard}>
+            <Text style={appStyles.alarmIcon}>{EMOJI_ALARM}</Text>
+            <Text style={appStyles.alarmTitle}>Alarm!</Text>
+            <Text style={appStyles.alarmMessage}>{TEXT_TIME_FOR_PRAYERS}</Text>
+            <TouchableOpacity style={appStyles.stopAlarmButton} onPress={stopAlarm}>
+              <Text style={appStyles.stopAlarmText}>{TEXT_STOP_ALARM}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -578,7 +538,7 @@ function App(): React.JSX.Element {
 
   // Single consistent render structure to prevent component remounting on theme change
   return (
-    <View style={styles.container}>
+    <View style={appStyles.container}>
       {/* Background Layer - switches between RadialGradient and LinearGradient */}
       {useRadialGradient && 'radialColorList' in currentBgTheme ? (
         <View style={StyleSheet.absoluteFill}>
@@ -592,123 +552,18 @@ function App(): React.JSX.Element {
         </View>
       ) : (
         <LinearGradient
-          colors={[...currentBgTheme.gradientColors]}
-          locations={[...currentBgTheme.gradientLocations]}
+          colors={currentBgTheme.gradientColors as any}
+          locations={currentBgTheme.gradientLocations as any}
           style={StyleSheet.absoluteFill}
         />
       )}
       
       {/* Content Layer - always the same structure */}
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView style={appStyles.safeArea}>
         {appContent}
       </SafeAreaView>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  safeArea: {
-    flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'flex-start',
-    paddingTop: 60,
-    paddingBottom: 20,
-    paddingHorizontal: 20,
-    backgroundColor: 'transparent',
-  },
-  titleContainer: {
-    alignItems: 'center',
-    flex: 1,
-    paddingHorizontal: 16,
-  },
-  subtitle: {
-    fontSize: 16,
-    textAlign: 'center',
-    marginTop: 8,
-    fontWeight: '400',
-    lineHeight: 22,
-    paddingHorizontal: 8,
-    // Color applied dynamically via inline styles
-  },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    width: '100%',
-    paddingHorizontal: 10,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: '700',
-    textAlign: 'center',
-    marginBottom: 8,
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 4,
-    // Color applied dynamically via inline styles
-  },
-  sunEventText: {
-    fontSize: 18,
-    color: '#FFFFFF',
-    textAlign: 'center',
-    marginTop: 12,
-    fontWeight: '500',
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
-  },
-  alarmOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.85)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  alarmCard: {
-    backgroundColor: '#1a1a2e',
-    borderRadius: 24,
-    padding: 40,
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#FF6B35',
-    shadowColor: '#FF6B35',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.5,
-    shadowRadius: 20,
-    elevation: 10,
-  },
-  alarmIcon: {
-    fontSize: 80,
-    marginBottom: 16,
-  },
-  alarmTitle: {
-    fontSize: 36,
-    fontWeight: '700',
-    color: '#FF6B35',
-    marginBottom: 8,
-  },
-  alarmMessage: {
-    fontSize: 18,
-    color: '#FFFFFF',
-    marginBottom: 32,
-    opacity: 0.8,
-  },
-  stopAlarmButton: {
-    backgroundColor: '#FF6B35',
-    paddingHorizontal: 48,
-    paddingVertical: 16,
-    borderRadius: 30,
-  },
-  stopAlarmText: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#FFFFFF',
-  },
-});
 
 export default App;
