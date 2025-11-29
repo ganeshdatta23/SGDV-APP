@@ -287,7 +287,7 @@ export const DarshanOverlay: React.FC<DarshanOverlayProps> = ({
       {/* Background Video */}
       <VideoView
         player={videoPlayer}
-        style={darshanOverlayStyles.overlay}
+        style={StyleSheet.absoluteFill}
         contentFit="cover"
         nativeControls={false}
       />
@@ -299,7 +299,7 @@ export const DarshanOverlay: React.FC<DarshanOverlayProps> = ({
       <LinearGradient
         colors={['rgba(0,0,0,0.7)', 'transparent', 'transparent', 'rgba(0,0,0,0.7)']}
         locations={[0, 0.25, 0.75, 1]}
-        style={darshanOverlayStyles.overlay}
+        style={StyleSheet.absoluteFill}
         start={{ x: 0.5, y: 0 }}
         end={{ x: 0.5, y: 1 }}
       />
@@ -307,25 +307,25 @@ export const DarshanOverlay: React.FC<DarshanOverlayProps> = ({
       {/* Radial vignette simulation - corner darkening */}
       <LinearGradient
         colors={['rgba(0,0,0,0.5)', 'transparent']}
-        style={darshanOverlayStyles.overlay}
+        style={StyleSheet.absoluteFill}
         start={{ x: 0, y: 0 }}
         end={{ x: 0.6, y: 0.6 }}
       />
       <LinearGradient
         colors={['rgba(0,0,0,0.5)', 'transparent']}
-        style={darshanOverlayStyles.overlay}
+        style={StyleSheet.absoluteFill}
         start={{ x: 1, y: 0 }}
         end={{ x: 0.4, y: 0.6 }}
       />
       <LinearGradient
         colors={['rgba(0,0,0,0.5)', 'transparent']}
-        style={darshanOverlayStyles.overlay}
+        style={StyleSheet.absoluteFill}
         start={{ x: 0, y: 1 }}
         end={{ x: 0.6, y: 0.4 }}
       />
       <LinearGradient
         colors={['rgba(0,0,0,0.5)', 'transparent']}
-        style={darshanOverlayStyles.overlay}
+        style={StyleSheet.absoluteFill}
         start={{ x: 1, y: 1 }}
         end={{ x: 0.4, y: 0.4 }}
       />
@@ -348,7 +348,7 @@ export const DarshanOverlay: React.FC<DarshanOverlayProps> = ({
           */}
           
           {/* Outer soft glow - large amber/orange - INCREASED INTENSITY */}
-          <Animated.View style={[darshanOverlayStyles.overlay, { opacity: pulseAnim1 }]}>
+          <Animated.View style={[StyleSheet.absoluteFill, { opacity: pulseAnim1 }]}>
             <Svg height="100%" width="100%" viewBox="0 0 100 100">
               <Defs>
                 <RadialGradient
@@ -371,7 +371,7 @@ export const DarshanOverlay: React.FC<DarshanOverlayProps> = ({
           </Animated.View>
 
           {/* Middle warm glow - golden - INCREASED SPREAD */}
-          <Animated.View style={[darshanOverlayStyles.overlay, { opacity: pulseAnim2 }]}>
+          <Animated.View style={[StyleSheet.absoluteFill, { opacity: pulseAnim2 }]}>
             <Svg height="100%" width="100%" viewBox="0 0 100 100">
               <Defs>
                 <RadialGradient
@@ -394,7 +394,7 @@ export const DarshanOverlay: React.FC<DarshanOverlayProps> = ({
           </Animated.View>
 
           {/* Inner bright glow - bright yellow - INCREASED BRIGHTNESS */}
-          <Animated.View style={[darshanOverlayStyles.overlay, { opacity: pulseAnim3 }]}>
+          <Animated.View style={[StyleSheet.absoluteFill, { opacity: pulseAnim3 }]}>
             <Svg height="100%" width="100%" viewBox="0 0 100 100">
               <Defs>
                 <RadialGradient
