@@ -3,6 +3,7 @@ import {
   View,
   Image,
   TouchableOpacity,
+  StyleSheet,
   Animated,
   Easing,
   Dimensions,

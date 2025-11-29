@@ -7,6 +7,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
+  StyleSheet,
   Switch,
   TouchableOpacity,
   ScrollView,
@@ -170,72 +171,72 @@ export default function SunCycleView({ latitude, longitude }: SunCycleViewProps)
   return (
     <ScrollView style={sunCycleViewStyles.container} contentContainerStyle={sunCycleViewStyles.scrollContent}>
       {/* Next Event Display */}
-      <View style={styles.countdownContainer}>
-        <Text style={styles.countdownLabel}>
-          NEXT {sunTimes.nextEventType === 'sunrise' ? 'SUNRISE' : 'SUNSET'}
+      <View style={sunCycleViewStyles.countdownContainer}>
+        <Text style={sunCycleViewStyles.countdownLabel}>
+          {sunTimes.nextEventType === 'sunrise' ? TEXT_NEXT_SUNRISE : TEXT_NEXT_SUNSET}
         </Text>
-        <Text style={styles.countdownTime}>{formatSunTime(sunTimes.nextEvent)}</Text>
+        <Text style={sunCycleViewStyles.countdownTime}>{formatSunTime(sunTimes.nextEvent)}</Text>
       </View>
 
       {/* Sun Times Display */}
-      <View style={styles.timesContainer}>
-        <View style={styles.timeCard}>
-          <Ionicons name="sunny" size={32} color="#FDB813" />
-          <Text style={styles.timeLabel}>Sunrise</Text>
-          <Text style={styles.timeValue}>{formatSunTime(sunTimes.sunrise)}</Text>
+      <View style={sunCycleViewStyles.timesContainer}>
+        <View style={sunCycleViewStyles.timeCard}>
+          <Ionicons name="sunny" size={SUN_ICON_SIZE} color={SUN_SUNRISE_ICON_COLOR} />
+          <Text style={sunCycleViewStyles.timeLabel}>{TEXT_SUNRISE}</Text>
+          <Text style={sunCycleViewStyles.timeValue}>{formatSunTime(sunTimes.sunrise)}</Text>
         </View>
-        <View style={styles.timeCard}>
-          <Ionicons name="moon" size={32} color="#FF6B35" />
-          <Text style={styles.timeLabel}>Sunset</Text>
-          <Text style={styles.timeValue}>{formatSunTime(sunTimes.sunset)}</Text>
+        <View style={sunCycleViewStyles.timeCard}>
+          <Ionicons name="moon" size={SUN_ICON_SIZE} color={SUN_SUNSET_ICON_COLOR} />
+          <Text style={sunCycleViewStyles.timeLabel}>{TEXT_SUNSET}</Text>
+          <Text style={sunCycleViewStyles.timeValue}>{formatSunTime(sunTimes.sunset)}</Text>
         </View>
       </View>
 
       {/* Alarm & Notification Controls */}
-      <View style={styles.controlsContainer}>
-        <Text style={styles.sectionTitle}>Alarm & Notification Settings</Text>
+      <View style={sunCycleViewStyles.controlsContainer}>
+        <Text style={sunCycleViewStyles.sectionTitle}>{TEXT_ALARM_NOTIFICATION_SETTINGS}</Text>
 
         {/* Alarm Mode Toggle */}
-        <View style={styles.controlRow}>
-          <View style={styles.controlLabel}>
-            <Ionicons name="alarm" size={24} color="#FF6B35" />
-            <Text style={styles.controlText}>Alarm</Text>
+        <View style={sunCycleViewStyles.controlRow}>
+          <View style={sunCycleViewStyles.controlLabel}>
+            <Ionicons name="alarm" size={24} color={SUN_SUNSET_ICON_COLOR} />
+            <Text style={sunCycleViewStyles.controlText}>{TEXT_ALARM}</Text>
           </View>
           <Switch
             value={config.alarmEnabled}
             onValueChange={(value) => updateConfig({ alarmEnabled: value })}
-            trackColor={{ false: '#767577', true: '#FF6B35' }}
+            trackColor={{ false: '#767577', true: SUN_SUNSET_ICON_COLOR }}
             thumbColor={config.alarmEnabled ? '#FFFFFF' : '#f4f3f4'}
           />
         </View>
 
         {/* Nested Alarm Options */}
         {config.alarmEnabled && (
-          <View style={styles.nestedControlsAlarm}>
+          <View style={sunCycleViewStyles.nestedControlsAlarm}>
             {/* Sunrise Toggle */}
-            <View style={styles.controlRow}>
-              <View style={styles.controlLabel}>
-                <Ionicons name="sunny-outline" size={22} color="#FF6B35" />
-                <Text style={styles.controlTextNested}>Sunrise Alarm</Text>
+            <View style={sunCycleViewStyles.controlRow}>
+              <View style={sunCycleViewStyles.controlLabel}>
+                <Ionicons name="sunny-outline" size={22} color={SUN_SUNSET_ICON_COLOR} />
+                <Text style={sunCycleViewStyles.controlTextNested}>{TEXT_SUNRISE_ALARM}</Text>
               </View>
               <Switch
                 value={config.sunriseAlarmEnabled}
                 onValueChange={(value) => updateConfig({ sunriseAlarmEnabled: value })}
-                trackColor={{ false: '#767577', true: '#FF6B35' }}
+                trackColor={{ false: '#767577', true: SUN_SUNSET_ICON_COLOR }}
                 thumbColor={config.sunriseAlarmEnabled ? '#FFFFFF' : '#f4f3f4'}
               />
             </View>
 
             {/* Sunset Toggle */}
-            <View style={styles.controlRow}>
-              <View style={styles.controlLabel}>
-                <Ionicons name="moon-outline" size={22} color="#FF6B35" />
-                <Text style={styles.controlTextNested}>Sunset Alarm</Text>
+            <View style={sunCycleViewStyles.controlRow}>
+              <View style={sunCycleViewStyles.controlLabel}>
+                <Ionicons name="moon-outline" size={22} color={SUN_SUNSET_ICON_COLOR} />
+                <Text style={sunCycleViewStyles.controlTextNested}>{TEXT_SUNSET_ALARM}</Text>
               </View>
               <Switch
                 value={config.sunsetAlarmEnabled}
                 onValueChange={(value) => updateConfig({ sunsetAlarmEnabled: value })}
-                trackColor={{ false: '#767577', true: '#FF6B35' }}
+                trackColor={{ false: '#767577', true: SUN_SUNSET_ICON_COLOR }}
                 thumbColor={config.sunsetAlarmEnabled ? '#FFFFFF' : '#f4f3f4'}
               />
             </View>
@@ -245,7 +246,7 @@ export default function SunCycleView({ latitude, longitude }: SunCycleViewProps)
         {/* Test Alarm Button */}
         {config.alarmEnabled && (
           <TouchableOpacity
-            style={[styles.testButton, isTestingAlarm && styles.testButtonActive]}
+            style={[sunCycleViewStyles.testButton, isTestingAlarm && sunCycleViewStyles.testButtonActive]}
             onPress={testAlarmSound}
           >
             <Ionicons
@@ -253,53 +254,53 @@ export default function SunCycleView({ latitude, longitude }: SunCycleViewProps)
               size={24}
               color="#FFFFFF"
             />
-            <Text style={styles.testButtonText}>
-              {isTestingAlarm ? 'Stop Test Alarm' : 'Test Alarm Sound'}
+            <Text style={sunCycleViewStyles.testButtonText}>
+              {isTestingAlarm ? TEXT_STOP_TEST_ALARM : TEXT_TEST_ALARM_SOUND}
             </Text>
           </TouchableOpacity>
         )}
 
         {/* Notification Toggle */}
-        <View style={[styles.controlRow, styles.controlRowSpaced]}>
-          <View style={styles.controlLabel}>
-            <Ionicons name="notifications" size={24} color="#FDB813" />
-            <Text style={styles.controlText}>Notifications</Text>
+        <View style={[sunCycleViewStyles.controlRow, sunCycleViewStyles.controlRowSpaced]}>
+          <View style={sunCycleViewStyles.controlLabel}>
+            <Ionicons name="notifications" size={24} color={SUN_SUNRISE_ICON_COLOR} />
+            <Text style={sunCycleViewStyles.controlText}>{TEXT_NOTIFICATIONS}</Text>
           </View>
           <Switch
             value={config.notificationsEnabled}
             onValueChange={(value) => updateConfig({ notificationsEnabled: value })}
-            trackColor={{ false: '#767577', true: '#FDB813' }}
+            trackColor={{ false: '#767577', true: SUN_SUNRISE_ICON_COLOR }}
             thumbColor={config.notificationsEnabled ? '#FFFFFF' : '#f4f3f4'}
           />
         </View>
 
         {/* Nested Notification Options */}
         {config.notificationsEnabled && (
-          <View style={styles.nestedControls}>
+          <View style={sunCycleViewStyles.nestedControls}>
             {/* Sunrise Toggle */}
-            <View style={styles.controlRow}>
-              <View style={styles.controlLabel}>
-                <Ionicons name="sunny-outline" size={22} color="#FDB813" />
-                <Text style={styles.controlTextNested}>Sunrise Alerts</Text>
+            <View style={sunCycleViewStyles.controlRow}>
+              <View style={sunCycleViewStyles.controlLabel}>
+                <Ionicons name="sunny-outline" size={22} color={SUN_SUNRISE_ICON_COLOR} />
+                <Text style={sunCycleViewStyles.controlTextNested}>{TEXT_SUNRISE_ALERTS}</Text>
               </View>
               <Switch
                 value={config.sunriseNotificationEnabled}
                 onValueChange={(value) => updateConfig({ sunriseNotificationEnabled: value })}
-                trackColor={{ false: '#767577', true: '#FDB813' }}
+                trackColor={{ false: '#767577', true: SUN_SUNRISE_ICON_COLOR }}
                 thumbColor={config.sunriseNotificationEnabled ? '#FFFFFF' : '#f4f3f4'}
               />
             </View>
 
             {/* Sunset Toggle */}
-            <View style={styles.controlRow}>
-              <View style={styles.controlLabel}>
-                <Ionicons name="moon-outline" size={22} color="#FF6B35" />
-                <Text style={styles.controlTextNested}>Sunset Alerts</Text>
+            <View style={sunCycleViewStyles.controlRow}>
+              <View style={sunCycleViewStyles.controlLabel}>
+                <Ionicons name="moon-outline" size={22} color={SUN_SUNSET_ICON_COLOR} />
+                <Text style={sunCycleViewStyles.controlTextNested}>{TEXT_SUNSET_ALERTS}</Text>
               </View>
               <Switch
                 value={config.sunsetNotificationEnabled}
                 onValueChange={(value) => updateConfig({ sunsetNotificationEnabled: value })}
-                trackColor={{ false: '#767577', true: '#FF6B35' }}
+                trackColor={{ false: '#767577', true: SUN_SUNSET_ICON_COLOR }}
                 thumbColor={config.sunsetNotificationEnabled ? '#FFFFFF' : '#f4f3f4'}
               />
             </View>
@@ -308,9 +309,9 @@ export default function SunCycleView({ latitude, longitude }: SunCycleViewProps)
 
         {/* Scheduled Count */}
         {(config.notificationsEnabled || config.alarmEnabled) && (
-          <View style={styles.infoBox}>
-            <Ionicons name="calendar" size={20} color="#FDB813" />
-            <Text style={styles.infoText}>
+          <View style={sunCycleViewStyles.infoBox}>
+            <Ionicons name="calendar" size={20} color={SUN_SUNRISE_ICON_COLOR} />
+            <Text style={sunCycleViewStyles.infoText}>
               {scheduledCount} alarms scheduled for the next 3 days
             </Text>
           </View>
@@ -318,205 +319,27 @@ export default function SunCycleView({ latitude, longitude }: SunCycleViewProps)
 
         {/* Test Notification Button */}
         <TouchableOpacity
-          style={styles.testNotificationButton}
+          style={sunCycleViewStyles.testNotificationButton}
           onPress={async () => {
             await sendTestNotification();
           }}
         >
           <Ionicons name="notifications-outline" size={24} color="#FFFFFF" />
-          <Text style={styles.testButtonText}>Send Test Notification</Text>
+          <Text style={sunCycleViewStyles.testButtonText}>{TEXT_SEND_TEST_NOTIFICATION}</Text>
         </TouchableOpacity>
 
         {/* Test Alarm Button - schedules alarm for 5 seconds from now */}
         <TouchableOpacity
-          style={styles.testAlarmButton}
+          style={sunCycleViewStyles.testAlarmButton}
           onPress={async () => {
             await sendTestAlarm();
           }}
         >
           <Ionicons name="alarm-outline" size={24} color="#FFFFFF" />
-          <Text style={styles.testButtonText}>Test Alarm (5 sec)</Text>
+          <Text style={sunCycleViewStyles.testButtonText}>{TEXT_TEST_ALARM_5_SEC}</Text>
         </TouchableOpacity>
       </View>
     </ScrollView>
   );
 }
-
-// ============================================================================
-// STYLES
-// ============================================================================
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingHorizontal: 20,
-    paddingBottom: 100,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 40,
-  },
-  loadingText: {
-    fontSize: 16,
-    color: '#FFFFFF',
-    opacity: 0.7,
-  },
-  countdownContainer: {
-    alignItems: 'center',
-    marginBottom: 30,
-  },
-  countdownLabel: {
-    fontSize: 18,
-    color: '#FFFFFF',
-    opacity: 0.8,
-    marginBottom: 8,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-  },
-  countdownTime: {
-    fontSize: 64,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    letterSpacing: 4,
-  },
-  countdownSubtext: {
-    fontSize: 20,
-    color: '#FFFFFF',
-    opacity: 0.7,
-    marginTop: 8,
-  },
-  timesContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginBottom: 30,
-  },
-  timeCard: {
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 16,
-    padding: 20,
-    minWidth: 140,
-  },
-  timeLabel: {
-    fontSize: 14,
-    color: '#FFFFFF',
-    opacity: 0.7,
-    marginTop: 8,
-    marginBottom: 4,
-  },
-  timeValue: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#FFFFFF',
-  },
-  controlsContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 16,
-    padding: 20,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#FFFFFF',
-    marginBottom: 16,
-  },
-  controlRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  controlRowSpaced: {
-    marginTop: 16,
-  },
-  controlLabel: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-    paddingRight: 8,
-  },
-  controlText: {
-    fontSize: 16,
-    color: '#FFFFFF',
-    marginLeft: 12,
-    flexWrap: 'wrap',
-    flex: 1,
-  },
-  controlTextNested: {
-    fontSize: 15,
-    color: '#FFFFFF',
-    marginLeft: 12,
-    opacity: 0.9,
-    flexWrap: 'wrap',
-    flex: 1,
-  },
-  nestedControls: {
-    marginLeft: 20,
-    paddingLeft: 16,
-    borderLeftWidth: 2,
-    borderLeftColor: 'rgba(253, 184, 19, 0.3)',
-  },
-  nestedControlsAlarm: {
-    marginLeft: 20,
-    paddingLeft: 16,
-    borderLeftWidth: 2,
-    borderLeftColor: 'rgba(255, 107, 53, 0.3)',
-  },
-  testButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#FF6B35',
-    borderRadius: 12,
-    padding: 16,
-    marginTop: 16,
-  },
-  testButtonActive: {
-    backgroundColor: '#DC3545',
-  },
-  testButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#FFFFFF',
-    marginLeft: 8,
-  },
-  infoBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(253, 184, 19, 0.1)',
-    borderRadius: 8,
-    padding: 12,
-    marginTop: 16,
-  },
-  infoText: {
-    fontSize: 14,
-    color: '#FFFFFF',
-    marginLeft: 8,
-    flex: 1,
-  },
-  testNotificationButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#4A90D9',
-    borderRadius: 12,
-    padding: 16,
-    marginTop: 16,
-  },
-  testAlarmButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#FF6B35',
-    borderRadius: 12,
-    padding: 16,
-    marginTop: 12,
-  },
-});
 
