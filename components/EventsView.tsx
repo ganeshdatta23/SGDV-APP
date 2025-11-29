@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { fetchEvents, EventData } from '../utils/sgvdApi';
 import { ThemeMode } from './CompassView';
 
@@ -53,6 +53,7 @@ export const EventsView: React.FC<EventsViewProps> = ({ style, theme = 'cosmic' 
   const currentEventsTheme = EVENTS_THEMES[theme];
   const [events, setEvents] = useState<EventData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [expandedEventIds, setExpandedEventIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     loadEvents();
@@ -68,6 +69,18 @@ export const EventsView: React.FC<EventsViewProps> = ({ style, theme = 'cosmic' 
     } finally {
       setLoading(false);
     }
+  };
+
+  const toggleEventExpansion = (eventId: string) => {
+    setExpandedEventIds(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(eventId)) {
+        newSet.delete(eventId);
+      } else {
+        newSet.add(eventId);
+      }
+      return newSet;
+    });
   };
 
   const formatDate = (dateStr: string) => {
@@ -94,38 +107,61 @@ export const EventsView: React.FC<EventsViewProps> = ({ style, theme = 'cosmic' 
         ) : events.length > 0 ? (
           events.map((event) => {
             const { month, day, time } = formatDate(event.event_date);
+            const isExpanded = expandedEventIds.has(event.id);
+            
             return (
-              <View 
-                key={event.id} 
-                style={[
-                  styles.eventCard, 
-                  { backgroundColor: currentEventsTheme.cardBg, borderColor: currentEventsTheme.cardBorder }
-                ]}
+              <TouchableOpacity
+                key={event.id}
+                activeOpacity={0.7}
+                onPress={() => toggleEventExpansion(event.id)}
               >
-                {/* Date badge */}
-                <View style={[styles.dateBadge, { backgroundColor: currentEventsTheme.dateBg, borderColor: currentEventsTheme.dateBorder }]}>
-                  <Text style={[styles.dateMonth, { color: currentEventsTheme.dateText }]}>{month}</Text>
-                  <Text style={[styles.dateDay, { color: currentEventsTheme.dateText }]}>{day}</Text>
-                </View>
-                
-                {/* Event details */}
-                <View style={styles.eventDetails}>
-                  <Text style={[styles.eventTitle, { color: currentEventsTheme.eventTitle }]} numberOfLines={2}>
-                    {event.title}
-                  </Text>
-                  <Text style={[styles.eventSubtext, { color: currentEventsTheme.eventSubtext }]}>
-                    {event.location_name || 'Location TBA'} • {time}
-                  </Text>
-                  {event.description && (
-                    <Text style={[styles.eventDescription, { color: currentEventsTheme.eventSubtext }]} numberOfLines={2}>
-                      {event.description}
+                <View 
+                  style={[
+                    styles.eventCard, 
+                    { backgroundColor: currentEventsTheme.cardBg, borderColor: currentEventsTheme.cardBorder }
+                  ]}
+                >
+                  {/* Date badge */}
+                  <View style={[styles.dateBadge, { backgroundColor: currentEventsTheme.dateBg, borderColor: currentEventsTheme.dateBorder }]}>
+                    <Text style={[styles.dateMonth, { color: currentEventsTheme.dateText }]}>{month}</Text>
+                    <Text style={[styles.dateDay, { color: currentEventsTheme.dateText }]}>{day}</Text>
+                  </View>
+                  
+                  {/* Event details */}
+                  <View style={styles.eventDetails}>
+                    <Text 
+                      style={[styles.eventTitle, { color: currentEventsTheme.eventTitle }]} 
+                      numberOfLines={isExpanded ? undefined : 2}
+                    >
+                      {event.title}
                     </Text>
-                  )}
+                    <Text style={[styles.eventSubtext, { color: currentEventsTheme.eventSubtext }]}>
+                      {event.location_name || 'Location TBA'} • {time}
+                    </Text>
+                    {event.description && (
+                      <Text 
+                        style={[styles.eventDescription, { color: currentEventsTheme.eventSubtext }]} 
+                        numberOfLines={isExpanded ? undefined : 2}
+                      >
+                        {event.description}
+                      </Text>
+                    )}
+                  </View>
+                  
+                  {/* Chevron - rotates when expanded */}
+                  <Text 
+                    style={[
+                      styles.chevron, 
+                      { 
+                        color: currentEventsTheme.eventSubtext,
+                        transform: [{ rotate: isExpanded ? '90deg' : '0deg' }]
+                      }
+                    ]}
+                  >
+                    ›
+                  </Text>
                 </View>
-                
-                {/* Chevron */}
-                <Text style={[styles.chevron, { color: currentEventsTheme.eventSubtext }]}>›</Text>
-              </View>
+              </TouchableOpacity>
             );
           })
         ) : (

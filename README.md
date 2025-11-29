@@ -359,6 +359,11 @@ npx expo start
 
 ### Production Build (EAS)
 
+0. **For testing in android using apk file**:
+```bash
+eas build --platform android --profile preview   
+```
+
 1. **Install EAS CLI**:
 ```bash
 npm install -g eas-cli
