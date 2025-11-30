@@ -255,6 +255,7 @@ export interface CardinalDirectionProps {
 export interface TurnInstruction {
   text: string;
   icon: keyof typeof Ionicons.glyphMap | null;
+  transform?: Array<{ scaleX?: number; scaleY?: number }>;
 }
 
 // ============================================================================

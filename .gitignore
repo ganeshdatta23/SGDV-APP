@@ -1,6 +1,8 @@
 # Dependencies
 node_modules/
 archive/
+ios/
+android/
 .pnp
 .pnp.*
 .yarn/

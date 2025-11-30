@@ -520,7 +520,7 @@ export const AUDIO_VOLUME_STEP = 0.01;
 // ============================================================================
 
 export const TEXT_GURU_DIGVANDANAM = 'Guru Digvandanam';
-export const TEXT_OFFER_PRAYERS = 'Offer your prayers to the direction of Appaji';
+export const TEXT_OFFER_PRAYERS = 'Offer prayers to Appaji in the direction shown';
 export const TEXT_SUNRISE_SUNSET_ALARMS = 'Sunrise & Sunset Alarms';
 export const TEXT_PROGRAMS = 'Programs';
 export const TEXT_STAY_UPDATED = 'Stay updated with upcoming programs';
@@ -550,8 +550,8 @@ export const TEXT_SOUND = 'SOUND';
 export const TEXT_CHOOSE_THEME = 'Choose Theme';
 export const TEXT_DARSHAN_AUDIO_VOLUME = 'Darshan Audio Volume';
 export const TEXT_ALIGNED = 'Aligned';
-export const TEXT_TURN_RIGHT = 'TURN RIGHT';
-export const TEXT_TURN_LEFT = 'TURN LEFT';
+export const TEXT_TURN_RIGHT = 'ROTATE RIGHT';
+export const TEXT_TURN_LEFT = 'ROTATE LEFT';
 export const TEXT_HEADING = 'HEADING';
 export const TEXT_TIME_FOR_PRAYERS = 'Time for your prayers';
 export const TEXT_STOP_ALARM = 'Stop Alarm';
@@ -559,11 +559,7 @@ export const TEXT_STOP_ALARM = 'Stop Alarm';
 // ============================================================================
 // EMOJIS
 // ============================================================================
-
-export const EMOJI_ALARM = '⏰';
-export const EMOJI_CALENDAR = '📅';
-export const EMOJI_FLOWER = '🌹';
-export const EMOJI_DIYA = '🪔';
+// Emoji constants removed - no longer used
 
 // ============================================================================
 // TIMING CONSTANTS

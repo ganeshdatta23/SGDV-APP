@@ -1,5 +1,7 @@
 import { StyleSheet } from 'react-native';
 
+/* Common styles for all screens */
+
 export const appStyles = StyleSheet.create({
   container: {
     flex: 1,
@@ -22,12 +24,12 @@ export const appStyles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 15.6,
     textAlign: 'center',
     marginTop: 8,
     fontWeight: '400',
-    lineHeight: 22,
-    paddingHorizontal: 8,
+    lineHeight: 21,
+    paddingHorizontal: 0,
   },
   headerRow: {
     flexDirection: 'row',

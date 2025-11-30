@@ -167,7 +167,7 @@ export const DarshanOverlay: React.FC<DarshanOverlayProps> = ({
         audioPlayer.loop = false;
         audioPlayer.volume = audioVolume;
         audioPlayer.play();
-        console.log(`🎵 Darshan audio started (will play once at volume ${audioVolume})`);
+        console.log(`Darshan audio started (will play once at volume ${audioVolume})`);
         setHasPlayedOnce(true);
       }
     }
@@ -180,7 +180,7 @@ export const DarshanOverlay: React.FC<DarshanOverlayProps> = ({
         if (!audioPlayer.playing && hasPlayedOnce && !isMuted) {
           // Audio finished playing
           setIsMuted(true);
-          console.log('🔇 Audio finished, auto-muting');
+          console.log('Audio finished, auto-muting');
           clearInterval(checkAudioStatus);
         }
       }, 500);
@@ -200,7 +200,7 @@ export const DarshanOverlay: React.FC<DarshanOverlayProps> = ({
       audioPlayer.volume = audioVolume;
       await audioPlayer.seekTo(0);
       audioPlayer.play();
-      console.log(`🔊 Audio unmuted and playing at volume ${audioVolume}`);
+      console.log(`Audio unmuted and playing at volume ${audioVolume}`);
       
       // Also play the video when audio is manually turned on
       if (videoPlayer && visible) {
@@ -209,9 +209,9 @@ export const DarshanOverlay: React.FC<DarshanOverlayProps> = ({
           videoPlayer.muted = true;
           videoPlayer.currentTime = 0;
           videoPlayer.play();
-          console.log('🎬 Video playback started - audio manually enabled');
+          console.log('Video playback started - audio manually enabled');
         } catch (error) {
-          console.log('❌ Video playback error when unmuting audio:', error);
+          console.log('Video playback error when unmuting audio:', error);
         }
       }
     } else {
@@ -219,9 +219,9 @@ export const DarshanOverlay: React.FC<DarshanOverlayProps> = ({
       setIsMuted(true);
       try {
         audioPlayer.pause();
-        console.log('🔇 Audio muted');
+        console.log('Audio muted');
       } catch (error) {
-        console.log('⚠️ Could not pause audio (player may be disposed)');
+        console.log('Could not pause audio (player may be disposed)');
       }
     }
   };
@@ -235,16 +235,16 @@ export const DarshanOverlay: React.FC<DarshanOverlayProps> = ({
         // Always seek to beginning when overlay becomes visible
         if (audioPlayer) {
           await audioPlayer.seekTo(0);
-          console.log('⏮️ Audio reset to position 0 - ready for fresh playback');
+          console.log('Audio reset to position 0 - ready for fresh playback');
         }
       } else {
         // Stop audio when overlay is not visible (dealigned)
         if (audioPlayer && audioPlayer.playing) {
           try {
             audioPlayer.pause();
-            console.log('🔇 Audio stopped - overlay dealigned');
+            console.log('Audio stopped - overlay dealigned');
           } catch (error) {
-            console.log('⚠️ Could not pause audio (player may be disposed)');
+            console.log('Could not pause audio (player may be disposed)');
           }
         }
       }
@@ -257,7 +257,7 @@ export const DarshanOverlay: React.FC<DarshanOverlayProps> = ({
   useEffect(() => {
     if (audioPlayer && visible && !isMuted) {
       audioPlayer.volume = audioVolume;
-      console.log(`🔊 Audio volume updated to ${Math.round(audioVolume * 100)}%`);
+      console.log(`Audio volume updated to ${Math.round(audioVolume * 100)}%`);
     }
   }, [audioVolume, audioPlayer, visible, isMuted]);
 
@@ -265,7 +265,7 @@ export const DarshanOverlay: React.FC<DarshanOverlayProps> = ({
   const handlePoojaPress = () => {
     if (flowerAnimationRef.current) {
       flowerAnimationRef.current.trigger();
-      console.log('🌹 Pooja flower animation triggered');
+      console.log('Pooja flower animation triggered');
     }
   };
 
@@ -273,7 +273,7 @@ export const DarshanOverlay: React.FC<DarshanOverlayProps> = ({
   const handleAartiPress = () => {
     if (aartiAnimationRef.current) {
       aartiAnimationRef.current.trigger();
-      console.log('🪔 Aarti animation triggered');
+      console.log('Aarti animation triggered');
     }
   };
 

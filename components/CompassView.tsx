@@ -366,9 +366,9 @@ export default function CompassView({
       return { text: TEXT_ALIGNED, icon: "checkmark-circle" };
     }
     if (delta > 0) {
-      return { text: TEXT_TURN_RIGHT, icon: "arrow-redo" };
+      return { text: TEXT_TURN_RIGHT, icon: "refresh-outline", transform: [{ }] };
     }
-    return { text: TEXT_TURN_LEFT, icon: "arrow-undo" };
+    return { text: TEXT_TURN_LEFT, icon: "refresh-outline" , transform: [{ scaleX: -1 }]};
   };
 
   const instruction = getTurnInstruction();
@@ -376,8 +376,8 @@ export default function CompassView({
 
   return (
     <View style={compassViewStyles.container}>
-      {/* Turn instruction above compass */}
-      <View style={[
+      <View style={
+        [
         compassViewStyles.turnContainer,
         {
           backgroundColor: isFacingTarget ? colors.turnContainerAlignedBg : colors.turnContainerBg,
@@ -393,6 +393,7 @@ export default function CompassView({
             name={instruction.icon} 
             size={config.turnInstructionIconSize} 
             color={isFacingTarget ? colors.emerald : colors.gold} 
+            transform={instruction.transform}
           />
         )}
         <Text style={[
@@ -401,7 +402,8 @@ export default function CompassView({
             color: isFacingTarget ? colors.emerald : colors.gold,
             fontSize: config.turnInstructionTextSize,
           }
-        ]}>
+        ]
+        }>
           {instruction.text}
         </Text>
       </View>

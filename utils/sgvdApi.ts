@@ -331,7 +331,7 @@ export const fetchLocationDirect = async (): Promise<LocationData> => {
     // The API returns { results: [...] }
     if (data?.results?.length > 0) {
       const locationData = data.results[0];
-      console.log('✅ STEP 1 SUCCESS: Location found from API:', locationData.name);
+      console.log('STEP 1 SUCCESS: Location found from API:', locationData.name);
       
       // Extract time from API and apply to today's date
       // This ignores the date from API and uses only the time portion
@@ -377,14 +377,14 @@ export const fetchLocationDirect = async (): Promise<LocationData> => {
     throw new Error('No location found in API response');
   } catch (apiError) {
     // STEP 2: API failed - try internal cache (in-memory + AsyncStorage)
-    console.warn('❌ STEP 1 FAILED: API error:', apiError);
-    console.log('💾 STEP 2: Checking internal cache...');
+    console.warn('STEP 1 FAILED: API error:', apiError);
+    console.log('STEP 2: Checking internal cache...');
     
     try {
       const cachedLocation = await loadCachedLocation();
       
       if (cachedLocation) {
-        console.log('✅ STEP 2 SUCCESS: Using cached location data');
+        console.log('STEP 2 SUCCESS: Using cached location data');
         console.log('Cached location:', {
           name: cachedLocation.name,
           coords: `${cachedLocation.latitude}, ${cachedLocation.longitude}`,
@@ -394,13 +394,13 @@ export const fetchLocationDirect = async (): Promise<LocationData> => {
         return cachedLocation;
       }
       
-      console.log('❌ STEP 2 FAILED: No valid cache found');
+      console.log('STEP 2 FAILED: No valid cache found');
     } catch (cacheError) {
-      console.warn('❌ STEP 2 FAILED: Cache read error:', cacheError);
+      console.warn('STEP 2 FAILED: Cache read error:', cacheError);
     }
     
     // STEP 3: Both API and cache failed - use hardcoded fallback
-    console.log('🏠 STEP 3: Using hardcoded fallback location');
+    console.log('STEP 3: Using hardcoded fallback location');
     const fallbackTimes = getFallbackSunTimes();
     const location: LocationData = {
       ...FALLBACK_LOCATION,
@@ -409,7 +409,7 @@ export const fetchLocationDirect = async (): Promise<LocationData> => {
       sunset: fallbackTimes.sunset,
     };
     
-    console.log('✅ STEP 3 SUCCESS: Fallback location loaded:', {
+    console.log('STEP 3 SUCCESS: Fallback location loaded:', {
       name: location.name,
       coords: `${location.latitude}, ${location.longitude}`,
       sunrise: formatSunTime(location.sunrise),

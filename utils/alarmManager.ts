@@ -55,11 +55,11 @@ export const requestNotificationPermissions = async (): Promise<boolean> => {
     }
 
     if (finalStatus !== 'granted') {
-      console.log('❌ Notification permissions not granted');
+      console.log('Notification permissions not granted');
       return false;
     }
 
-    console.log('✅ Notification permissions granted');
+    console.log('Notification permissions granted');
     return true;
   } catch (error) {
     console.error('Error requesting notification permissions:', error);
@@ -69,13 +69,13 @@ export const requestNotificationPermissions = async (): Promise<boolean> => {
 
 // Initialize notification system
 export const initializeNotifications = async (): Promise<boolean> => {
-  console.log('⏰ Initializing notification system...');
+  console.log('Initializing notification system...');
   
   // Request permissions
   const hasPermission = await requestNotificationPermissions();
   
   if (!hasPermission) {
-    console.log('⚠️ Notifications will not work without permissions');
+    console.log('Notifications will not work without permissions');
     return false;
   }
 
@@ -90,10 +90,10 @@ export const initializeNotifications = async (): Promise<boolean> => {
       enableVibrate: true,
       enableLights: true,
     });
-    console.log('✅ Android notification channel created');
+    console.log('Android notification channel created');
   }
 
-  console.log('✅ Notification system initialized');
+  console.log('Notification system initialized');
   return true;
 };
 
@@ -112,7 +112,7 @@ export const getAlarmConfig = async (): Promise<AlarmConfig> => {
 export const saveAlarmConfig = async (config: AlarmConfig): Promise<void> => {
   try {
     await AsyncStorage.setItem('alarmConfig', JSON.stringify(config));
-    console.log('✅ Alarm config saved:', config);
+    console.log('Alarm config saved:', config);
   } catch (error) {
     console.error('Error saving alarm config:', error);
   }
@@ -129,7 +129,7 @@ const scheduleNotification = async (
   try {
     // Don't schedule if the date is in the past
     if (triggerDate <= new Date()) {
-      console.log(`⏭️ Skipping past notification: ${title} at ${triggerDate.toLocaleString()}`);
+      console.log(`Skipping past notification: ${title} at ${triggerDate.toLocaleString()}`);
       return null;
     }
 
@@ -157,11 +157,11 @@ const scheduleNotification = async (
       } as Notifications.DateTriggerInput,
     });
 
-    console.log(`📅 Scheduled notification: ${title} at ${triggerDate.toLocaleString()} (ID: ${notificationId})`);
+    console.log(`Scheduled notification: ${title} at ${triggerDate.toLocaleString()} (ID: ${notificationId})`);
     scheduledNotificationIds.push(notificationId);
     return notificationId;
   } catch (error) {
-    console.error(`❌ Error scheduling notification: ${title}`, error);
+    console.error(`Error scheduling notification: ${title}`, error);
     return null;
   }
 };
@@ -181,7 +181,7 @@ export const scheduleAlarms = async (latitude: number, longitude: number): Promi
                                 (config.notificationsEnabled && config.sunsetNotificationEnabled);
     
     if (!shouldScheduleSunrise && !shouldScheduleSunset) {
-      console.log('⏰ No alarms or notifications enabled, skipping scheduling');
+      console.log('No alarms or notifications enabled, skipping scheduling');
       return;
     }
 
@@ -256,9 +256,9 @@ export const scheduleAlarms = async (latitude: number, longitude: number): Promi
       );
     }
     
-    console.log('✅ Alarms scheduled successfully');
+    console.log('Alarms scheduled successfully');
   } catch (error) {
-    console.error('❌ Error scheduling alarms:', error);
+    console.error('Error scheduling alarms:', error);
   }
 };
 
@@ -268,7 +268,7 @@ export const cancelAllAlarms = async (): Promise<void> => {
     // Cancel all scheduled notifications
     await Notifications.cancelAllScheduledNotificationsAsync();
     scheduledNotificationIds = [];
-  console.log('🔕 All alarms cancelled');
+  console.log('All alarms cancelled');
   } catch (error) {
     console.error('Error cancelling alarms:', error);
   }
@@ -357,7 +357,7 @@ export const getNextAlarmInfo = async (latitude: number, longitude: number): Pro
 // Schedule alarms for the next 3 days
 export const scheduleAlarmsForNext3Days = async (latitude: number, longitude: number): Promise<void> => {
   try {
-  console.log('📅 Scheduling alarms for next 3 days');
+  console.log('Scheduling alarms for next 3 days');
     
     const config = await getAlarmConfig();
     
@@ -371,7 +371,7 @@ export const scheduleAlarmsForNext3Days = async (latitude: number, longitude: nu
                                 (config.notificationsEnabled && config.sunsetNotificationEnabled);
     
     if (!shouldScheduleSunrise && !shouldScheduleSunset) {
-      console.log('⏰ No alarms or notifications enabled, skipping scheduling');
+      console.log('No alarms or notifications enabled, skipping scheduling');
       return;
     }
 
@@ -417,9 +417,9 @@ export const scheduleAlarmsForNext3Days = async (latitude: number, longitude: nu
       }
     }
     
-    console.log('✅ Alarms for next 3 days scheduled successfully');
+    console.log('Alarms for next 3 days scheduled successfully');
   } catch (error) {
-    console.error('❌ Error scheduling alarms for 3 days:', error);
+    console.error('Error scheduling alarms for 3 days:', error);
   }
 };
 
@@ -471,9 +471,9 @@ export const sendTestNotification = async (): Promise<void> => {
       },
       trigger: null, // Immediate notification
     });
-    console.log('✅ Test notification sent');
+    console.log('Test notification sent');
   } catch (error) {
-    console.error('❌ Error sending test notification:', error);
+    console.error('Error sending test notification:', error);
   }
 };
 
@@ -486,7 +486,7 @@ export const sendTestAlarm = async (): Promise<void> => {
     await Notifications.scheduleNotificationAsync({
       identifier: 'test-alarm',
       content: {
-        title: '⏰ Test Alarm',
+        title: 'Test Alarm',
         body: 'This is a test alarm! The alarm sound should be playing.',
         sound: 'default',
         priority: 'max',
@@ -498,9 +498,9 @@ export const sendTestAlarm = async (): Promise<void> => {
         channelId: Platform.OS === 'android' ? 'sunrise-sunset-alarms' : undefined,
       } as Notifications.DateTriggerInput,
     });
-    console.log('✅ Test alarm scheduled for 5 seconds from now');
+    console.log('Test alarm scheduled for 5 seconds from now');
   } catch (error) {
-    console.error('❌ Error scheduling test alarm:', error);
+    console.error('Error scheduling test alarm:', error);
   }
 };
 

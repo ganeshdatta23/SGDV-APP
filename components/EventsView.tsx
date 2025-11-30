@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { fetchEvents } from '../utils/sgvdApi';
 import { EventsViewProps, EventData, FormattedDate } from '../types';
-import { EVENTS_THEMES, TEXT_LOADING_EVENTS, TEXT_NO_UPCOMING_EVENTS, TEXT_LOCATION_TBA, EMOJI_CALENDAR } from '../constants';
+import { EVENTS_THEMES, TEXT_LOADING_EVENTS, TEXT_NO_UPCOMING_EVENTS, TEXT_LOCATION_TBA } from '../constants';
 import { eventsViewStyles } from '../styles/EventsViewStyles';
 
 export const EventsView: React.FC<EventsViewProps> = ({ style, theme = 'cosmic' }) => {
@@ -126,7 +126,7 @@ export const EventsView: React.FC<EventsViewProps> = ({ style, theme = 'cosmic' 
           })
         ) : (
           <View style={[eventsViewStyles.card, { backgroundColor: currentEventsTheme.cardBg, borderColor: currentEventsTheme.cardBorder }]}>
-            <Text style={eventsViewStyles.emptyIcon}>{EMOJI_CALENDAR}</Text>
+            <Text style={eventsViewStyles.emptyIcon}>Calendar</Text>
             <Text style={[eventsViewStyles.emptyText, { color: currentEventsTheme.emptyText }]}>{TEXT_NO_UPCOMING_EVENTS}</Text>
           </View>
         )}

@@ -131,7 +131,7 @@ export default function SunCycleView({ latitude, longitude }: SunCycleViewProps)
         alarmPlayer.pause();
         setIsTestingAlarm(false);
       } catch (error) {
-        console.log('⚠️ Could not pause alarm (player may be disposed)');
+        console.log('Could not pause alarm (player may be disposed)');
         setIsTestingAlarm(false);
       }
     } else {
@@ -147,12 +147,12 @@ export default function SunCycleView({ latitude, longitude }: SunCycleViewProps)
             alarmPlayer.pause();
             setIsTestingAlarm(false);
           } catch (error) {
-            console.log('⚠️ Could not pause alarm (player may be disposed)');
+            console.log('Could not pause alarm (player may be disposed)');
             setIsTestingAlarm(false);
           }
         }, ALARM_TEST_DURATION_MS);
       } catch (error) {
-        console.log('⚠️ Could not play alarm:', error);
+        console.log('Could not play alarm:', error);
       }
     }
   }, [isTestingAlarm, alarmPlayer]);

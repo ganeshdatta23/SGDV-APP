@@ -37,7 +37,6 @@ import {
   TEXT_CUSTOMIZE_EXPERIENCE,
   TEXT_TIME_FOR_PRAYERS,
   TEXT_STOP_ALARM,
-  EMOJI_ALARM,
 } from './constants';
 import { appStyles } from './styles/AppStyles';
 
@@ -57,7 +56,7 @@ function App(): React.JSX.Element {
   
   // Log targetLocation changes
   useEffect(() => {
-    console.log('🎯 App.tsx: targetLocation state changed:', targetLocation);
+    console.log('App.tsx: targetLocation state changed:', targetLocation);
   }, [targetLocation]);
   
   // Alignment state
@@ -117,8 +116,8 @@ function App(): React.JSX.Element {
   useEffect(() => {
     const loadLocation = async () => {
       try {
-        console.log('🔍 App.tsx: Starting location fetch process...');
-        console.log('🔍 App.tsx: Calling fetchLocationDirect() with fallback chain (API -> Cache -> Hardcoded)');
+        console.log('App.tsx: Starting location fetch process...');
+        console.log('App.tsx: Calling fetchLocationDirect() with fallback chain (API -> Cache -> Hardcoded)');
         
         // fetchLocationDirect() always returns a valid location through its fallback chain:
         // 1. Try API first
@@ -126,7 +125,7 @@ function App(): React.JSX.Element {
         // 3. If cache fails, use hardcoded fallback location
         const location = await fetchLocationDirect();
         
-        console.log('✅ App.tsx: Target location loaded successfully:', {
+        console.log('App.tsx: Target location loaded successfully:', {
           name: location.name,
           coords: `${location.latitude}, ${location.longitude}`,
           address: location.address,
@@ -134,16 +133,16 @@ function App(): React.JSX.Element {
         setTargetLocation(location);
       } catch (error) {
         // This should never happen since fetchLocationDirect has complete fallback chain
-        console.error('❌ App.tsx: Unexpected error loading location:', error);
+        console.error('App.tsx: Unexpected error loading location:', error);
         if (error instanceof Error) {
-          console.error('❌ App.tsx: Error details:', error.message, error.stack);
+          console.error('App.tsx: Error details:', error.message, error.stack);
         } else {
-          console.error('❌ App.tsx: Error details:', String(error));
+          console.error('App.tsx: Error details:', String(error));
         }
       }
     };
 
-    console.log('🚀 App.tsx: Component mounted, starting location load...');
+    console.log('App.tsx: Component mounted, starting location load...');
     
     // Initialize audio mode - enable background playback for alarms
     const setupAudio = async () => {
@@ -152,9 +151,9 @@ function App(): React.JSX.Element {
           playsInSilentMode: true,
           shouldPlayInBackground: true, // Enable background audio for alarms
         });
-        console.log('✅ Audio mode configured with background playback');
+        console.log('Audio mode configured with background playback');
       } catch (error) {
-        console.log('❌ Failed to configure audio mode', error);
+        console.log('Failed to configure audio mode', error);
       }
     };
     
@@ -165,12 +164,12 @@ function App(): React.JSX.Element {
       try {
         const initialized = await initializeNotifications();
         if (initialized) {
-          console.log('✅ Notifications ready');
+          console.log('Notifications ready');
         } else {
-          console.log('⚠️ Notifications not available - permissions may be denied');
+          console.log('Notifications not available - permissions may be denied');
         }
       } catch (error) {
-        console.error('❌ Failed to initialize notifications:', error);
+        console.error('Failed to initialize notifications:', error);
       }
     };
     
@@ -190,7 +189,7 @@ function App(): React.JSX.Element {
         alarmPlayer.volume = 1.0;
         alarmPlayer.play();
         setIsAlarmPlaying(true);
-        console.log('🔊 Alarm sound started');
+        console.log('Alarm sound started');
         
         // Also start playing background music if audio is enabled
         if (audioPlayer && audioEnabled) {
@@ -198,36 +197,36 @@ function App(): React.JSX.Element {
             audioPlayer.loop = true;
             audioPlayer.volume = audioVolume;
             audioPlayer.play();
-            console.log('🎵 Background music started for alarm');
+            console.log('Background music started for alarm');
           } catch (error) {
-            console.log('⚠️ Could not start background music:', error);
+            console.log('Could not start background music:', error);
           }
         }
         
         // Auto-stop after 1 minute
         alarmTimeoutRef.current = setTimeout(() => {
-          console.log('⏱️ Alarm auto-stopped after 1 minute');
+          console.log('Alarm auto-stopped after 1 minute');
           if (alarmPlayer) {
             try {
               alarmPlayer.pause();
               setIsAlarmPlaying(false);
             } catch (error) {
-              console.log('⚠️ Could not auto-stop alarm:', error);
+              console.log('Could not auto-stop alarm:', error);
             }
           }
           // Also stop background music
           if (audioPlayer && audioPlayer.playing) {
             try {
               audioPlayer.pause();
-              console.log('🎵 Background music stopped');
+              console.log('Background music stopped');
             } catch (error) {
-              console.log('⚠️ Could not stop background music:', error);
+              console.log('Could not stop background music:', error);
             }
           }
         }, ALARM_MAX_DURATION_MS);
         
       } catch (error) {
-        console.error('❌ Failed to play alarm sound:', error);
+        console.error('Failed to play alarm sound:', error);
       }
     }
   }, [alarmPlayer, isAlarmPlaying, audioPlayer, audioEnabled, audioVolume]);
@@ -235,12 +234,12 @@ function App(): React.JSX.Element {
   // Listen for alarm notifications (when app is in foreground)
   useEffect(() => {
     const subscription = addNotificationReceivedListener((notification) => {
-      console.log('🔔 Notification received:', notification);
+      console.log('Notification received:', notification);
       
       // Check if this is an alarm notification
       const data = notification.request.content.data;
       if (data && data.isAlarm) {
-        console.log('⏰ Alarm notification received - playing alarm sound!');
+        console.log('Alarm notification received - playing alarm sound!');
         startAlarm();
       }
     });
@@ -253,12 +252,12 @@ function App(): React.JSX.Element {
   // Listen for notification taps (when user opens app from notification)
   useEffect(() => {
     const subscription = addNotificationResponseReceivedListener((response) => {
-      console.log('👆 Notification tapped:', response);
+      console.log('Notification tapped:', response);
       
       // Check if this is an alarm notification
       const data = response.notification.request.content.data;
       if (data && data.isAlarm) {
-        console.log('⏰ Alarm notification tapped - playing alarm sound!');
+        console.log('Alarm notification tapped - playing alarm sound!');
         startAlarm();
       }
     });
@@ -280,9 +279,9 @@ function App(): React.JSX.Element {
       try {
         alarmPlayer.pause();
         setIsAlarmPlaying(false);
-        console.log('🔕 Alarm stopped');
+        console.log('Alarm stopped');
       } catch (error) {
-        console.log('⚠️ Could not stop alarm:', error);
+        console.log('Could not stop alarm:', error);
       }
     }
     
@@ -290,9 +289,9 @@ function App(): React.JSX.Element {
     if (audioPlayer && audioPlayer.playing) {
       try {
         audioPlayer.pause();
-        console.log('🎵 Background music stopped');
+        console.log('Background music stopped');
       } catch (error) {
-        console.log('⚠️ Could not stop background music:', error);
+        console.log('Could not stop background music:', error);
       }
     }
   }, [alarmPlayer, isAlarmPlaying, audioPlayer]);
@@ -307,26 +306,26 @@ function App(): React.JSX.Element {
       try {
         // Only play if aligned AND app is in foreground
         if (isAligned && appStateVisible === 'active') {
-          console.log('🎬 Playing darshan video...');
+          console.log('Playing darshan video...');
           videoPlayer.loop = true;
           videoPlayer.muted = true;
           // Reset to start to ensure video plays from beginning
           videoPlayer.currentTime = 0;
           videoPlayer.play();
-          console.log('✅ Video playback started');
+          console.log('Video playback started');
         } else {
           // Pause video if not aligned or app is in background
           if (videoPlayer.playing) {
             videoPlayer.pause();
             if (appStateVisible !== 'active') {
-              console.log('🎬 Video paused - app in background');
+              console.log('Video paused - app in background');
             } else {
-              console.log('🎬 Video paused - not aligned');
+              console.log('Video paused - not aligned');
             }
           }
         }
       } catch (error) {
-        console.log('❌ Video playback error:', error);
+        console.log('Video playback error:', error);
       }
     };
 
@@ -342,7 +341,7 @@ function App(): React.JSX.Element {
     // Pause audio if app is in background
     if (appStateVisible !== 'active' && audioPlayer.playing) {
       audioPlayer.pause();
-      console.log('🎵 Audio paused - app in background');
+      console.log('Audio paused - app in background');
     }
   }, [appStateVisible, audioPlayer]);
 
@@ -369,7 +368,7 @@ function App(): React.JSX.Element {
           }
           
           // Schedule alarms for sunrise/sunset
-          console.log('⏰ Scheduling alarms for sunrise/sunset...');
+          console.log('Scheduling alarms for sunrise/sunset...');
           await scheduleAlarms(targetLocation.latitude, targetLocation.longitude);
         } catch (error) {
           console.error('Error getting sun times:', error);
@@ -383,31 +382,31 @@ function App(): React.JSX.Element {
   }, [targetLocation]);
 
   const handleAlignmentChange = (aligned: boolean) => {
-    console.log('🧭 Alignment changed:', aligned);
-    console.log('🎵 App state:', appStateVisible);
-    console.log('🎵 Audio player exists:', !!audioPlayer);
-    console.log('🔒 Is closed manually:', isClosedManually);
-    console.log('🔒 Current isAligned state:', isAligned);
+    console.log('Alignment changed:', aligned);
+    console.log('App state:', appStateVisible);
+    console.log('Audio player exists:', !!audioPlayer);
+    console.log('Is closed manually:', isClosedManually);
+    console.log('Current isAligned state:', isAligned);
     
     // Only allow alignment if not manually closed
     if (aligned && !isClosedManually) {
-      console.log('✅ Setting aligned to TRUE - Video overlay will render');
+      console.log('Setting aligned to TRUE - Video overlay will render');
       setIsAligned(true);
     } else if (!aligned) {
-      console.log('❌ Setting aligned to FALSE - Video overlay will hide');
+      console.log('Setting aligned to FALSE - Video overlay will hide');
       setIsAligned(false);
       // Stop audio when dealigned
       if (audioPlayer && audioPlayer.playing) {
         audioPlayer.pause();
-        console.log('🔇 Audio stopped - dealigned');
+        console.log('Audio stopped - dealigned');
       }
       // Reset manual close state when alignment is lost
       if (isClosedManually) {
         setIsClosedManually(false);
-        console.log('🔓 Manual close state reset - ready for next alignment');
+        console.log('Manual close state reset - ready for next alignment');
       }
     } else if (aligned && isClosedManually) {
-      console.log('🚫 Alignment blocked - manually closed');
+      console.log('Alignment blocked - manually closed');
     }
   };
 
@@ -504,7 +503,7 @@ function App(): React.JSX.Element {
         audioEnabled={audioEnabled}
         audioVolume={audioVolume}
         onClose={() => {
-          console.log('🔴 Close button pressed - stopping audio and requiring fresh alignment');
+          console.log('Close button pressed - stopping audio and requiring fresh alignment');
           setIsAligned(false);
           setIsClosedManually(true);
           // Pause audio when closing
@@ -523,7 +522,7 @@ function App(): React.JSX.Element {
       >
         <View style={appStyles.alarmOverlay}>
           <View style={appStyles.alarmCard}>
-            <Text style={appStyles.alarmIcon}>{EMOJI_ALARM}</Text>
+            <Text style={appStyles.alarmIcon}>Alarm</Text>
             <Text style={appStyles.alarmTitle}>Alarm!</Text>
             <Text style={appStyles.alarmMessage}>{TEXT_TIME_FOR_PRAYERS}</Text>
             <TouchableOpacity style={appStyles.stopAlarmButton} onPress={stopAlarm}>
