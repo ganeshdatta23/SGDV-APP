@@ -21,6 +21,7 @@ import {
   getScheduledNotifications,
   sendTestNotification,
   sendTestAlarm,
+  sendTestBackgroundNotification,
 } from '../utils/alarmManager';
 import { SunCycleViewProps, AlarmConfig } from '../types';
 import {
@@ -336,6 +337,17 @@ export default function SunCycleView({ latitude, longitude }: SunCycleViewProps)
         >
           <Ionicons name="alarm-outline" size={24} color="#FFFFFF" />
           <Text style={sunCycleViewStyles.testButtonText}>{TEXT_TEST_ALARM_5_SEC}</Text>
+        </TouchableOpacity>
+
+        {/* Test Background Notification Button */}
+        <TouchableOpacity
+          style={[sunCycleViewStyles.testAlarmButton, { backgroundColor: '#4CAF50' }]}
+          onPress={async () => {
+            await sendTestBackgroundNotification();
+          }}
+        >
+          <Ionicons name="phone-portrait-outline" size={24} color="#FFFFFF" />
+          <Text style={sunCycleViewStyles.testButtonText}>Test Background (10s)</Text>
         </TouchableOpacity>
       </View>
     </ScrollView>

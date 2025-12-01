@@ -376,6 +376,19 @@ export default function CompassView({
 
   return (
     <View style={compassViewStyles.container}>
+      {/* Instruction Subtitle */}
+      <Text style={[
+        compassViewStyles.instructionSubtitle,
+        {
+          color: colors.statusText,
+          fontSize: 14,
+          marginBottom: 12,
+          opacity: 0.85,
+        }
+      ]}>
+        Rotate your phone in the direction below to align with swamiji's direction
+      </Text>
+
       <View style={
         [
         compassViewStyles.turnContainer,

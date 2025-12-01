@@ -159,11 +159,15 @@ export const DarshanOverlay: React.FC<DarshanOverlayProps> = ({
     }
   }, [visible]);
 
-  // Handle audio playback - plays once, then mutes
+  // Ref to track if audio has been started this session (avoids race conditions with state)
+  const audioStartedRef = useRef(false);
+
+  // Handle audio playback - plays once, then auto-mutes when finished
   useEffect(() => {
-    if (visible && audioPlayer && audioEnabled) {
-      if (!hasPlayedOnce && !isMuted) {
-        // Play audio once
+    if (visible && audioPlayer && audioEnabled && !isMuted) {
+      // Only play if we haven't started yet this session
+      if (!audioStartedRef.current && !hasPlayedOnce) {
+        audioStartedRef.current = true;
         audioPlayer.loop = false;
         audioPlayer.volume = audioVolume;
         audioPlayer.play();
@@ -171,22 +175,30 @@ export const DarshanOverlay: React.FC<DarshanOverlayProps> = ({
         setHasPlayedOnce(true);
       }
     }
-  }, [visible, audioPlayer, hasPlayedOnce, isMuted, audioEnabled, audioVolume]);
+  }, [visible, audioPlayer, isMuted, audioEnabled, audioVolume, hasPlayedOnce]);
 
-  // Listen for audio completion
+  // Listen for audio completion using currentTime/duration check
   useEffect(() => {
-    if (audioPlayer && hasPlayedOnce) {
-      const checkAudioStatus = setInterval(() => {
-        if (!audioPlayer.playing && hasPlayedOnce && !isMuted) {
-          // Audio finished playing
-          setIsMuted(true);
-          console.log('Audio finished, auto-muting');
-          clearInterval(checkAudioStatus);
-        }
-      }, 500);
-
-      return () => clearInterval(checkAudioStatus);
+    if (!audioPlayer || !hasPlayedOnce || isMuted) {
+      return;
     }
+
+    const checkAudioCompletion = setInterval(() => {
+      // Check if audio has finished by comparing currentTime to duration
+      // Also check playing property as backup
+      const currentTime = audioPlayer.currentTime || 0;
+      const duration = audioPlayer.duration || 0;
+      const isFinished = duration > 0 && currentTime >= duration - 0.3;
+      const isNotPlaying = !audioPlayer.playing;
+      
+      if ((isFinished || isNotPlaying) && duration > 0) {
+        setIsMuted(true);
+        console.log(`Audio finished (currentTime: ${currentTime.toFixed(1)}s, duration: ${duration.toFixed(1)}s), auto-muting`);
+        clearInterval(checkAudioCompletion);
+      }
+    }, 300);
+
+    return () => clearInterval(checkAudioCompletion);
   }, [audioPlayer, hasPlayedOnce, isMuted]);
 
   // Handle audio toggle
@@ -196,6 +208,8 @@ export const DarshanOverlay: React.FC<DarshanOverlayProps> = ({
     if (isMuted) {
       // Unmute and play again
       setIsMuted(false);
+      setHasPlayedOnce(true); // Mark as played so completion listener watches
+      audioStartedRef.current = true;
       audioPlayer.loop = false;
       audioPlayer.volume = audioVolume;
       await audioPlayer.seekTo(0);
@@ -230,6 +244,8 @@ export const DarshanOverlay: React.FC<DarshanOverlayProps> = ({
   useEffect(() => {
     const resetAudioState = async () => {
       if (visible) {
+        // Reset refs and state for fresh playback
+        audioStartedRef.current = false;
         setHasPlayedOnce(false);
         setIsMuted(!audioEnabled);
         // Always seek to beginning when overlay becomes visible
@@ -239,6 +255,7 @@ export const DarshanOverlay: React.FC<DarshanOverlayProps> = ({
         }
       } else {
         // Stop audio when overlay is not visible (dealigned)
+        audioStartedRef.current = false;
         if (audioPlayer && audioPlayer.playing) {
           try {
             audioPlayer.pause();

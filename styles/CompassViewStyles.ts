@@ -8,6 +8,13 @@ export const compassViewStyles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: 0,
   },
+  instructionSubtitle: {
+    textAlign: 'center',
+    fontWeight: '500',
+    letterSpacing: 0.3,
+    paddingHorizontal: 20,
+    marginTop: -35,
+  },
   turnContainer: {
     flexDirection: 'row',
     alignItems: 'center',

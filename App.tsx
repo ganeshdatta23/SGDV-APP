@@ -182,6 +182,7 @@ function App(): React.JSX.Element {
   const alarmTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   // Function to start playing the alarm
+  // Note: Only plays the alarm sound, NOT the background music (which is controlled by DarshanOverlay)
   const startAlarm = useCallback(() => {
     if (alarmPlayer && !isAlarmPlaying) {
       try {
@@ -190,18 +191,6 @@ function App(): React.JSX.Element {
         alarmPlayer.play();
         setIsAlarmPlaying(true);
         console.log('Alarm sound started');
-        
-        // Also start playing background music if audio is enabled
-        if (audioPlayer && audioEnabled) {
-          try {
-            audioPlayer.loop = true;
-            audioPlayer.volume = audioVolume;
-            audioPlayer.play();
-            console.log('Background music started for alarm');
-          } catch (error) {
-            console.log('Could not start background music:', error);
-          }
-        }
         
         // Auto-stop after 1 minute
         alarmTimeoutRef.current = setTimeout(() => {
@@ -214,22 +203,13 @@ function App(): React.JSX.Element {
               console.log('Could not auto-stop alarm:', error);
             }
           }
-          // Also stop background music
-          if (audioPlayer && audioPlayer.playing) {
-            try {
-              audioPlayer.pause();
-              console.log('Background music stopped');
-            } catch (error) {
-              console.log('Could not stop background music:', error);
-            }
-          }
         }, ALARM_MAX_DURATION_MS);
         
       } catch (error) {
         console.error('Failed to play alarm sound:', error);
       }
     }
-  }, [alarmPlayer, isAlarmPlaying, audioPlayer, audioEnabled, audioVolume]);
+  }, [alarmPlayer, isAlarmPlaying]);
   
   // Listen for alarm notifications (when app is in foreground)
   useEffect(() => {
@@ -284,17 +264,7 @@ function App(): React.JSX.Element {
         console.log('Could not stop alarm:', error);
       }
     }
-    
-    // Also stop background music if it's playing
-    if (audioPlayer && audioPlayer.playing) {
-      try {
-        audioPlayer.pause();
-        console.log('Background music stopped');
-      } catch (error) {
-        console.log('Could not stop background music:', error);
-      }
-    }
-  }, [alarmPlayer, isAlarmPlaying, audioPlayer]);
+  }, [alarmPlayer, isAlarmPlaying]);
 
   // Play / pause video depending on alignment and app state
   useEffect(() => {

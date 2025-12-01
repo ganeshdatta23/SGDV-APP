@@ -2,6 +2,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 import { calculateSunTimes } from './sgvdApi';
+import * as TaskManager from 'expo-task-manager';
+
+// Background notification task name
+const BACKGROUND_NOTIFICATION_TASK = 'background-notification';
 
 // Configure how notifications are displayed when app is in foreground
 Notifications.setNotificationHandler({
@@ -11,6 +15,42 @@ Notifications.setNotificationHandler({
     shouldShowBanner: true,
     shouldShowList: true,
   }),
+});
+
+// Define the background task for handling notifications
+TaskManager.defineTask(BACKGROUND_NOTIFICATION_TASK, async ({ data, error, executionInfo }) => {
+  console.log('Background notification task received:', { data, error, executionInfo });
+  
+  if (error) {
+    console.error('Background notification task error:', error);
+    return;
+  }
+
+  // Handle the notification data
+  if (data) {
+    const notificationData = data as any;
+    console.log('Processing background notification:', notificationData);
+    
+    // You can perform background processing here
+    // Note: This runs in a limited execution context
+    // Heavy operations should be avoided
+    
+    // For alarm notifications, we can't play sounds directly in background
+    // The system notification sound will play automatically
+    if (notificationData.isAlarm) {
+      console.log('Background alarm notification processed');
+      
+      // You could store alarm state or perform other lightweight operations
+      try {
+        await AsyncStorage.setItem('lastAlarmTriggered', JSON.stringify({
+          time: new Date().toISOString(),
+          type: notificationData.type || 'unknown'
+        }));
+      } catch (storageError) {
+        console.error('Failed to store alarm state:', storageError);
+      }
+    }
+  }
 });
 
 // Alarm configuration
@@ -50,7 +90,23 @@ export const requestNotificationPermissions = async (): Promise<boolean> => {
     let finalStatus = existingStatus;
 
     if (existingStatus !== 'granted') {
-      const { status } = await Notifications.requestPermissionsAsync();
+      // Request permissions with specific options for background delivery
+      const permissionRequest = Platform.OS === 'ios' 
+        ? {
+            ios: {
+              allowAlert: true,
+              allowBadge: true,
+              allowSound: true,
+              allowDisplayInCarPlay: false,
+              allowCriticalAlerts: false,
+              provideAppNotificationSettings: false,
+              allowProvisional: false,
+              allowAnnouncements: false,
+            },
+          }
+        : {};
+
+      const { status } = await Notifications.requestPermissionsAsync(permissionRequest);
       finalStatus = status;
     }
 
@@ -79,8 +135,9 @@ export const initializeNotifications = async (): Promise<boolean> => {
     return false;
   }
 
-  // Set notification channel for Android
+  // Set notification channels for Android
   if (Platform.OS === 'android') {
+    // High priority channel for alarms
     await Notifications.setNotificationChannelAsync('sunrise-sunset-alarms', {
       name: 'Sunrise & Sunset Alarms',
       importance: Notifications.AndroidImportance.MAX,
@@ -89,8 +146,31 @@ export const initializeNotifications = async (): Promise<boolean> => {
       sound: 'default',
       enableVibrate: true,
       enableLights: true,
+      lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+      bypassDnd: true, // Bypass Do Not Disturb for alarms
     });
-    console.log('Android notification channel created');
+    
+    // Regular priority channel for notifications
+    await Notifications.setNotificationChannelAsync('sunrise-sunset-notifications', {
+      name: 'Sunrise & Sunset Notifications',
+      importance: Notifications.AndroidImportance.HIGH,
+      vibrationPattern: [0, 150, 150, 150],
+      lightColor: '#FF6B35',
+      sound: 'default',
+      enableVibrate: true,
+      enableLights: true,
+      lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+    });
+    
+    console.log('Android notification channels created');
+  }
+
+  // Register background notification handler
+  try {
+    await Notifications.registerTaskAsync(BACKGROUND_NOTIFICATION_TASK);
+    console.log('Background notification task registered');
+  } catch (error) {
+    console.error('Failed to register background notification task:', error);
   }
 
   console.log('Notification system initialized');
@@ -145,15 +225,22 @@ const scheduleNotification = async (
       content: {
         title,
         body,
-        sound: isAlarm ? 'default' : undefined,
+        sound: isAlarm ? 'default' : 'default', // Always use sound for background notifications
         priority: isAlarm ? 'max' : 'high',
         data: { type: identifier.includes('sunrise') ? 'sunrise' : 'sunset', isAlarm },
         categoryIdentifier: 'sunrise-sunset',
+        ...(Platform.OS === 'android' && {
+          // Android-specific content
+          sticky: isAlarm, // Make alarms sticky
+          ongoing: isAlarm, // Make alarms ongoing until dismissed
+        }),
       },
       trigger: {
         type: Notifications.SchedulableTriggerInputTypes.DATE,
         date: triggerDate,
-        channelId: Platform.OS === 'android' ? 'sunrise-sunset-alarms' : undefined,
+        channelId: Platform.OS === 'android' 
+          ? (isAlarm ? 'sunrise-sunset-alarms' : 'sunrise-sunset-notifications')
+          : undefined,
       } as Notifications.DateTriggerInput,
     });
 
@@ -491,6 +578,10 @@ export const sendTestAlarm = async (): Promise<void> => {
         sound: 'default',
         priority: 'max',
         data: { type: 'test', isAlarm: true },
+        ...(Platform.OS === 'android' && {
+          sticky: true,
+          ongoing: true,
+        }),
       },
       trigger: {
         type: Notifications.SchedulableTriggerInputTypes.DATE,
@@ -501,6 +592,56 @@ export const sendTestAlarm = async (): Promise<void> => {
     console.log('Test alarm scheduled for 5 seconds from now');
   } catch (error) {
     console.error('Error scheduling test alarm:', error);
+  }
+};
+
+// Send a test background notification (scheduled for 10 seconds from now)
+export const sendTestBackgroundNotification = async (): Promise<void> => {
+  try {
+    const triggerDate = new Date();
+    triggerDate.setSeconds(triggerDate.getSeconds() + 10);
+    
+    await Notifications.scheduleNotificationAsync({
+      identifier: 'test-background-notification',
+      content: {
+        title: '🌅 Background Test',
+        body: 'This notification should work even when the app is closed! Background task should process this.',
+        sound: 'default',
+        priority: 'high',
+        data: { type: 'test', isAlarm: false, backgroundTest: true },
+      },
+      trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.DATE,
+        date: triggerDate,
+        channelId: Platform.OS === 'android' ? 'sunrise-sunset-notifications' : undefined,
+      } as Notifications.DateTriggerInput,
+    });
+    console.log('Test background notification scheduled for 10 seconds from now');
+    console.log('📱 To test: Close the app completely and wait 10 seconds');
+  } catch (error) {
+    console.error('Error scheduling test background notification:', error);
+  }
+};
+
+// Clean up background notification task
+export const cleanupBackgroundTask = async (): Promise<void> => {
+  try {
+    await Notifications.unregisterTaskAsync(BACKGROUND_NOTIFICATION_TASK);
+    console.log('Background notification task unregistered');
+  } catch (error) {
+    console.error('Failed to unregister background notification task:', error);
+  }
+};
+
+// Check if background task is registered
+export const isBackgroundTaskRegistered = async (): Promise<boolean> => {
+  try {
+    const isRegistered = await TaskManager.isTaskRegisteredAsync(BACKGROUND_NOTIFICATION_TASK);
+    console.log('Background task registered:', isRegistered);
+    return isRegistered;
+  } catch (error) {
+    console.error('Error checking background task registration:', error);
+    return false;
   }
 };
 
