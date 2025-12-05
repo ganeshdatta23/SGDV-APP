@@ -95,7 +95,7 @@ export const requestNotificationPermissions = async (): Promise<boolean> => {
         ? {
             ios: {
               allowAlert: true,
-              allowBadge: true,
+              allowBadge: false,
               allowSound: true,
               allowDisplayInCarPlay: false,
               allowCriticalAlerts: false,
@@ -165,6 +165,42 @@ export const initializeNotifications = async (): Promise<boolean> => {
     console.log('Android notification channels created');
   }
 
+  // Set up iOS notification categories for better alarm handling
+  if (Platform.OS === 'ios') {
+    try {
+      await Notifications.setNotificationCategoryAsync('ALARM_CATEGORY', [
+        {
+          identifier: 'STOP_ALARM',
+          buttonTitle: 'Stop Alarm',
+          options: {
+            opensAppToForeground: true,
+          },
+        },
+        {
+          identifier: 'SNOOZE_ALARM',
+          buttonTitle: 'Snooze 5 min',
+          options: {
+            opensAppToForeground: false,
+          },
+        },
+      ]);
+      
+      await Notifications.setNotificationCategoryAsync('NOTIFICATION_CATEGORY', [
+        {
+          identifier: 'OPEN_APP',
+          buttonTitle: 'Open App',
+          options: {
+            opensAppToForeground: true,
+          },
+        },
+      ]);
+      
+      console.log('iOS notification categories created');
+    } catch (error) {
+      console.error('Failed to create iOS notification categories:', error);
+    }
+  }
+
   // Register background notification handler
   try {
     await Notifications.registerTaskAsync(BACKGROUND_NOTIFICATION_TASK);
@@ -225,14 +261,22 @@ const scheduleNotification = async (
       content: {
         title,
         body,
-        sound: isAlarm ? 'default' : 'default', // Always use sound for background notifications
+        sound: isAlarm ? 'custom_alert.wav' : 'default', // Use custom sound for alarms
         priority: isAlarm ? 'max' : 'high',
         data: { type: identifier.includes('sunrise') ? 'sunrise' : 'sunset', isAlarm },
-        categoryIdentifier: 'sunrise-sunset',
+        categoryIdentifier: isAlarm ? 'ALARM_CATEGORY' : 'NOTIFICATION_CATEGORY',
         ...(Platform.OS === 'android' && {
           // Android-specific content
           sticky: isAlarm, // Make alarms sticky
           ongoing: isAlarm, // Make alarms ongoing until dismissed
+        }),
+        ...(Platform.OS === 'ios' && isAlarm && {
+          // iOS-specific content for alarms
+          criticalAlert: {
+            name: 'custom_alert.wav',
+            volume: 1.0,
+          },
+          interruptionLevel: 'critical', // This bypasses Do Not Disturb on iOS
         }),
       },
       trigger: {
@@ -547,6 +591,59 @@ export const addNotificationResponseReceivedListener = (
   return Notifications.addNotificationResponseReceivedListener(callback);
 };
 
+// Handle notification category actions (Stop Alarm, Snooze, etc.)
+export const handleNotificationAction = async (response: Notifications.NotificationResponse): Promise<void> => {
+  const { actionIdentifier, notification } = response;
+  const data = notification.request.content.data;
+  
+  console.log('Notification action received:', actionIdentifier, data);
+  
+  switch (actionIdentifier) {
+    case 'STOP_ALARM':
+      console.log('Stop alarm action triggered');
+      // Cancel any ongoing alarm notifications
+      try {
+        await Notifications.dismissNotificationAsync(notification.request.identifier);
+        console.log('Alarm notification dismissed');
+      } catch (error) {
+        console.error('Error dismissing alarm notification:', error);
+      }
+      break;
+      
+    case 'SNOOZE_ALARM':
+      console.log('Snooze alarm action triggered');
+      // Schedule a new alarm 5 minutes from now
+      try {
+        const snoozeDate = new Date();
+        snoozeDate.setMinutes(snoozeDate.getMinutes() + 5);
+        
+        await scheduleNotification(
+          `${notification.request.identifier}-snooze`,
+          'Snoozed Alarm',
+          'Your snoozed alarm is now ringing!',
+          snoozeDate,
+          true
+        );
+        
+        // Dismiss the current notification
+        await Notifications.dismissNotificationAsync(notification.request.identifier);
+        console.log('Alarm snoozed for 5 minutes');
+      } catch (error) {
+        console.error('Error snoozing alarm:', error);
+      }
+      break;
+      
+    case 'OPEN_APP':
+      console.log('Open app action triggered');
+      // App will automatically open due to opensAppToForeground: true
+      break;
+      
+    default:
+      console.log('Default notification action - opening app');
+      break;
+  }
+};
+
 // Send an immediate test notification
 export const sendTestNotification = async (): Promise<void> => {
   try {
@@ -575,12 +672,20 @@ export const sendTestAlarm = async (): Promise<void> => {
       content: {
         title: 'Test Alarm',
         body: 'This is a test alarm! The alarm sound should be playing.',
-        sound: 'default',
+        sound: 'custom_alert.wav',
         priority: 'max',
         data: { type: 'test', isAlarm: true },
+        categoryIdentifier: 'ALARM_CATEGORY',
         ...(Platform.OS === 'android' && {
           sticky: true,
           ongoing: true,
+        }),
+        ...(Platform.OS === 'ios' && {
+          criticalAlert: {
+            name: 'custom_alert.wav',
+            volume: 1.0,
+          },
+          interruptionLevel: 'critical',
         }),
       },
       trigger: {

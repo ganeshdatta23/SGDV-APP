@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Guru Digvandanam",
-    "slug": "darshanam-compass-native",
+    "slug": "darshanam-compass-native-new",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/compass-icon.png",
@@ -20,7 +20,11 @@
         "NSMotionUsageDescription": "This app needs access to your device motion sensors for compass functionality.",
         "ITSAppUsesNonExemptEncryption": false
       },
-      "backgroundModes": ["background-processing", "background-fetch", "remote-notification"]
+      "backgroundModes": [
+        "background-processing",
+        "background-fetch",
+        "remote-notification"
+      ]
     },
     "android": {
       "adaptiveIcon": {
@@ -61,8 +65,9 @@
     ],
     "extra": {
       "eas": {
-        "projectId": "bc32d61f-aadb-4483-9b29-4e1cd983c923"
+        "projectId": "7d6ac752-f13c-4ec8-b4ad-97647e4bad25"
       }
-    }
+    },
+    "owner": "amardattadola2"
   }
 }

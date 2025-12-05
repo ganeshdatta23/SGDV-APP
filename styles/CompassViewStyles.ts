@@ -13,7 +13,7 @@ export const compassViewStyles = StyleSheet.create({
     fontWeight: '500',
     letterSpacing: 0.3,
     paddingHorizontal: 20,
-    marginTop: -35,
+    marginTop: -65,
   },
   turnContainer: {
     flexDirection: 'row',

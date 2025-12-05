@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, Dimensions } from 'react-native';
+import { View, Text, Dimensions, TouchableOpacity } from 'react-native';
 import { Magnetometer } from 'expo-sensors';
 import * as Haptics from 'expo-haptics';
 import * as Location from 'expo-location';
@@ -93,6 +93,9 @@ export default function CompassView({
   const colors = COMPASS_THEMES[theme];
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   
+  // NEW: Track if compass has been started
+  const [isCompassStarted, setIsCompassStarted] = useState(false);
+  
   // Track if we've already triggered haptics for current alignment
   const hasTriggeredHapticsRef = useRef(false);
   
@@ -109,6 +112,11 @@ export default function CompassView({
 
   // Magnetometer for compass heading
   useEffect(() => {
+    // NEW: Only subscribe when compass is started
+    if (!isCompassStarted) {
+      return;
+    }
+    
     // Set update interval for magnetometer
     Magnetometer.setUpdateInterval(config.compassRefreshInterval);
 
@@ -159,7 +167,7 @@ export default function CompassView({
     });
 
     return () => subscription.remove();
-  }, [heading, dialRotation]);
+  }, [heading, dialRotation, isCompassStarted]); // Add isCompassStarted to deps
 
   // Request location permissions using expo-location
   const requestLocationPermission = async () => {
@@ -290,6 +298,11 @@ export default function CompassView({
   const compassRadius = compassSize / 2;
   const centerX = compassSize / 2;
   const centerY = compassSize / 2;
+  const startButtonSize = compassRadius * config.centerHubSizeRatio * 4;
+  // Center hub radius - larger when compass not started to accommodate button
+  const centerHubRadius = !isCompassStarted 
+    ? startButtonSize / 2 - 5  // Slightly smaller than button for visual padding
+    : compassRadius * config.centerHubSizeRatio;
 
   // Reanimated dial rotation style
   const dialRotateStyle = useAnimatedStyle(() => {
@@ -376,53 +389,104 @@ export default function CompassView({
 
   return (
     <View style={compassViewStyles.container}>
-      {/* Instruction Subtitle */}
-      <Text style={[
-        compassViewStyles.instructionSubtitle,
-        {
-          color: colors.statusText,
-          fontSize: 14,
-          marginBottom: 12,
-          opacity: 0.85,
-        }
-      ]}>
-        Rotate your phone in the direction below to align with swamiji's direction
-      </Text>
-
-      <View style={
-        [
-        compassViewStyles.turnContainer,
-        {
-          backgroundColor: isFacingTarget ? colors.turnContainerAlignedBg : colors.turnContainerBg,
-          borderColor: isFacingTarget ? colors.turnContainerAlignedBorder : colors.turnContainerBorder,
-          paddingHorizontal: config.statusContainerPaddingH,
-          paddingVertical: config.turnContainerPaddingV,
-          marginBottom: config.turnContainerMarginBottom,
-          borderRadius: config.turnContainerRadius,
-        }
-      ]}>
-        {instruction.icon && (
-          <Ionicons 
-            name={instruction.icon} 
-            size={config.turnInstructionIconSize} 
-            color={isFacingTarget ? colors.emerald : colors.gold} 
-            transform={instruction.transform}
-          />
-        )}
+      {/* Instruction Subtitle - Only show when compass is started */}
+      {isCompassStarted && (
         <Text style={[
-          compassViewStyles.turnText,
-          { 
-            color: isFacingTarget ? colors.emerald : colors.gold,
-            fontSize: config.turnInstructionTextSize,
+          compassViewStyles.instructionSubtitle,
+          {
+            color: colors.statusText,
+            fontSize: 15,
+            marginTop: -35,
+            marginBottom:70,
+            opacity: 0.9,
           }
-        ]
-        }>
-          {instruction.text}
+        ]}>
+          Rotate your phone till it aligns perfectly
         </Text>
-      </View>
+      )}
+      
+      {/* Show placeholder text when compass not started */}
+      {!isCompassStarted && (
+        <Text style={[
+          compassViewStyles.instructionSubtitle,
+          {
+            color: colors.statusText,
+            fontSize: 15,
+            marginTop: -35,
+            marginBottom: 70,
+            opacity: 0.9,
+          }
+        ]}>
+          Tap the Start button to begin navigation
+        </Text>
+      )}
+
+      {/* Turn indicator - Only show when compass is started */}
+      {isCompassStarted && (
+        <View style={[
+          compassViewStyles.turnContainer,
+          {
+            backgroundColor: isFacingTarget ? colors.turnContainerAlignedBg : colors.turnContainerBg,
+            borderColor: isFacingTarget ? colors.turnContainerAlignedBorder : colors.turnContainerBorder,
+            paddingHorizontal: config.statusContainerPaddingH,
+            paddingVertical: config.turnContainerPaddingV,
+            marginBottom: config.turnContainerMarginBottom,
+            borderRadius: config.turnContainerRadius,
+          }
+        ]}>
+          {instruction.icon && (
+            <Ionicons 
+              name={instruction.icon} 
+              size={config.turnInstructionIconSize} 
+              color={isFacingTarget ? colors.emerald : colors.gold} 
+              transform={instruction.transform}
+            />
+          )}
+          <Text style={[
+            compassViewStyles.turnText,
+            { 
+              color: isFacingTarget ? colors.emerald : colors.gold,
+              fontSize: config.turnInstructionTextSize,
+            }
+          ]
+          }>
+            {instruction.text}
+          </Text>
+        </View>
+      )}
+      
+      {/* Show ready state indicator when compass not started */}
+      {!isCompassStarted && (
+        <View style={[
+          compassViewStyles.turnContainer,
+          {
+            backgroundColor: colors.turnContainerBg,
+            borderColor: colors.turnContainerBorder,
+            paddingHorizontal: config.statusContainerPaddingH,
+            paddingVertical: config.turnContainerPaddingV,
+            marginBottom: config.turnContainerMarginBottom,
+            borderRadius: config.turnContainerRadius,
+          }
+        ]}>
+          <Ionicons 
+            name="navigate-circle-outline" 
+            size={config.turnInstructionIconSize} 
+            color={colors.gold} 
+          />
+          <Text style={[
+            compassViewStyles.turnText,
+            { 
+              color: colors.gold,
+              fontSize: config.turnInstructionTextSize,
+            }
+          ]}>
+            READY
+          </Text>
+        </View>
+      )}
 
       {/* Compass Visual */}
-      <View style={[compassViewStyles.compassContainer, { marginBottom: config.compassMarginBottom }]}>
+      <View style={[compassViewStyles.compassContainer, { marginBottom: config.compassMarginBottom, overflow: 'visible' }]}>
         {/* Fixed Phone Orientation Marker at Top */}
         <View style={compassViewStyles.phoneMarker}>
           <Svg width="30" height="40">
@@ -468,7 +532,7 @@ export default function CompassView({
             </G>
 
             {/* Cardinal directions with counter-rotation to stay upright */}
-            {(['N', 'E', 'S', 'W'] as const).map((dir) => {
+            {isCompassStarted && (['N', 'E', 'S', 'W'] as const).map((dir) => {
               const svgCenter = (compassSize + 50) / 2;
               // Position each cardinal label on the compass ring
               const positions = {
@@ -496,7 +560,7 @@ export default function CompassView({
         </Animated.View>
 
         {/* Layer 2: Target Pointer (Independent Rotation) */}
-        {effectiveTargetHeading !== null && (
+        {isCompassStarted && effectiveTargetHeading !== null && (
           <Animated.View style={[compassViewStyles.pointerLayer, pointerRotateStyle]}>
             <Svg width={compassSize + 50} height={compassSize + 50} style={compassViewStyles.compass}>
               <G transform={`translate(25, 25)`}>
@@ -514,68 +578,117 @@ export default function CompassView({
             </Svg>
           </Animated.View>
         )}
-
         {/* Layer 3: Center Hub (Static - Always Upright) */}
-        <View style={compassViewStyles.centerHubLayer}>
-          <Svg width={compassSize + 50} height={compassSize + 50} style={compassViewStyles.compass}>
+        <View style={[compassViewStyles.centerHubLayer, { overflow: 'visible' }]}>
+          <Svg width={compassSize + 50} height={compassSize + 50} style={[compassViewStyles.compass, { overflow: 'visible' }]}>
             {/* Center Hub Circle */}
             <Circle
               cx={(compassSize + 50) / 2}
               cy={(compassSize + 50) / 2}
-              r={compassRadius * config.centerHubSizeRatio}
+              r={centerHubRadius}
               fill={colors.centerHubBg}
               stroke={colors.centerHubStroke}
               strokeWidth="1"
               opacity={0.95}
             />
 
-            {/* Center Hub Content */}
-            <G transform={`translate(${(compassSize + 50) / 2}, ${(compassSize + 50) / 2})`}>
-              {/* Heading Label */}
-              <SvgText
-                x={0}
-                y={-25}
-                fontSize={config.centerLabelFontSize}
-                fill={colors.headingLabel}
-                textAnchor="middle"
-                letterSpacing={2}
-              >
-                {TEXT_HEADING}
-              </SvgText>
-              {/* Heading Value */}
-              <SvgText
-                x={0}
-                y={5}
-                fontSize={config.centerValueFontSize}
-                fill={colors.headingValue}
-                textAnchor="middle"
-                fontWeight="bold"
-              >
-                {currentHeading !== null ? `${Math.round(currentHeading)}°` : '--'}
-              </SvgText>
-              {/* Divider line */}
-              <Line
-                x1={-30}
-                y1={15}
-                x2={30}
-                y2={15}
-                stroke={colors.headingValue}
-                strokeWidth="0.5"
-                opacity={0.2}
-              />
-              {/* Target bearing */}
-              <SvgText
-                x={0}
-                y={35}
-                fontSize={config.targetBearingFontSize}
-                fill={isFacingTarget ? colors.emerald : colors.gold}
-                textAnchor="middle"
-                fontWeight="bold"
-              >
-                {effectiveTargetHeading !== null ? `▲ ${Math.round(effectiveTargetHeading)}°` : '--'}
-              </SvgText>
-            </G>
+            {/* Center Hub Content - Only show when compass is started */}
+            {isCompassStarted && (
+              <G transform={`translate(${(compassSize + 50) / 2}, ${(compassSize + 50) / 2})`}>
+                {/* Heading Label */}
+                <SvgText
+                  x={0}
+                  y={-25}
+                  fontSize={config.centerLabelFontSize}
+                  fill={colors.headingLabel}
+                  textAnchor="middle"
+                  letterSpacing={2}
+                >
+                  {TEXT_HEADING}
+                </SvgText>
+                {/* Heading Value */}
+                <SvgText
+                  x={0}
+                  y={5}
+                  fontSize={config.centerValueFontSize}
+                  fill={colors.headingValue}
+                  textAnchor="middle"
+                  fontWeight="bold"
+                >
+                  {currentHeading !== null ? `${Math.round(currentHeading)}°` : '--'}
+                </SvgText>
+                {/* Divider line */}
+                <Line
+                  x1={-30}
+                  y1={15}
+                  x2={30}
+                  y2={15}
+                  stroke={colors.headingValue}
+                  strokeWidth="0.5"
+                  opacity={0.2}
+                />
+                {/* Target bearing */}
+                <SvgText
+                  x={0}
+                  y={35}
+                  fontSize={config.targetBearingFontSize}
+                  fill={isFacingTarget ? colors.emerald : colors.gold}
+                  textAnchor="middle"
+                  fontWeight="bold"
+                >
+                  {effectiveTargetHeading !== null ? `▲ ${Math.round(effectiveTargetHeading)}°` : '--'}
+                </SvgText>
+              </G>
+            )}
           </Svg>
+          
+          {/* Start Compass Button - Show when compass not started */}
+          {!isCompassStarted && (
+            <TouchableOpacity
+              style={{
+                position: 'absolute',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: startButtonSize,
+                height: startButtonSize,
+                borderRadius: startButtonSize / 2,
+                top: '50%',
+                left: '50%',
+                marginTop: -startButtonSize / 2,
+                marginLeft: -startButtonSize / 2,
+                opacity: 0.9,
+                // backgroundColor: 'rgba(0, 0, 0, 0.8)',
+              }}
+              onPress={() => setIsCompassStarted(true)}
+              activeOpacity={0.5}
+            >
+              <Ionicons 
+                name="compass-outline" 
+                size={40} 
+                color={colors.gold} 
+                style={{ marginBottom: 6 }}
+              />
+              <Text style={{
+                color: colors.gold,
+                fontSize: 18,
+                fontWeight: '800',
+                textTransform: 'uppercase',
+                letterSpacing: 1.5,
+                textAlign: 'center',
+              }}>
+                Start
+              </Text>
+              <Text style={{
+                color: colors.statusText,
+                fontSize: 16,
+                fontWeight: '500',
+                opacity: 0.8,
+                marginTop: 2,
+              }}>
+                Compass
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
       </View>
 

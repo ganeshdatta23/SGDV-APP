@@ -18,7 +18,7 @@ import SettingsView from './components/SettingsView';
 import SunCycleView from './components/SunCycleView';
 import DarshanOverlay from './components/DarshanOverlay';
 import { fetchLocationDirect, calculateSunTimes } from './utils/sgvdApi';
-import { initializeNotifications, scheduleAlarms, addNotificationReceivedListener, addNotificationResponseReceivedListener } from './utils/alarmManager';
+import { initializeNotifications, scheduleAlarms, addNotificationReceivedListener, addNotificationResponseReceivedListener, handleNotificationAction } from './utils/alarmManager';
 import { ThemeMode, Tab, TargetLocation, SunEventInfo } from './types';
 import {
   APP_BACKGROUNDS,
@@ -211,6 +211,25 @@ function App(): React.JSX.Element {
     }
   }, [alarmPlayer, isAlarmPlaying]);
   
+  // Function to stop the alarm
+  const stopAlarm = useCallback(() => {
+    // Clear the auto-stop timeout
+    if (alarmTimeoutRef.current) {
+      clearTimeout(alarmTimeoutRef.current);
+      alarmTimeoutRef.current = null;
+    }
+    
+    if (alarmPlayer && isAlarmPlaying) {
+      try {
+        alarmPlayer.pause();
+        setIsAlarmPlaying(false);
+        console.log('Alarm stopped');
+      } catch (error) {
+        console.log('Could not stop alarm:', error);
+      }
+    }
+  }, [alarmPlayer, isAlarmPlaying]);
+  
   // Listen for alarm notifications (when app is in foreground)
   useEffect(() => {
     const subscription = addNotificationReceivedListener((notification) => {
@@ -231,40 +250,31 @@ function App(): React.JSX.Element {
   
   // Listen for notification taps (when user opens app from notification)
   useEffect(() => {
-    const subscription = addNotificationResponseReceivedListener((response) => {
-      console.log('Notification tapped:', response);
+    const subscription = addNotificationResponseReceivedListener(async (response) => {
+      console.log('Notification response received:', response);
       
-      // Check if this is an alarm notification
+      // Handle notification category actions (Stop, Snooze, etc.)
+      await handleNotificationAction(response);
+      
+      // Check if this is an alarm notification and handle accordingly
       const data = response.notification.request.content.data;
       if (data && data.isAlarm) {
-        console.log('Alarm notification tapped - playing alarm sound!');
-        startAlarm();
+        // Only play alarm sound if it's the default action (not Stop or Snooze)
+        if (response.actionIdentifier === 'com.apple.UNNotificationDefaultActionIdentifier' || 
+            response.actionIdentifier === 'default') {
+          console.log('Alarm notification tapped - playing alarm sound!');
+          startAlarm();
+        } else if (response.actionIdentifier === 'STOP_ALARM') {
+          console.log('Stop alarm action - stopping any playing alarm');
+          stopAlarm();
+        }
       }
     });
     
     return () => {
       subscription.remove();
     };
-  }, [startAlarm]);
-  
-  // Function to stop the alarm
-  const stopAlarm = useCallback(() => {
-    // Clear the auto-stop timeout
-    if (alarmTimeoutRef.current) {
-      clearTimeout(alarmTimeoutRef.current);
-      alarmTimeoutRef.current = null;
-    }
-    
-    if (alarmPlayer && isAlarmPlaying) {
-      try {
-        alarmPlayer.pause();
-        setIsAlarmPlaying(false);
-        console.log('Alarm stopped');
-      } catch (error) {
-        console.log('Could not stop alarm:', error);
-      }
-    }
-  }, [alarmPlayer, isAlarmPlaying]);
+  }, [startAlarm, stopAlarm]);
 
   // Play / pause video depending on alignment and app state
   useEffect(() => {
