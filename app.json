@@ -16,15 +16,9 @@
       "bundleIdentifier": "com.darshanamcompassnative",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "This app needs your location to show the direction to the sacred place.",
-        "NSLocationAlwaysUsageDescription": "This app needs your location to show the direction to the sacred place.",
         "NSMotionUsageDescription": "This app needs access to your device motion sensors for compass functionality.",
         "ITSAppUsesNonExemptEncryption": false
-      },
-      "backgroundModes": [
-        "background-processing",
-        "background-fetch",
-        "remote-notification"
-      ]
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -49,7 +43,10 @@
           "sounds": [
             "./assets/audio/custom_alert.wav"
           ],
-          "enableBackgroundRemoteNotifications": true
+          "enableBackgroundRemoteNotifications": true,
+          "icon": "./assets/images/compass-icon.png",
+          "color": "#FF6B35",
+          "iosDisplayInForeground": true
         }
       ],
       [

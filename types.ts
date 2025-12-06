@@ -187,6 +187,7 @@ export interface AlarmConfig {
   notificationsEnabled: boolean;
   sunriseNotificationEnabled: boolean;
   sunsetNotificationEnabled: boolean;
+  scheduleDaysAhead?: number; // Number of days ahead to schedule alarms (default: 1 = today + tomorrow)
 }
 
 // ============================================================================

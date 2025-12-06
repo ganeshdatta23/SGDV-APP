@@ -379,9 +379,9 @@ export default function CompassView({
       return { text: TEXT_ALIGNED, icon: "checkmark-circle" };
     }
     if (delta > 0) {
-      return { text: TEXT_TURN_RIGHT, icon: "refresh-outline", transform: [{ }] };
+      return { text: TEXT_TURN_RIGHT, icon: "refresh-outline" };
     }
-    return { text: TEXT_TURN_LEFT, icon: "refresh-outline" , transform: [{ scaleX: -1 }]};
+    return { text: TEXT_TURN_LEFT, icon: "refresh-outline", transform: [{ scaleX: -1 }] };
   };
 
   const instruction = getTurnInstruction();

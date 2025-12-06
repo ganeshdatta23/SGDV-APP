@@ -65,6 +65,7 @@ interface AlarmConfig {
   notificationsEnabled: boolean; // Silent notifications
   sunriseNotificationEnabled: boolean; // Sunrise notifications
   sunsetNotificationEnabled: boolean; // Sunset notifications
+  scheduleDaysAhead: number; // Number of days ahead to schedule alarms (default: 1 = today + tomorrow)
 }
 
 const DEFAULT_ALARM_CONFIG: AlarmConfig = {
@@ -78,6 +79,7 @@ const DEFAULT_ALARM_CONFIG: AlarmConfig = {
   notificationsEnabled: true, // Notifications enabled by default
   sunriseNotificationEnabled: true, // Sunrise notifications enabled by default
   sunsetNotificationEnabled: true, // Sunset notifications enabled by default
+  scheduleDaysAhead: 1, // Schedule for today + 1 day ahead (total 2 days) by default
 };
 
 // Store notification IDs for cleanup
@@ -98,7 +100,7 @@ export const requestNotificationPermissions = async (): Promise<boolean> => {
               allowBadge: false,
               allowSound: true,
               allowDisplayInCarPlay: false,
-              allowCriticalAlerts: false,
+              allowCriticalAlerts: true, // Required for alarm critical alerts
               provideAppNotificationSettings: false,
               allowProvisional: false,
               allowAnnouncements: false,
@@ -297,100 +299,10 @@ const scheduleNotification = async (
   }
 };
 
-// Schedule sunrise/sunset alarms
+// Schedule sunrise/sunset alarms (legacy function - now uses scheduleAlarmsForNext3Days internally)
 export const scheduleAlarms = async (latitude: number, longitude: number): Promise<void> => {
-  try {
-    const config = await getAlarmConfig();
-    
-    // Clear existing alarms first
-    await cancelAllAlarms();
-    
-    // Determine if any sunrise/sunset alarms should be scheduled
-    const shouldScheduleSunrise = (config.alarmEnabled && config.sunriseAlarmEnabled) || 
-                                  (config.notificationsEnabled && config.sunriseNotificationEnabled);
-    const shouldScheduleSunset = (config.alarmEnabled && config.sunsetAlarmEnabled) || 
-                                (config.notificationsEnabled && config.sunsetNotificationEnabled);
-    
-    if (!shouldScheduleSunrise && !shouldScheduleSunset) {
-      console.log('No alarms or notifications enabled, skipping scheduling');
-      return;
-    }
-
-    // Determine if this should be a loud alarm or silent notification
-    const isAlarm = config.alarmEnabled;
-    
-    // Calculate sun times for today and tomorrow
-    const today = new Date();
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    
-    const todaySunTimes = await calculateSunTimes(latitude, longitude, today);
-    const tomorrowSunTimes = await calculateSunTimes(latitude, longitude, tomorrow);
-    
-    const now = new Date();
-    
-    // Schedule today's alarms if they haven't passed
-    if (shouldScheduleSunrise) {
-      const sunriseAlarmTime = new Date(todaySunTimes.sunrise);
-      sunriseAlarmTime.setMinutes(sunriseAlarmTime.getMinutes() - config.sunriseOffset);
-      
-      if (sunriseAlarmTime > now) {
-        await scheduleNotification(
-          'sunrise-today',
-          'Sunrise Alert',
-          `Sunrise in ${config.sunriseOffset} minutes! Time for morning prayers.`,
-          sunriseAlarmTime,
-          isAlarm
-        );
-      }
-    }
-    
-    if (shouldScheduleSunset) {
-      const sunsetAlarmTime = new Date(todaySunTimes.sunset);
-      sunsetAlarmTime.setMinutes(sunsetAlarmTime.getMinutes() - config.sunsetOffset);
-      
-      if (sunsetAlarmTime > now) {
-        await scheduleNotification(
-          'sunset-today',
-          'Sunset Alert',
-          `Sunset in ${config.sunsetOffset} minutes! Time for evening prayers.`,
-          sunsetAlarmTime,
-          isAlarm
-        );
-      }
-    }
-    
-    // Schedule tomorrow's alarms
-    if (shouldScheduleSunrise) {
-      const tomorrowSunriseAlarmTime = new Date(tomorrowSunTimes.sunrise);
-      tomorrowSunriseAlarmTime.setMinutes(tomorrowSunriseAlarmTime.getMinutes() - config.sunriseOffset);
-      
-      await scheduleNotification(
-        'sunrise-tomorrow',
-        'Sunrise Alert',
-        `Sunrise in ${config.sunriseOffset} minutes! Time for morning prayers.`,
-        tomorrowSunriseAlarmTime,
-        isAlarm
-      );
-    }
-    
-    if (shouldScheduleSunset) {
-      const tomorrowSunsetAlarmTime = new Date(tomorrowSunTimes.sunset);
-      tomorrowSunsetAlarmTime.setMinutes(tomorrowSunsetAlarmTime.getMinutes() - config.sunsetOffset);
-      
-      await scheduleNotification(
-        'sunset-tomorrow',
-        'Sunset Alert',
-        `Sunset in ${config.sunsetOffset} minutes! Time for evening prayers.`,
-        tomorrowSunsetAlarmTime,
-        isAlarm
-      );
-    }
-    
-    console.log('Alarms scheduled successfully');
-  } catch (error) {
-    console.error('Error scheduling alarms:', error);
-  }
+  // Use the unified scheduling function to avoid conflicts
+  return scheduleAlarmsForNext3Days(latitude, longitude);
 };
 
 // Cancel all scheduled alarms
@@ -485,12 +397,13 @@ export const getNextAlarmInfo = async (latitude: number, longitude: number): Pro
   }
 };
 
-// Schedule alarms for the next 3 days
+// Schedule alarms for the configured number of days ahead
 export const scheduleAlarmsForNext3Days = async (latitude: number, longitude: number): Promise<void> => {
   try {
-  console.log('Scheduling alarms for next 3 days');
-    
     const config = await getAlarmConfig();
+    const daysAhead = config.scheduleDaysAhead ?? 1; // Default to 1 day ahead (today + tomorrow)
+    
+    console.log(`Scheduling alarms for ${daysAhead + 1} days (today + ${daysAhead} day(s) ahead)`);
     
     // Clear existing alarms first
     await cancelAllAlarms();
@@ -509,8 +422,9 @@ export const scheduleAlarmsForNext3Days = async (latitude: number, longitude: nu
     const isAlarm = config.alarmEnabled;
     const now = new Date();
     
-    // Schedule for today and next 2 days
-    for (let dayOffset = 0; dayOffset < 3; dayOffset++) {
+    // Schedule for today and next N days (where N = scheduleDaysAhead)
+    // scheduleDaysAhead = 1 means: today (0) + tomorrow (1) = 2 days total
+    for (let dayOffset = 0; dayOffset <= daysAhead; dayOffset++) {
       const date = new Date(now);
       date.setDate(date.getDate() + dayOffset);
       
@@ -548,9 +462,9 @@ export const scheduleAlarmsForNext3Days = async (latitude: number, longitude: nu
       }
     }
     
-    console.log('Alarms for next 3 days scheduled successfully');
+    console.log(`Alarms scheduled successfully for ${daysAhead + 1} days`);
   } catch (error) {
-    console.error('Error scheduling alarms for 3 days:', error);
+    console.error('Error scheduling alarms:', error);
   }
 };
 
