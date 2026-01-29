@@ -3,7 +3,7 @@
  * Shows countdown timer and alarm controls
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -12,16 +12,13 @@ import {
   ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useAudioPlayer } from 'expo-audio';
 import { calculateSunTimes, formatSunTime } from '../utils/sgvdApi';
 import {
   getAlarmConfig,
   saveAlarmConfig,
   scheduleAlarmsForNext3Days,
   getScheduledNotifications,
-  sendTestNotification,
   sendTestAlarm,
-  sendTestBackgroundNotification,
 } from '../utils/alarmManager';
 import { SunCycleViewProps, AlarmConfig } from '../types';
 import {
@@ -36,15 +33,11 @@ import {
   TEXT_SUNSET_ALARM,
   TEXT_SUNRISE_ALERTS,
   TEXT_SUNSET_ALERTS,
-  TEXT_TEST_ALARM_SOUND,
-  TEXT_STOP_TEST_ALARM,
-  TEXT_SEND_TEST_NOTIFICATION,
   TEXT_TEST_ALARM_5_SEC,
   TEXT_ALARM_NOTIFICATION_SETTINGS,
   SUN_SUNRISE_ICON_COLOR,
   SUN_SUNSET_ICON_COLOR,
   SUN_ICON_SIZE,
-  ALARM_TEST_DURATION_MS,
 } from '../constants';
 import { sunCycleViewStyles } from '../styles/SunCycleViewStyles';
 
@@ -58,10 +51,6 @@ export default function SunCycleView({ latitude, longitude }: SunCycleViewProps)
   } | null>(null);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [scheduledCount, setScheduledCount] = useState(0);
-  const [isTestingAlarm, setIsTestingAlarm] = useState(false);
-
-  // Audio player for alarm sound
-  const alarmPlayer = useAudioPlayer(require('../assets/audio/alarm-sound.mp3'));
 
   // Load configuration and sun times
   useEffect(() => {
@@ -102,16 +91,35 @@ export default function SunCycleView({ latitude, longitude }: SunCycleViewProps)
   const updateConfig = async (newConfig: Partial<AlarmConfig>) => {
     if (!config) return;
 
+    let nextConfig = { ...newConfig };
+
     // If alarm mode is being enabled, automatically enable both sunrise and sunset alarms
-    if (newConfig.alarmEnabled === true && !config.alarmEnabled) {
-      newConfig = {
-        ...newConfig,
+    if (nextConfig.alarmEnabled === true && !config.alarmEnabled) {
+      nextConfig = {
+        ...nextConfig,
         sunriseAlarmEnabled: true,
         sunsetAlarmEnabled: true,
       };
     }
 
-    const updatedConfig = { ...config, ...newConfig };
+    // If notification mode is being enabled, automatically enable both sunrise and sunset notifications
+    if (nextConfig.notificationsEnabled === true && !config.notificationsEnabled) {
+      nextConfig = {
+        ...nextConfig,
+        sunriseNotificationEnabled: true,
+        sunsetNotificationEnabled: true,
+      };
+    }
+
+    // Enforce alarm vs notification exclusivity
+    if (nextConfig.alarmEnabled === true) {
+      nextConfig = { ...nextConfig, notificationsEnabled: false };
+    }
+    if (nextConfig.notificationsEnabled === true) {
+      nextConfig = { ...nextConfig, alarmEnabled: false };
+    }
+
+    const updatedConfig = { ...config, ...nextConfig };
     setConfig(updatedConfig);
     await saveAlarmConfig(updatedConfig);
 
@@ -124,39 +132,6 @@ export default function SunCycleView({ latitude, longitude }: SunCycleViewProps)
     const scheduled = await getScheduledNotifications();
     setScheduledCount(scheduled.length);
   };
-
-  // Test alarm sound
-  const testAlarmSound = useCallback(() => {
-    if (isTestingAlarm) {
-      try {
-        alarmPlayer.pause();
-        setIsTestingAlarm(false);
-      } catch (error) {
-        console.log('Could not pause alarm (player may be disposed)');
-        setIsTestingAlarm(false);
-      }
-    } else {
-      try {
-        alarmPlayer.loop = true;
-        alarmPlayer.volume = 1.0;
-        alarmPlayer.play();
-        setIsTestingAlarm(true);
-        
-        // Auto-stop after 10 seconds
-        setTimeout(() => {
-          try {
-            alarmPlayer.pause();
-            setIsTestingAlarm(false);
-          } catch (error) {
-            console.log('Could not pause alarm (player may be disposed)');
-            setIsTestingAlarm(false);
-          }
-        }, ALARM_TEST_DURATION_MS);
-      } catch (error) {
-        console.log('Could not play alarm:', error);
-      }
-    }
-  }, [isTestingAlarm, alarmPlayer]);
 
   if (!config || !sunTimes) {
     return (
@@ -243,23 +218,6 @@ export default function SunCycleView({ latitude, longitude }: SunCycleViewProps)
           </View>
         )}
 
-        {/* Test Alarm Button */}
-        {config.alarmEnabled && (
-          <TouchableOpacity
-            style={[sunCycleViewStyles.testButton, isTestingAlarm && sunCycleViewStyles.testButtonActive]}
-            onPress={testAlarmSound}
-          >
-            <Ionicons
-              name={isTestingAlarm ? 'stop-circle' : 'play-circle'}
-              size={24}
-              color="#FFFFFF"
-            />
-            <Text style={sunCycleViewStyles.testButtonText}>
-              {isTestingAlarm ? TEXT_STOP_TEST_ALARM : TEXT_TEST_ALARM_SOUND}
-            </Text>
-          </TouchableOpacity>
-        )}
-
         {/* Notification Toggle */}
         <View style={[sunCycleViewStyles.controlRow, sunCycleViewStyles.controlRowSpaced]}>
           <View style={sunCycleViewStyles.controlLabel}>
@@ -317,18 +275,7 @@ export default function SunCycleView({ latitude, longitude }: SunCycleViewProps)
           </View>
         )}
 
-        {/* Test Notification Button */}
-        <TouchableOpacity
-          style={sunCycleViewStyles.testNotificationButton}
-          onPress={async () => {
-            await sendTestNotification();
-          }}
-        >
-          <Ionicons name="notifications-outline" size={24} color="#FFFFFF" />
-          <Text style={sunCycleViewStyles.testButtonText}>{TEXT_SEND_TEST_NOTIFICATION}</Text>
-        </TouchableOpacity>
-
-        {/* Test Alarm Button - schedules alarm for 5 seconds from now */}
+        {/* Test Alarm Button - schedules alarm for 10 seconds from now */}
         <TouchableOpacity
           style={sunCycleViewStyles.testAlarmButton}
           onPress={async () => {
@@ -337,17 +284,6 @@ export default function SunCycleView({ latitude, longitude }: SunCycleViewProps)
         >
           <Ionicons name="alarm-outline" size={24} color="#FFFFFF" />
           <Text style={sunCycleViewStyles.testButtonText}>{TEXT_TEST_ALARM_5_SEC}</Text>
-        </TouchableOpacity>
-
-        {/* Test Background Notification Button */}
-        <TouchableOpacity
-          style={[sunCycleViewStyles.testAlarmButton, { backgroundColor: '#4CAF50' }]}
-          onPress={async () => {
-            await sendTestBackgroundNotification();
-          }}
-        >
-          <Ionicons name="phone-portrait-outline" size={24} color="#FFFFFF" />
-          <Text style={sunCycleViewStyles.testButtonText}>Test Background (10s)</Text>
         </TouchableOpacity>
       </View>
     </ScrollView>

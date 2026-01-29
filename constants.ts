@@ -73,6 +73,7 @@ export const DEFAULT_ALARM_CONFIG: AlarmConfig = {
   notificationsEnabled: true,
   sunriseNotificationEnabled: true,
   sunsetNotificationEnabled: true,
+  alarmSound: 'custom',
 };
 
 export const ALARM_MAX_DURATION_MS = 60000; // 1 minute
@@ -543,8 +544,14 @@ export const TEXT_SUNSET_ALERTS = 'Sunset Alerts';
 export const TEXT_TEST_ALARM_SOUND = 'Test Alarm Sound';
 export const TEXT_STOP_TEST_ALARM = 'Stop Test Alarm';
 export const TEXT_SEND_TEST_NOTIFICATION = 'Send Test Notification';
-export const TEXT_TEST_ALARM_5_SEC = 'Test Alarm (5 sec)';
+export const TEXT_TEST_ALARM_5_SEC = 'Test Alarm (10 sec)';
 export const TEXT_ALARM_NOTIFICATION_SETTINGS = 'Alarm & Notification Settings';
+export const TEXT_ALARM_SOUND = 'Alarm Sound';
+export const TEXT_ALARM_SOUND_DEFAULT = 'Default';
+export const TEXT_ALARM_SOUND_CUSTOM = 'Custom (custom_alert.wav)';
+export const TEXT_SCHEDULE_MODE = 'Schedule Mode';
+export const TEXT_SCHEDULE_MODE_ALARM = 'Alarm';
+export const TEXT_SCHEDULE_MODE_NOTIFICATION = 'Notification';
 export const TEXT_APPEARANCE = 'APPEARANCE';
 export const TEXT_SOUND = 'SOUND';
 export const TEXT_CHOOSE_THEME = 'Choose Theme';

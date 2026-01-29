@@ -92,7 +92,7 @@ function App(): React.JSX.Element {
   const audioPlayer = useAudioPlayer(require('./assets/audio/background-music.mp3'));
   
   // Alarm audio player for sunrise/sunset alarms
-  const alarmPlayer = useAudioPlayer(require('./assets/audio/alarm-sound.mp3'));
+  const alarmPlayer = useAudioPlayer(require('./assets/audio/custom_alert.wav'));
   
   // Track if alarm is currently playing
   const [isAlarmPlaying, setIsAlarmPlaying] = useState(false);
@@ -237,7 +237,7 @@ function App(): React.JSX.Element {
       
       // Check if this is an alarm notification
       const data = notification.request.content.data;
-      if (data && data.isAlarm) {
+      if (data && data.isAlarm && data.alarmSound !== 'default') {
         console.log('Alarm notification received - playing alarm sound!');
         startAlarm();
       }
@@ -262,8 +262,10 @@ function App(): React.JSX.Element {
         // Only play alarm sound if it's the default action (not Stop or Snooze)
         if (response.actionIdentifier === 'com.apple.UNNotificationDefaultActionIdentifier' || 
             response.actionIdentifier === 'default') {
-          console.log('Alarm notification tapped - playing alarm sound!');
-          startAlarm();
+          if (data.alarmSound !== 'default') {
+            console.log('Alarm notification tapped - playing alarm sound!');
+            startAlarm();
+          }
         } else if (response.actionIdentifier === 'STOP_ALARM') {
           console.log('Stop alarm action - stopping any playing alarm');
           stopAlarm();
@@ -465,6 +467,7 @@ function App(): React.JSX.Element {
           onAudioToggle={setAudioEnabled}
           audioVolume={audioVolume}
           onVolumeChange={setAudioVolume}
+          targetLocation={targetLocation}
         />
       )}
 

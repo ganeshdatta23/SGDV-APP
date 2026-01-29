@@ -187,6 +187,7 @@ export interface AlarmConfig {
   notificationsEnabled: boolean;
   sunriseNotificationEnabled: boolean;
   sunsetNotificationEnabled: boolean;
+  alarmSound: 'default' | 'custom';
   scheduleDaysAhead?: number; // Number of days ahead to schedule alarms (default: 1 = today + tomorrow)
 }
 
@@ -299,6 +300,7 @@ export interface SettingsViewProps {
   onAudioToggle?: (enabled: boolean) => void;
   audioVolume?: number;
   onVolumeChange?: (volume: number) => void;
+  targetLocation?: TargetLocation | null;
   style?: object;
 }
 

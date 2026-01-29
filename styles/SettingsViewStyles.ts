@@ -104,6 +104,27 @@ export const settingsViewStyles = StyleSheet.create({
     width: '100%',
     height: 40,
   },
+  loadingRow: {
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+  },
+  optionRow: {
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+  },
+  optionButton: {
+    flex: 1,
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingVertical: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  optionButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
   versionContainer: {
     alignItems: 'center',
     paddingVertical: 10,

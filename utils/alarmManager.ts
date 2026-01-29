@@ -1,11 +1,23 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
+import Constants from 'expo-constants';
 import { calculateSunTimes } from './sgvdApi';
 import * as TaskManager from 'expo-task-manager';
 
 // Background notification task name
 const BACKGROUND_NOTIFICATION_TASK = 'background-notification';
+
+// Check if running in Expo Go (custom sounds don't work there)
+const isExpoGo = Constants.appOwnership === 'expo';
+
+// Android channels (immutable) - versioned to avoid cached settings
+const ALARM_CHANNEL_DEFAULT_ID = 'sunrise-sunset-alarms-default-v1';
+const ALARM_CHANNEL_CUSTOM_ID = 'sunrise-sunset-alarms-custom-v1';
+const NOTIFICATION_CHANNEL_ID = 'sunrise-sunset-notifications-v1';
+
+// Expo notifications expect the base filename (including extension)
+const CUSTOM_ALARM_SOUND = 'custom_alert.wav';
 
 // Configure how notifications are displayed when app is in foreground
 Notifications.setNotificationHandler({
@@ -79,6 +91,7 @@ const DEFAULT_ALARM_CONFIG: AlarmConfig = {
   notificationsEnabled: true, // Notifications enabled by default
   sunriseNotificationEnabled: true, // Sunrise notifications enabled by default
   sunsetNotificationEnabled: true, // Sunset notifications enabled by default
+  alarmSound: 'custom',
   scheduleDaysAhead: 1, // Schedule for today + 1 day ahead (total 2 days) by default
 };
 
@@ -139,31 +152,72 @@ export const initializeNotifications = async (): Promise<boolean> => {
 
   // Set notification channels for Android
   if (Platform.OS === 'android') {
-    // High priority channel for alarms
-    await Notifications.setNotificationChannelAsync('sunrise-sunset-alarms', {
-      name: 'Sunrise & Sunset Alarms',
+    const oldChannelIds = [
+      'sunrise-sunset-alarms',
+      'sunrise-sunset-notifications',
+      'alarm-channel',
+      'alarm-channel-v2',
+      'alarm-channel-v3',
+      'notification-channel',
+      'notification-channel-v2',
+      'notification-channel-v3',
+    ];
+    for (const id of oldChannelIds) {
+      await Notifications.deleteNotificationChannelAsync(id).catch(() => {});
+    }
+
+    const customAlarmSound = isExpoGo ? 'default' : CUSTOM_ALARM_SOUND;
+
+    // Alarm channel (default sound)
+    await Notifications.setNotificationChannelAsync(ALARM_CHANNEL_DEFAULT_ID, {
+      name: 'Sunrise & Sunset Alarms (Default)',
       importance: Notifications.AndroidImportance.MAX,
+      vibrationPattern: [0, 500, 200, 500, 200, 500],
+      lightColor: '#FF6B35',
+      sound: 'default',
+      enableVibrate: true,
+      enableLights: true,
+      lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+      bypassDnd: true,
+      audioAttributes: {
+        usage: Notifications.AndroidAudioUsage.ALARM,
+        contentType: Notifications.AndroidAudioContentType.SONIFICATION,
+      },
+    });
+
+    // Alarm channel (custom sound)
+    await Notifications.setNotificationChannelAsync(ALARM_CHANNEL_CUSTOM_ID, {
+      name: 'Sunrise & Sunset Alarms (Custom)',
+      importance: Notifications.AndroidImportance.MAX,
+      vibrationPattern: [0, 500, 200, 500, 200, 500],
+      lightColor: '#FF6B35',
+      sound: customAlarmSound,
+      enableVibrate: true,
+      enableLights: true,
+      lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+      bypassDnd: true,
+      audioAttributes: {
+        usage: Notifications.AndroidAudioUsage.ALARM,
+        contentType: Notifications.AndroidAudioContentType.SONIFICATION,
+      },
+    });
+
+    // Regular notifications channel
+    await Notifications.setNotificationChannelAsync(NOTIFICATION_CHANNEL_ID, {
+      name: 'Sunrise & Sunset Notifications',
+      importance: Notifications.AndroidImportance.HIGH,
       vibrationPattern: [0, 250, 250, 250],
       lightColor: '#FF6B35',
       sound: 'default',
       enableVibrate: true,
       enableLights: true,
       lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
-      bypassDnd: true, // Bypass Do Not Disturb for alarms
+      audioAttributes: {
+        usage: Notifications.AndroidAudioUsage.NOTIFICATION,
+        contentType: Notifications.AndroidAudioContentType.SONIFICATION,
+      },
     });
-    
-    // Regular priority channel for notifications
-    await Notifications.setNotificationChannelAsync('sunrise-sunset-notifications', {
-      name: 'Sunrise & Sunset Notifications',
-      importance: Notifications.AndroidImportance.HIGH,
-      vibrationPattern: [0, 150, 150, 150],
-      lightColor: '#FF6B35',
-      sound: 'default',
-      enableVibrate: true,
-      enableLights: true,
-      lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
-    });
-    
+
     console.log('Android notification channels created');
   }
 
@@ -219,7 +273,7 @@ export const initializeNotifications = async (): Promise<boolean> => {
 export const getAlarmConfig = async (): Promise<AlarmConfig> => {
   try {
     const config = await AsyncStorage.getItem('alarmConfig');
-    return config ? JSON.parse(config) : DEFAULT_ALARM_CONFIG;
+    return config ? { ...DEFAULT_ALARM_CONFIG, ...JSON.parse(config) } : DEFAULT_ALARM_CONFIG;
   } catch (error) {
     console.error('Error getting alarm config:', error);
     return DEFAULT_ALARM_CONFIG;
@@ -242,7 +296,8 @@ const scheduleNotification = async (
   title: string,
   body: string,
   triggerDate: Date,
-  isAlarm: boolean = false
+  isAlarm: boolean = false,
+  alarmSound: AlarmConfig['alarmSound'] = 'custom'
 ): Promise<string | null> => {
   try {
     // Don't schedule if the date is in the past
@@ -258,34 +313,31 @@ const scheduleNotification = async (
       // Ignore if notification doesn't exist
     }
 
+    const selectedAlarmSound =
+      alarmSound === 'custom' && !isExpoGo ? CUSTOM_ALARM_SOUND : 'default';
+    const androidAlarmChannel =
+      alarmSound === 'custom' && !isExpoGo ? ALARM_CHANNEL_CUSTOM_ID : ALARM_CHANNEL_DEFAULT_ID;
+
     const notificationId = await Notifications.scheduleNotificationAsync({
       identifier,
       content: {
         title,
         body,
-        sound: isAlarm ? 'custom_alert.wav' : 'default', // Use custom sound for alarms
+        sound: isAlarm ? selectedAlarmSound : 'default',
         priority: isAlarm ? 'max' : 'high',
-        data: { type: identifier.includes('sunrise') ? 'sunrise' : 'sunset', isAlarm },
+        data: {
+          type: identifier.includes('sunrise') ? 'sunrise' : 'sunset',
+          isAlarm,
+          alarmSound: isAlarm ? alarmSound : 'default',
+        },
         categoryIdentifier: isAlarm ? 'ALARM_CATEGORY' : 'NOTIFICATION_CATEGORY',
-        ...(Platform.OS === 'android' && {
-          // Android-specific content
-          sticky: isAlarm, // Make alarms sticky
-          ongoing: isAlarm, // Make alarms ongoing until dismissed
-        }),
-        ...(Platform.OS === 'ios' && isAlarm && {
-          // iOS-specific content for alarms
-          criticalAlert: {
-            name: 'custom_alert.wav',
-            volume: 1.0,
-          },
-          interruptionLevel: 'critical', // This bypasses Do Not Disturb on iOS
-        }),
+        vibrate: isAlarm ? [0, 500, 200, 500] : [0, 250, 250, 250],
       },
       trigger: {
         type: Notifications.SchedulableTriggerInputTypes.DATE,
         date: triggerDate,
         channelId: Platform.OS === 'android' 
-          ? (isAlarm ? 'sunrise-sunset-alarms' : 'sunrise-sunset-notifications')
+          ? (isAlarm ? androidAlarmChannel : NOTIFICATION_CHANNEL_ID)
           : undefined,
       } as Notifications.DateTriggerInput,
     });
@@ -441,7 +493,8 @@ export const scheduleAlarmsForNext3Days = async (latitude: number, longitude: nu
             'Sunrise Alert',
             `Sunrise in ${config.sunriseOffset} minutes! Time for morning prayers.`,
             sunriseAlarmTime,
-            isAlarm
+            isAlarm,
+            config.alarmSound
           );
         }
       }
@@ -456,7 +509,8 @@ export const scheduleAlarmsForNext3Days = async (latitude: number, longitude: nu
             'Sunset Alert',
             `Sunset in ${config.sunsetOffset} minutes! Time for evening prayers.`,
             sunsetAlarmTime,
-            isAlarm
+            isAlarm,
+            config.alarmSound
           );
         }
       }
@@ -528,6 +582,7 @@ export const handleNotificationAction = async (response: Notifications.Notificat
       console.log('Snooze alarm action triggered');
       // Schedule a new alarm 5 minutes from now
       try {
+        const config = await getAlarmConfig();
         const snoozeDate = new Date();
         snoozeDate.setMinutes(snoozeDate.getMinutes() + 5);
         
@@ -536,7 +591,8 @@ export const handleNotificationAction = async (response: Notifications.Notificat
           'Snoozed Alarm',
           'Your snoozed alarm is now ringing!',
           snoozeDate,
-          true
+          true,
+          config.alarmSound
         );
         
         // Dismiss the current notification
@@ -575,40 +631,30 @@ export const sendTestNotification = async (): Promise<void> => {
   }
 };
 
-// Send a test alarm (scheduled for 5 seconds from now)
+// Send a test alarm (scheduled for 10 seconds from now)
 export const sendTestAlarm = async (): Promise<void> => {
   try {
     const triggerDate = new Date();
-    triggerDate.setSeconds(triggerDate.getSeconds() + 5);
+    triggerDate.setSeconds(triggerDate.getSeconds() + 10);
     
     await Notifications.scheduleNotificationAsync({
       identifier: 'test-alarm',
       content: {
         title: 'Test Alarm',
-        body: 'This is a test alarm! The alarm sound should be playing.',
-        sound: 'custom_alert.wav',
+        body: 'This is a test alarm! The default alarm sound should be playing.',
+        sound: 'default',
         priority: 'max',
-        data: { type: 'test', isAlarm: true },
+        data: { type: 'test', isAlarm: true, alarmSound: 'default' },
         categoryIdentifier: 'ALARM_CATEGORY',
-        ...(Platform.OS === 'android' && {
-          sticky: true,
-          ongoing: true,
-        }),
-        ...(Platform.OS === 'ios' && {
-          criticalAlert: {
-            name: 'custom_alert.wav',
-            volume: 1.0,
-          },
-          interruptionLevel: 'critical',
-        }),
+        vibrate: [0, 500, 200, 500],
       },
       trigger: {
         type: Notifications.SchedulableTriggerInputTypes.DATE,
         date: triggerDate,
-        channelId: Platform.OS === 'android' ? 'sunrise-sunset-alarms' : undefined,
+        channelId: Platform.OS === 'android' ? ALARM_CHANNEL_DEFAULT_ID : undefined,
       } as Notifications.DateTriggerInput,
     });
-    console.log('Test alarm scheduled for 5 seconds from now');
+    console.log('Test alarm scheduled for 10 seconds from now');
   } catch (error) {
     console.error('Error scheduling test alarm:', error);
   }
@@ -632,7 +678,7 @@ export const sendTestBackgroundNotification = async (): Promise<void> => {
       trigger: {
         type: Notifications.SchedulableTriggerInputTypes.DATE,
         date: triggerDate,
-        channelId: Platform.OS === 'android' ? 'sunrise-sunset-notifications' : undefined,
+        channelId: Platform.OS === 'android' ? NOTIFICATION_CHANNEL_ID : undefined,
       } as Notifications.DateTriggerInput,
     });
     console.log('Test background notification scheduled for 10 seconds from now');

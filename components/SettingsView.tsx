@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, LayoutAnimation, Platform, UIManager } from 'react-native';
 import Slider from '@react-native-community/slider';
 import { Ionicons } from '@expo/vector-icons';
-import { SettingsViewProps, ThemeMode } from '../types';
+import { AlarmConfig, SettingsViewProps, ThemeMode } from '../types';
+import { getAlarmConfig, saveAlarmConfig, scheduleAlarmsForNext3Days } from '../utils/alarmManager';
 import {
   SETTINGS_THEMES,
   THEME_INFO,
@@ -10,6 +11,13 @@ import {
   TEXT_SOUND,
   TEXT_CHOOSE_THEME,
   TEXT_DARSHAN_AUDIO_VOLUME,
+  TEXT_ALARM_NOTIFICATION_SETTINGS,
+  TEXT_ALARM_SOUND,
+  TEXT_ALARM_SOUND_DEFAULT,
+  TEXT_ALARM_SOUND_CUSTOM,
+  TEXT_SCHEDULE_MODE,
+  TEXT_SCHEDULE_MODE_ALARM,
+  TEXT_SCHEDULE_MODE_NOTIFICATION,
   APP_NAME,
   APP_VERSION,
 } from '../constants';
@@ -35,10 +43,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   onAudioToggle,
   audioVolume = 1.0,
   onVolumeChange,
+  targetLocation,
   style 
 }) => {
   const [isThemeExpanded, setIsThemeExpanded] = useState(false);
   const [isSoundExpanded, setIsSoundExpanded] = useState(false);
+  const [alarmConfig, setAlarmConfig] = useState<AlarmConfig | null>(null);
   const theme = SETTINGS_THEMES[currentTheme];
 
   const toggleThemeSection = () => {
@@ -57,6 +67,56 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     // LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     // setIsThemeExpanded(false);
   };
+
+  useEffect(() => {
+    const loadAlarmConfig = async () => {
+      const config = await getAlarmConfig();
+      setAlarmConfig(config);
+    };
+
+    loadAlarmConfig();
+  }, []);
+
+  const updateAlarmConfig = async (newConfig: Partial<AlarmConfig>) => {
+    if (!alarmConfig) return;
+
+    let nextConfig = { ...newConfig };
+
+    if (nextConfig.alarmEnabled === true && !alarmConfig.alarmEnabled) {
+      nextConfig = {
+        ...nextConfig,
+        sunriseAlarmEnabled: true,
+        sunsetAlarmEnabled: true,
+      };
+    }
+
+    if (nextConfig.notificationsEnabled === true && !alarmConfig.notificationsEnabled) {
+      nextConfig = {
+        ...nextConfig,
+        sunriseNotificationEnabled: true,
+        sunsetNotificationEnabled: true,
+      };
+    }
+
+    if (nextConfig.alarmEnabled === true) {
+      nextConfig = { ...nextConfig, notificationsEnabled: false };
+    }
+    if (nextConfig.notificationsEnabled === true) {
+      nextConfig = { ...nextConfig, alarmEnabled: false };
+    }
+
+    const updatedConfig = { ...alarmConfig, ...nextConfig };
+    setAlarmConfig(updatedConfig);
+    await saveAlarmConfig(updatedConfig);
+
+    if (targetLocation?.latitude && targetLocation?.longitude) {
+      await scheduleAlarmsForNext3Days(targetLocation.latitude, targetLocation.longitude);
+    }
+  };
+
+  const isAlarmMode = alarmConfig?.alarmEnabled ?? false;
+  const isNotificationMode = alarmConfig?.notificationsEnabled ?? true;
+  const alarmSound = alarmConfig?.alarmSound ?? 'custom';
 
   return (
     <View style={[settingsViewStyles.wrapper, style]}>
@@ -218,6 +278,125 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             />
           </View>
         )}
+        </View>
+
+        {/* Alarm & Notification Settings */}
+        <View style={[settingsViewStyles.section, { backgroundColor: theme.sectionBg, borderColor: theme.sectionBorder }]}>
+          <Text style={[settingsViewStyles.sectionHeader, { color: theme.sectionTitle }]}>
+            {TEXT_ALARM_NOTIFICATION_SETTINGS}
+          </Text>
+
+          {!alarmConfig ? (
+            <View style={settingsViewStyles.loadingRow}>
+              <Text style={[settingsViewStyles.settingSubtitle, { color: theme.itemSubtext }]}>
+                Loading alarm settings...
+              </Text>
+            </View>
+          ) : (
+            <>
+              {/* Schedule Mode */}
+              <View style={settingsViewStyles.settingRow}>
+                <View style={settingsViewStyles.settingLeft}>
+                  <View style={[settingsViewStyles.iconContainer, { backgroundColor: theme.accent + '20' }]}>
+                    <Ionicons name="alarm" size={22} color={theme.accent} />
+                  </View>
+                  <View style={settingsViewStyles.settingInfo}>
+                    <Text style={[settingsViewStyles.settingTitle, { color: theme.itemText }]}>
+                      {TEXT_SCHEDULE_MODE}
+                    </Text>
+                    <Text style={[settingsViewStyles.settingSubtitle, { color: theme.itemSubtext }]}>
+                      {isAlarmMode ? TEXT_SCHEDULE_MODE_ALARM : TEXT_SCHEDULE_MODE_NOTIFICATION}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+              <View style={settingsViewStyles.optionRow}>
+                <TouchableOpacity
+                  style={[
+                    settingsViewStyles.optionButton,
+                    { borderColor: isAlarmMode ? theme.accent : theme.sectionBorder, marginRight: 10 },
+                    isAlarmMode && { backgroundColor: theme.selectedBg },
+                  ]}
+                  onPress={() => updateAlarmConfig({ alarmEnabled: true })}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[
+                    settingsViewStyles.optionButtonText,
+                    { color: isAlarmMode ? theme.accent : theme.itemText }
+                  ]}>
+                    {TEXT_SCHEDULE_MODE_ALARM}
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    settingsViewStyles.optionButton,
+                    { borderColor: isNotificationMode ? theme.accent : theme.sectionBorder },
+                    isNotificationMode && { backgroundColor: theme.selectedBg },
+                  ]}
+                  onPress={() => updateAlarmConfig({ notificationsEnabled: true })}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[
+                    settingsViewStyles.optionButtonText,
+                    { color: isNotificationMode ? theme.accent : theme.itemText }
+                  ]}>
+                    {TEXT_SCHEDULE_MODE_NOTIFICATION}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Alarm Sound */}
+              <View style={settingsViewStyles.settingRow}>
+                <View style={settingsViewStyles.settingLeft}>
+                  <View style={[settingsViewStyles.iconContainer, { backgroundColor: theme.accent + '20' }]}>
+                    <Ionicons name="musical-notes" size={22} color={theme.accent} />
+                  </View>
+                  <View style={settingsViewStyles.settingInfo}>
+                    <Text style={[settingsViewStyles.settingTitle, { color: theme.itemText }]}>
+                      {TEXT_ALARM_SOUND}
+                    </Text>
+                    <Text style={[settingsViewStyles.settingSubtitle, { color: theme.itemSubtext }]}>
+                      {alarmSound === 'custom' ? TEXT_ALARM_SOUND_CUSTOM : TEXT_ALARM_SOUND_DEFAULT}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+              <View style={settingsViewStyles.optionRow}>
+                <TouchableOpacity
+                  style={[
+                    settingsViewStyles.optionButton,
+                    { borderColor: alarmSound === 'default' ? theme.accent : theme.sectionBorder, marginRight: 10 },
+                    alarmSound === 'default' && { backgroundColor: theme.selectedBg },
+                  ]}
+                  onPress={() => updateAlarmConfig({ alarmSound: 'default' })}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[
+                    settingsViewStyles.optionButtonText,
+                    { color: alarmSound === 'default' ? theme.accent : theme.itemText }
+                  ]}>
+                    {TEXT_ALARM_SOUND_DEFAULT}
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    settingsViewStyles.optionButton,
+                    { borderColor: alarmSound === 'custom' ? theme.accent : theme.sectionBorder },
+                    alarmSound === 'custom' && { backgroundColor: theme.selectedBg },
+                  ]}
+                  onPress={() => updateAlarmConfig({ alarmSound: 'custom' })}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[
+                    settingsViewStyles.optionButtonText,
+                    { color: alarmSound === 'custom' ? theme.accent : theme.itemText }
+                  ]}>
+                    {TEXT_ALARM_SOUND_CUSTOM}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </>
+          )}
         </View>
       </ScrollView>
 
