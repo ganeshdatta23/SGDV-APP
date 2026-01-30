@@ -111,14 +111,6 @@ export default function SunCycleView({ latitude, longitude }: SunCycleViewProps)
       };
     }
 
-    // Enforce alarm vs notification exclusivity
-    if (nextConfig.alarmEnabled === true) {
-      nextConfig = { ...nextConfig, notificationsEnabled: false };
-    }
-    if (nextConfig.notificationsEnabled === true) {
-      nextConfig = { ...nextConfig, alarmEnabled: false };
-    }
-
     const updatedConfig = { ...config, ...nextConfig };
     setConfig(updatedConfig);
     await saveAlarmConfig(updatedConfig);
