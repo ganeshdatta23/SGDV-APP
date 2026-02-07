@@ -472,7 +472,7 @@ export const APP_SUBTITLE_MARGIN_TOP = 8;
 export const APP_SUBTITLE_LINE_HEIGHT = 22;
 
 export const APP_VERSION = '1.0.0';
-export const APP_NAME = 'Guru Digvandanam';
+export const APP_NAME = 'Guru Dhigvandanam';
 
 // ============================================================================
 // SUN CYCLE VIEW CONFIGURATION

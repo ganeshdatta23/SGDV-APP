@@ -30,7 +30,7 @@ const FALLBACK_SUNSET_HOUR = 18;  // 6:00 PM
 // ============================================================================
 // Set to true to use hardcoded test times (2-3 minutes from now)
 // Set to false to use actual API times
-const USE_HARDCODED_TEST_TIME = true; // TODO: Set to false when API is ready
+const USE_HARDCODED_TEST_TIME = false;
 
 // Get hardcoded test times (2-3 minutes from current time for easy testing)
 const getHardcodedTestTimes = (): { sunrise: Date; sunset: Date } => {

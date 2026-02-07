@@ -4,7 +4,7 @@
     "slug": "darshanam-compass-native-new",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/compass-icon.png",
+    "icon": "./assets/images/app_icon.png",
     "userInterfaceStyle": "light",
     "splash": {
       "image": "./assets/images/swamiji-darshan.png",
@@ -22,7 +22,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/compass-icon.png",
+        "foregroundImage": "./assets/images/app_icon.png",
         "backgroundColor": "#FF6B35"
       },
       "package": "com.darshanamcompassnative",
@@ -44,7 +44,7 @@
             "./assets/audio/custom_alert.wav"
           ],
           "enableBackgroundRemoteNotifications": true,
-          "icon": "./assets/images/compass-icon.png",
+          "icon": "./assets/images/app_icon.png",
           "color": "#FF6B35",
           "iosDisplayInForeground": true
         }
