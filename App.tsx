@@ -5,7 +5,7 @@
  */
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { StatusBar, StyleSheet, Text, View, AppState, TouchableOpacity, Modal } from 'react-native';
+import { StatusBar, StyleSheet, Text, View, AppState, TouchableOpacity, Modal, Platform, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { RadialGradient } from 'react-native-gradients';
@@ -18,7 +18,8 @@ import SettingsView from './components/SettingsView';
 import SunCycleView from './components/SunCycleView';
 import DarshanOverlay from './components/DarshanOverlay';
 import { fetchLocationDirect, calculateSunTimes } from './utils/sgvdApi';
-import { initializeNotifications, scheduleAlarms, addNotificationReceivedListener, addNotificationResponseReceivedListener, handleNotificationAction } from './utils/alarmManager';
+import { initializeNotifications, scheduleAlarms, addNotificationReceivedListener, addNotificationResponseReceivedListener, handleNotificationAction, scheduleTestNotificationIn, cancelAllAlarms } from './utils/alarmManager';
+import { stopAlarmNotification, scheduleSnoozeAlarm, scheduleNotifeeAlarm } from './utils/notifeeAlarmService';
 import { ThemeMode, Tab, TargetLocation, SunEventInfo } from './types';
 import {
   APP_BACKGROUNDS,
@@ -96,6 +97,9 @@ function App(): React.JSX.Element {
   
   // Track if alarm is currently playing
   const [isAlarmPlaying, setIsAlarmPlaying] = useState(false);
+
+  // Track active notifee alarm notification ID (Android only)
+  const [activeAlarmNotificationId, setActiveAlarmNotificationId] = useState<string | null>(null);
 
   // App state tracking for background/foreground
   const appState = useRef(AppState.currentState);
@@ -178,6 +182,116 @@ function App(): React.JSX.Element {
     loadLocation();
   }, []);
   
+  // Notifee foreground event listener + initial notification check (Android only)
+  useEffect(() => {
+    if (Platform.OS !== 'android') return;
+
+    let unsubscribe: (() => void) | undefined;
+
+    const setupNotifee = async () => {
+      try {
+        const notifee = (await import('@notifee/react-native')).default;
+        const { EventType } = await import('@notifee/react-native');
+
+        // Check if app was launched by a full-screen alarm notification
+        const initialNotification = await notifee.getInitialNotification();
+        if (initialNotification?.notification?.android?.asForegroundService) {
+          setIsAlarmPlaying(true);
+          setActiveAlarmNotificationId(initialNotification.notification.id || null);
+        }
+
+        // Listen for notifee events while app is in foreground
+        unsubscribe = notifee.onForegroundEvent(({ type, detail }) => {
+          const { notification, pressAction } = detail;
+
+          if (type === EventType.DELIVERED) {
+            // Alarm notification delivered while app is in foreground
+            if (notification?.android?.asForegroundService) {
+              setIsAlarmPlaying(true);
+              setActiveAlarmNotificationId(notification.id || null);
+            }
+          }
+
+          if (type === EventType.ACTION_PRESS) {
+            if (pressAction?.id === 'stop') {
+              setIsAlarmPlaying(false);
+              setActiveAlarmNotificationId(null);
+              // Tear down the foreground service (stops the looping sound),
+              // then remove the notification.
+              notifee.stopForegroundService();
+              if (notification?.id) {
+                notifee.cancelNotification(notification.id);
+              }
+            } else if (pressAction?.id === 'snooze') {
+              setIsAlarmPlaying(false);
+              setActiveAlarmNotificationId(null);
+              notifee.stopForegroundService();
+              if (notification?.id) {
+                notifee.cancelNotification(notification.id);
+              }
+              // Reschedule 5 minutes out (matches the background handler).
+              scheduleSnoozeAlarm(notification?.id || 'snooze');
+            }
+          }
+
+          if (type === EventType.DISMISSED) {
+            setIsAlarmPlaying(false);
+            setActiveAlarmNotificationId(null);
+          }
+        });
+      } catch (error) {
+        console.log('Notifee setup skipped (not available):', error);
+      }
+    };
+
+    setupNotifee();
+
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
+  }, []);
+
+  // Dev-only deep links so an automated test can exercise the alarm without UI
+  // navigation. e.g. schedule a near-future alarm, then kill the app, to verify
+  // it still fires from a closed state:
+  //   adb shell am start -a android.intent.action.VIEW -d "sgdv://schedule-test?secs=15"
+  //   adb shell am start -a android.intent.action.VIEW -d "sgdv://cancel-all"
+  // The whole block is stripped from production builds by the __DEV__ guard.
+  useEffect(() => {
+    if (!__DEV__ || Platform.OS !== 'android') return;
+
+    const handleUrl = async (url: string | null) => {
+      if (!url || !url.startsWith('sgdv://')) return;
+      try {
+        const action = url.replace('sgdv://', '').split('?')[0];
+        const secsMatch = url.match(/[?&]secs=(\d+)/);
+        const secs = secsMatch ? parseInt(secsMatch[1], 10) : 15;
+
+        if (action === 'schedule-test') {
+          await scheduleNotifeeAlarm(
+            'e2e-scheduled-alarm',
+            'Scheduled Test Alarm',
+            'Fired from a scheduled trigger while the app was closed.',
+            Date.now() + secs * 1000,
+            'default',
+          );
+        } else if (action === 'schedule-notif') {
+          // Silent notification-mode path (expo-notifications), to verify
+          // notifications also fire in the background / when the app is closed.
+          await scheduleTestNotificationIn(secs);
+        } else if (action === 'cancel-all') {
+          await cancelAllAlarms();
+        }
+      } catch (error) {
+        console.log('Deep-link handler error:', error);
+      }
+    };
+
+    Linking.getInitialURL().then(handleUrl);
+    const sub = Linking.addEventListener('url', ({ url }) => handleUrl(url));
+    return () => sub.remove();
+  }, []);
+
   // Reference for alarm auto-stop timeout
   const alarmTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
@@ -218,7 +332,17 @@ function App(): React.JSX.Element {
       clearTimeout(alarmTimeoutRef.current);
       alarmTimeoutRef.current = null;
     }
-    
+
+    // On Android: stop the notifee foreground service notification
+    if (Platform.OS === 'android' && activeAlarmNotificationId) {
+      stopAlarmNotification(activeAlarmNotificationId);
+      setActiveAlarmNotificationId(null);
+      setIsAlarmPlaying(false);
+      console.log('Android notifee alarm stopped');
+      return;
+    }
+
+    // iOS / fallback: stop expo-audio player
     if (alarmPlayer && isAlarmPlaying) {
       try {
         alarmPlayer.pause();
@@ -228,7 +352,7 @@ function App(): React.JSX.Element {
         console.log('Could not stop alarm:', error);
       }
     }
-  }, [alarmPlayer, isAlarmPlaying]);
+  }, [alarmPlayer, isAlarmPlaying, activeAlarmNotificationId]);
   
   // Listen for alarm notifications (when app is in foreground)
   useEffect(() => {

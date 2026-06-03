@@ -2,6 +2,7 @@
   "expo": {
     "name": "Guru Dhigvandanam",
     "slug": "darshanam-compass-native-new",
+    "scheme": "sgdv",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/app_icon.png",
@@ -32,6 +33,10 @@
         "VIBRATE",
         "SCHEDULE_EXACT_ALARM",
         "USE_EXACT_ALARM",
+        "WAKE_LOCK",
+        "USE_FULL_SCREEN_INTENT",
+        "FOREGROUND_SERVICE",
+        "FOREGROUND_SERVICE_MEDIA_PLAYBACK",
         "android.permission.ACCESS_COARSE_LOCATION",
         "android.permission.ACCESS_FINE_LOCATION"
       ]
@@ -56,6 +61,7 @@
           "supportsPictureInPicture": false
         }
       ],
+      "./plugins/withAndroidAlarm",
       "expo-audio",
       "expo-location",
       "expo-task-manager"

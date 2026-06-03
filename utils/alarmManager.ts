@@ -3,10 +3,12 @@ import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 import { calculateSunTimes } from './sgvdApi';
-import * as TaskManager from 'expo-task-manager';
-
-// Background notification task name
-const BACKGROUND_NOTIFICATION_TASK = 'background-notification';
+import {
+  initializeNotifeeChannels,
+  scheduleNotifeeAlarm,
+  cancelAllNotifeeAlarms,
+  displayImmediateAlarm,
+} from './notifeeAlarmService';
 
 // Check if running in Expo Go (custom sounds don't work there)
 const isExpoGo = Constants.appOwnership === 'expo';
@@ -29,42 +31,6 @@ Notifications.setNotificationHandler({
   }),
 });
 
-// Define the background task for handling notifications
-TaskManager.defineTask(BACKGROUND_NOTIFICATION_TASK, async ({ data, error, executionInfo }) => {
-  console.log('Background notification task received:', { data, error, executionInfo });
-  
-  if (error) {
-    console.error('Background notification task error:', error);
-    return;
-  }
-
-  // Handle the notification data
-  if (data) {
-    const notificationData = data as any;
-    console.log('Processing background notification:', notificationData);
-    
-    // You can perform background processing here
-    // Note: This runs in a limited execution context
-    // Heavy operations should be avoided
-    
-    // For alarm notifications, we can't play sounds directly in background
-    // The system notification sound will play automatically
-    if (notificationData.isAlarm) {
-      console.log('Background alarm notification processed');
-      
-      // You could store alarm state or perform other lightweight operations
-      try {
-        await AsyncStorage.setItem('lastAlarmTriggered', JSON.stringify({
-          time: new Date().toISOString(),
-          type: notificationData.type || 'unknown'
-        }));
-      } catch (storageError) {
-        console.error('Failed to store alarm state:', storageError);
-      }
-    }
-  }
-});
-
 // Alarm configuration
 interface AlarmConfig {
   sunriseEnabled: boolean;
@@ -77,6 +43,7 @@ interface AlarmConfig {
   notificationsEnabled: boolean; // Silent notifications
   sunriseNotificationEnabled: boolean; // Sunrise notifications
   sunsetNotificationEnabled: boolean; // Sunset notifications
+  alarmSound: 'default' | 'custom';
   scheduleDaysAhead: number; // Number of days ahead to schedule alarms (default: 1 = today + tomorrow)
 }
 
@@ -106,7 +73,7 @@ export const requestNotificationPermissions = async (): Promise<boolean> => {
 
     if (existingStatus !== 'granted') {
       // Request permissions with specific options for background delivery
-      const permissionRequest = Platform.OS === 'ios' 
+      const permissionRequest = Platform.OS === 'ios'
         ? {
             ios: {
               allowAlert: true,
@@ -141,10 +108,10 @@ export const requestNotificationPermissions = async (): Promise<boolean> => {
 // Initialize notification system
 export const initializeNotifications = async (): Promise<boolean> => {
   console.log('Initializing notification system...');
-  
+
   // Request permissions
   const hasPermission = await requestNotificationPermissions();
-  
+
   if (!hasPermission) {
     console.log('Notifications will not work without permissions');
     return false;
@@ -168,7 +135,7 @@ export const initializeNotifications = async (): Promise<boolean> => {
 
     const customAlarmSound = isExpoGo ? 'default' : CUSTOM_ALARM_SOUND;
 
-    // Alarm channel (default sound)
+    // Alarm channel (default sound) — used for iOS and Android notification-mode fallback
     await Notifications.setNotificationChannelAsync(ALARM_CHANNEL_DEFAULT_ID, {
       name: 'Sunrise & Sunset Alarms (Default)',
       importance: Notifications.AndroidImportance.MAX,
@@ -219,6 +186,9 @@ export const initializeNotifications = async (): Promise<boolean> => {
     });
 
     console.log('Android notification channels created');
+
+    // Initialize notifee channels for Android alarm mode
+    await initializeNotifeeChannels();
   }
 
   // Set up iOS notification categories for better alarm handling
@@ -240,7 +210,7 @@ export const initializeNotifications = async (): Promise<boolean> => {
           },
         },
       ]);
-      
+
       await Notifications.setNotificationCategoryAsync('NOTIFICATION_CATEGORY', [
         {
           identifier: 'OPEN_APP',
@@ -250,19 +220,11 @@ export const initializeNotifications = async (): Promise<boolean> => {
           },
         },
       ]);
-      
+
       console.log('iOS notification categories created');
     } catch (error) {
       console.error('Failed to create iOS notification categories:', error);
     }
-  }
-
-  // Register background notification handler
-  try {
-    await Notifications.registerTaskAsync(BACKGROUND_NOTIFICATION_TASK);
-    console.log('Background notification task registered');
-  } catch (error) {
-    console.error('Failed to register background notification task:', error);
   }
 
   console.log('Notification system initialized');
@@ -306,6 +268,18 @@ const scheduleNotification = async (
       return null;
     }
 
+    // On Android alarm mode: use notifee for full-screen + foreground service
+    if (isAlarm && Platform.OS === 'android') {
+      return scheduleNotifeeAlarm(
+        identifier,
+        title,
+        body,
+        triggerDate.getTime(),
+        alarmSound,
+      );
+    }
+
+    // For iOS alarms and all notification-mode: use expo-notifications
     // Cancel any existing notification with the same identifier
     try {
       await Notifications.cancelScheduledNotificationAsync(identifier);
@@ -336,7 +310,7 @@ const scheduleNotification = async (
       trigger: {
         type: Notifications.SchedulableTriggerInputTypes.DATE,
         date: triggerDate,
-        channelId: Platform.OS === 'android' 
+        channelId: Platform.OS === 'android'
           ? (isAlarm ? androidAlarmChannel : NOTIFICATION_CHANNEL_ID)
           : undefined,
       } as Notifications.DateTriggerInput,
@@ -351,6 +325,25 @@ const scheduleNotification = async (
   }
 };
 
+// Schedule a silent notification-mode alert N seconds from now. Used by the
+// automated test to verify that notifications (not just the loud alarm) fire in
+// the background / when the app is closed. isAlarm=false routes through
+// expo-notifications, which schedules via AlarmManager and is delivered by the
+// OS even if the app process is gone.
+export const scheduleTestNotificationIn = async (
+  seconds: number,
+): Promise<string | null> => {
+  const triggerDate = new Date(Date.now() + seconds * 1000);
+  return scheduleNotification(
+    'e2e-scheduled-notification',
+    'Scheduled Notification',
+    'This notification fired while the app was closed.',
+    triggerDate,
+    false,
+    'default',
+  );
+};
+
 // Schedule sunrise/sunset alarms (legacy function - now uses scheduleAlarmsForNext3Days internally)
 export const scheduleAlarms = async (latitude: number, longitude: number): Promise<void> => {
   // Use the unified scheduling function to avoid conflicts
@@ -360,10 +353,16 @@ export const scheduleAlarms = async (latitude: number, longitude: number): Promi
 // Cancel all scheduled alarms
 export const cancelAllAlarms = async (): Promise<void> => {
   try {
-    // Cancel all scheduled notifications
+    // Cancel all expo-notifications
     await Notifications.cancelAllScheduledNotificationsAsync();
     scheduledNotificationIds = [];
-  console.log('All alarms cancelled');
+
+    // Also cancel all notifee alarms on Android
+    if (Platform.OS === 'android') {
+      await cancelAllNotifeeAlarms();
+    }
+
+    console.log('All alarms cancelled');
   } catch (error) {
     console.error('Error cancelling alarms:', error);
   }
@@ -377,23 +376,23 @@ export const getNextAlarmInfo = async (latitude: number, longitude: number): Pro
 } | null> => {
   try {
     const config = await getAlarmConfig();
-    
+
     // Determine if any sunrise/sunset alarms should be scheduled
-    const shouldScheduleSunrise = (config.alarmEnabled && config.sunriseAlarmEnabled) || 
+    const shouldScheduleSunrise = (config.alarmEnabled && config.sunriseAlarmEnabled) ||
                                   (config.notificationsEnabled && config.sunriseNotificationEnabled);
-    const shouldScheduleSunset = (config.alarmEnabled && config.sunsetAlarmEnabled) || 
+    const shouldScheduleSunset = (config.alarmEnabled && config.sunsetAlarmEnabled) ||
                                 (config.notificationsEnabled && config.sunsetNotificationEnabled);
-    
+
     const today = new Date();
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
-    
+
     const todaySunTimes = await calculateSunTimes(latitude, longitude, today);
     const tomorrowSunTimes = await calculateSunTimes(latitude, longitude, tomorrow);
-    
+
     const now = new Date();
     const alarms = [];
-    
+
     // Check today's alarms
     if (shouldScheduleSunrise) {
       const sunriseAlarmTime = new Date(todaySunTimes.sunrise);
@@ -406,7 +405,7 @@ export const getNextAlarmInfo = async (latitude: number, longitude: number): Pro
         });
       }
     }
-    
+
     if (shouldScheduleSunset) {
       const sunsetAlarmTime = new Date(todaySunTimes.sunset);
       sunsetAlarmTime.setMinutes(sunsetAlarmTime.getMinutes() - config.sunsetOffset);
@@ -418,7 +417,7 @@ export const getNextAlarmInfo = async (latitude: number, longitude: number): Pro
         });
       }
     }
-    
+
     // Check tomorrow's alarms
     if (shouldScheduleSunrise) {
       const tomorrowSunriseAlarmTime = new Date(tomorrowSunTimes.sunrise);
@@ -429,7 +428,7 @@ export const getNextAlarmInfo = async (latitude: number, longitude: number): Pro
         alarmTime: tomorrowSunriseAlarmTime,
       });
     }
-    
+
     if (shouldScheduleSunset) {
       const tomorrowSunsetAlarmTime = new Date(tomorrowSunTimes.sunset);
       tomorrowSunsetAlarmTime.setMinutes(tomorrowSunsetAlarmTime.getMinutes() - config.sunsetOffset);
@@ -439,7 +438,7 @@ export const getNextAlarmInfo = async (latitude: number, longitude: number): Pro
         alarmTime: tomorrowSunsetAlarmTime,
       });
     }
-    
+
     // Sort by alarm time and return the next one
     alarms.sort((a, b) => a.alarmTime.getTime() - b.alarmTime.getTime());
     return alarms.length > 0 ? alarms[0] : null;
@@ -454,18 +453,18 @@ export const scheduleAlarmsForNext3Days = async (latitude: number, longitude: nu
   try {
     const config = await getAlarmConfig();
     const daysAhead = config.scheduleDaysAhead ?? 1; // Default to 1 day ahead (today + tomorrow)
-    
+
     console.log(`Scheduling alarms for ${daysAhead + 1} days (today + ${daysAhead} day(s) ahead)`);
-    
+
     // Clear existing alarms first
     await cancelAllAlarms();
-    
+
     // Determine if any sunrise/sunset alarms should be scheduled
-    const shouldScheduleSunrise = (config.alarmEnabled && config.sunriseAlarmEnabled) || 
+    const shouldScheduleSunrise = (config.alarmEnabled && config.sunriseAlarmEnabled) ||
                                   (config.notificationsEnabled && config.sunriseNotificationEnabled);
-    const shouldScheduleSunset = (config.alarmEnabled && config.sunsetAlarmEnabled) || 
+    const shouldScheduleSunset = (config.alarmEnabled && config.sunsetAlarmEnabled) ||
                                 (config.notificationsEnabled && config.sunsetNotificationEnabled);
-    
+
     if (!shouldScheduleSunrise && !shouldScheduleSunset) {
       console.log('No alarms or notifications enabled, skipping scheduling');
       return;
@@ -473,20 +472,19 @@ export const scheduleAlarmsForNext3Days = async (latitude: number, longitude: nu
 
     const isAlarm = config.alarmEnabled;
     const now = new Date();
-    
+
     // Schedule for today and next N days (where N = scheduleDaysAhead)
-    // scheduleDaysAhead = 1 means: today (0) + tomorrow (1) = 2 days total
     for (let dayOffset = 0; dayOffset <= daysAhead; dayOffset++) {
       const date = new Date(now);
       date.setDate(date.getDate() + dayOffset);
-      
+
       const sunTimes = await calculateSunTimes(latitude, longitude, date);
       const dayLabel = dayOffset === 0 ? 'today' : dayOffset === 1 ? 'tomorrow' : `day${dayOffset}`;
-      
+
       if (shouldScheduleSunrise) {
         const sunriseAlarmTime = new Date(sunTimes.sunrise);
         sunriseAlarmTime.setMinutes(sunriseAlarmTime.getMinutes() - config.sunriseOffset);
-        
+
         if (sunriseAlarmTime > now) {
           await scheduleNotification(
             `sunrise-${dayLabel}`,
@@ -498,11 +496,11 @@ export const scheduleAlarmsForNext3Days = async (latitude: number, longitude: nu
           );
         }
       }
-      
+
       if (shouldScheduleSunset) {
         const sunsetAlarmTime = new Date(sunTimes.sunset);
         sunsetAlarmTime.setMinutes(sunsetAlarmTime.getMinutes() - config.sunsetOffset);
-        
+
         if (sunsetAlarmTime > now) {
           await scheduleNotification(
             `sunset-${dayLabel}`,
@@ -515,7 +513,7 @@ export const scheduleAlarmsForNext3Days = async (latitude: number, longitude: nu
         }
       }
     }
-    
+
     console.log(`Alarms scheduled successfully for ${daysAhead + 1} days`);
   } catch (error) {
     console.error('Error scheduling alarms:', error);
@@ -531,13 +529,13 @@ export const getScheduledNotifications = async (): Promise<Array<{
 }>> => {
   try {
     const notifications = await Notifications.getAllScheduledNotificationsAsync();
-    
+
     return notifications.map(notification => ({
       id: notification.identifier,
       title: notification.content.title || 'Alarm',
       body: notification.content.body || '',
-      date: notification.trigger && 'date' in notification.trigger 
-        ? new Date(notification.trigger.date as number) 
+      date: notification.trigger && 'date' in notification.trigger
+        ? new Date(notification.trigger.date as number)
         : new Date(),
     }));
   } catch (error) {
@@ -563,9 +561,15 @@ export const addNotificationResponseReceivedListener = (
 export const handleNotificationAction = async (response: Notifications.NotificationResponse): Promise<void> => {
   const { actionIdentifier, notification } = response;
   const data = notification.request.content.data;
-  
+
   console.log('Notification action received:', actionIdentifier, data);
-  
+
+  // On Android alarm mode, actions are handled by notifee background handler
+  if (Platform.OS === 'android' && data?.isAlarm) {
+    console.log('Android alarm action - handled by notifee');
+    return;
+  }
+
   switch (actionIdentifier) {
     case 'STOP_ALARM':
       console.log('Stop alarm action triggered');
@@ -577,7 +581,7 @@ export const handleNotificationAction = async (response: Notifications.Notificat
         console.error('Error dismissing alarm notification:', error);
       }
       break;
-      
+
     case 'SNOOZE_ALARM':
       console.log('Snooze alarm action triggered');
       // Schedule a new alarm 5 minutes from now
@@ -585,7 +589,7 @@ export const handleNotificationAction = async (response: Notifications.Notificat
         const config = await getAlarmConfig();
         const snoozeDate = new Date();
         snoozeDate.setMinutes(snoozeDate.getMinutes() + 5);
-        
+
         await scheduleNotification(
           `${notification.request.identifier}-snooze`,
           'Snoozed Alarm',
@@ -594,7 +598,7 @@ export const handleNotificationAction = async (response: Notifications.Notificat
           true,
           config.alarmSound
         );
-        
+
         // Dismiss the current notification
         await Notifications.dismissNotificationAsync(notification.request.identifier);
         console.log('Alarm snoozed for 5 minutes');
@@ -602,12 +606,12 @@ export const handleNotificationAction = async (response: Notifications.Notificat
         console.error('Error snoozing alarm:', error);
       }
       break;
-      
+
     case 'OPEN_APP':
       console.log('Open app action triggered');
       // App will automatically open due to opensAppToForeground: true
       break;
-      
+
     default:
       console.log('Default notification action - opening app');
       break;
@@ -634,9 +638,21 @@ export const sendTestNotification = async (): Promise<void> => {
 // Send a test alarm (scheduled for 10 seconds from now)
 export const sendTestAlarm = async (): Promise<void> => {
   try {
+    // On Android: use notifee for full alarm experience
+    if (Platform.OS === 'android') {
+      await displayImmediateAlarm(
+        'Test Alarm',
+        'This is a test alarm! The alarm sound should be playing continuously.',
+        'default',
+      );
+      console.log('Notifee test alarm displayed');
+      return;
+    }
+
+    // On iOS: use expo-notifications
     const triggerDate = new Date();
     triggerDate.setSeconds(triggerDate.getSeconds() + 10);
-    
+
     await Notifications.scheduleNotificationAsync({
       identifier: 'test-alarm',
       content: {
@@ -660,54 +676,4 @@ export const sendTestAlarm = async (): Promise<void> => {
   }
 };
 
-// Send a test background notification (scheduled for 10 seconds from now)
-export const sendTestBackgroundNotification = async (): Promise<void> => {
-  try {
-    const triggerDate = new Date();
-    triggerDate.setSeconds(triggerDate.getSeconds() + 10);
-    
-    await Notifications.scheduleNotificationAsync({
-      identifier: 'test-background-notification',
-      content: {
-        title: '🌅 Background Test',
-        body: 'This notification should work even when the app is closed! Background task should process this.',
-        sound: 'default',
-        priority: 'high',
-        data: { type: 'test', isAlarm: false, backgroundTest: true },
-      },
-      trigger: {
-        type: Notifications.SchedulableTriggerInputTypes.DATE,
-        date: triggerDate,
-        channelId: Platform.OS === 'android' ? NOTIFICATION_CHANNEL_ID : undefined,
-      } as Notifications.DateTriggerInput,
-    });
-    console.log('Test background notification scheduled for 10 seconds from now');
-    console.log('📱 To test: Close the app completely and wait 10 seconds');
-  } catch (error) {
-    console.error('Error scheduling test background notification:', error);
-  }
-};
-
-// Clean up background notification task
-export const cleanupBackgroundTask = async (): Promise<void> => {
-  try {
-    await Notifications.unregisterTaskAsync(BACKGROUND_NOTIFICATION_TASK);
-    console.log('Background notification task unregistered');
-  } catch (error) {
-    console.error('Failed to unregister background notification task:', error);
-  }
-};
-
-// Check if background task is registered
-export const isBackgroundTaskRegistered = async (): Promise<boolean> => {
-  try {
-    const isRegistered = await TaskManager.isTaskRegisteredAsync(BACKGROUND_NOTIFICATION_TASK);
-    console.log('Background task registered:', isRegistered);
-    return isRegistered;
-  } catch (error) {
-    console.error('Error checking background task registration:', error);
-    return false;
-  }
-};
-
-export type { AlarmConfig }; 
+export type { AlarmConfig };
