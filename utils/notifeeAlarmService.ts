@@ -21,7 +21,11 @@ export const initializeNotifeeChannels = async (): Promise<void> => {
       importance: AndroidImportance.HIGH,
       sound: 'default',
       vibration: true,
-      vibrationPattern: [0, 500, 200, 500, 200, 500],
+      // notifee requires an even number of strictly-positive values (no leading
+      // 0 delay, unlike expo-notifications/Android). A 0 here makes createChannel
+      // throw, the channel is never created, and the alarm's foreground service
+      // then crashes with "invalid channel for service notification".
+      vibrationPattern: [500, 200, 500, 200, 500, 200],
       lights: true,
       lightColor: '#FF6B35',
       bypassDnd: true,
@@ -35,7 +39,11 @@ export const initializeNotifeeChannels = async (): Promise<void> => {
       importance: AndroidImportance.HIGH,
       sound: 'custom_alert',
       vibration: true,
-      vibrationPattern: [0, 500, 200, 500, 200, 500],
+      // notifee requires an even number of strictly-positive values (no leading
+      // 0 delay, unlike expo-notifications/Android). A 0 here makes createChannel
+      // throw, the channel is never created, and the alarm's foreground service
+      // then crashes with "invalid channel for service notification".
+      vibrationPattern: [500, 200, 500, 200, 500, 200],
       lights: true,
       lightColor: '#FF6B35',
       bypassDnd: true,
