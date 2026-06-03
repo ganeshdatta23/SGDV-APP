@@ -63,6 +63,14 @@ export const scheduleNotifeeAlarm = async (
       return null;
     }
 
+    // Ensure the alarm channels exist. Creating a channel is idempotent and
+    // needs no notification permission. Without this, scheduling before app
+    // init (or before POST_NOTIFICATIONS is granted) leaves the channel
+    // missing, and when the alarm fires the foreground service crashes with
+    // "invalid channel for service notification". The channel persists, so it
+    // is still present when the trigger fires from a killed app.
+    await initializeNotifeeChannels();
+
     // Cancel any existing alarm with same ID
     try {
       await notifee.cancelNotification(id);
@@ -146,6 +154,9 @@ export const displayImmediateAlarm = async (
   soundName: 'default' | 'custom' = 'default',
 ): Promise<void> => {
   try {
+    // Ensure the alarm channels exist before posting (see scheduleNotifeeAlarm).
+    await initializeNotifeeChannels();
+
     const channelId =
       soundName === 'custom'
         ? NOTIFEE_ALARM_CHANNEL_CUSTOM
