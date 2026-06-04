@@ -638,14 +638,18 @@ export const sendTestNotification = async (): Promise<void> => {
 // Send a test alarm (scheduled for 10 seconds from now)
 export const sendTestAlarm = async (): Promise<void> => {
   try {
+    // Use the configured alarm sound (defaults to 'custom') so the Test Alarm
+    // button plays the same sound as real alarms, not the system default.
+    const config = await getAlarmConfig();
+
     // On Android: use notifee for full alarm experience
     if (Platform.OS === 'android') {
       await displayImmediateAlarm(
         'Test Alarm',
         'This is a test alarm! The alarm sound should be playing continuously.',
-        'default',
+        config.alarmSound,
       );
-      console.log('Notifee test alarm displayed');
+      console.log(`Notifee test alarm displayed (sound: ${config.alarmSound})`);
       return;
     }
 
