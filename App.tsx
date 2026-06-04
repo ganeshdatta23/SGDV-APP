@@ -266,6 +266,10 @@ function App(): React.JSX.Element {
         const action = url.replace('sgdv://', '').split('?')[0];
         const secsMatch = url.match(/[?&]secs=(\d+)/);
         const secs = secsMatch ? parseInt(secsMatch[1], 10) : 15;
+        // ?sound=custom uses the bundled custom_alert sound; default otherwise.
+        const sound: 'default' | 'custom' = /[?&]sound=custom/.test(url)
+          ? 'custom'
+          : 'default';
 
         if (action === 'schedule-test') {
           await scheduleNotifeeAlarm(
@@ -273,7 +277,7 @@ function App(): React.JSX.Element {
             'Scheduled Test Alarm',
             'Fired from a scheduled trigger while the app was closed.',
             Date.now() + secs * 1000,
-            'default',
+            sound,
           );
         } else if (action === 'schedule-notif') {
           // Silent notification-mode path (expo-notifications), to verify
