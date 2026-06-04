@@ -312,6 +312,13 @@ const scheduleNotification = async (
         },
         categoryIdentifier: isAlarm ? 'ALARM_CATEGORY' : 'NOTIFICATION_CATEGORY',
         vibrate: isAlarm ? [0, 500, 200, 500] : [0, 250, 250, 250],
+        // iOS only (ignored on Android, which rings via the notifee foreground
+        // service). 'timeSensitive' makes an alarm break through Focus modes and
+        // the lock screen even when the app is closed. It needs the
+        // com.apple.developer.usernotifications.time-sensitive entitlement
+        // (declared in app.json) but, unlike 'critical', no special Apple
+        // approval. iOS still plays the sound once (≤30s) — it cannot loop.
+        interruptionLevel: isAlarm ? 'timeSensitive' : 'active',
       },
       trigger: {
         type: Notifications.SchedulableTriggerInputTypes.DATE,
@@ -677,11 +684,15 @@ export const sendTestAlarm = async (): Promise<void> => {
         data: { type: 'test', isAlarm: true, alarmSound: 'default' },
         categoryIdentifier: 'ALARM_CATEGORY',
         vibrate: [0, 500, 200, 500],
+        // iOS: surface as Time-Sensitive so the test alarm breaks through Focus/DND.
+        interruptionLevel: 'timeSensitive',
       },
       trigger: {
         type: Notifications.SchedulableTriggerInputTypes.DATE,
         date: triggerDate,
-        channelId: Platform.OS === 'android' ? ALARM_CHANNEL_DEFAULT_ID : undefined,
+        // This path only runs on iOS (the Android case returned early above), so
+        // no Android channelId is needed.
+        channelId: undefined,
       } as Notifications.DateTriggerInput,
     });
     console.log('Test alarm scheduled for 10 seconds from now');

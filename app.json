@@ -15,6 +15,9 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.darshanamcompassnative",
+      "entitlements": {
+        "com.apple.developer.usernotifications.time-sensitive": true
+      },
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "This app needs your location to show the direction to the sacred place.",
         "NSMotionUsageDescription": "This app needs access to your device motion sensors for compass functionality.",
