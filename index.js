@@ -12,18 +12,42 @@ import App from './App';
 if (Platform.OS === 'android') {
   const notifee = require('@notifee/react-native').default;
   const { EventType } = require('@notifee/react-native');
+  const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+
+  // Read the user's alarm config (timeout/snooze/sound) directly from storage so
+  // it works in the headless background context where React state is unavailable.
+  const readAlarmConfig = async () => {
+    try {
+      const raw = await AsyncStorage.getItem('alarmConfig');
+      return raw ? JSON.parse(raw) : {};
+    } catch {
+      return {};
+    }
+  };
 
   // Foreground service runner. REQUIRED by notifee whenever a notification uses
   // `asForegroundService: true`. Without it, when the alarm fires (especially
   // from a backgrounded or fully-killed app) the foreground service has no task
   // to run, so the looping alarm sound and the ongoing notification do not
-  // persist. The returned promise is intentionally kept pending: the service
-  // stays alive until the Stop action calls stopForegroundService() or the
-  // notification is cancelled.
-  notifee.registerForegroundService(() => {
-    return new Promise(() => {
-      // Kept alive for the lifetime of the alarm. Teardown is driven by the
-      // Stop/Snooze/Dismiss handling below (stopForegroundService).
+  // persist. It also enforces the configurable auto-stop timeout: after
+  // alarmTimeoutMs the alarm stops itself (0 = never -> ring until stopped).
+  notifee.registerForegroundService((notification) => {
+    return new Promise(async (resolve) => {
+      const cfg = await readAlarmConfig();
+      const timeoutMs =
+        typeof cfg.alarmTimeoutMs === 'number' ? cfg.alarmTimeoutMs : 60000;
+      if (timeoutMs > 0) {
+        setTimeout(async () => {
+          await notifee.stopForegroundService();
+          if (notification?.id) {
+            await notifee.cancelNotification(notification.id);
+          }
+          resolve();
+        }, timeoutMs);
+      }
+      // timeoutMs <= 0: keep the promise pending; the service stays alive until
+      // the Stop action calls stopForegroundService() or the notification is
+      // cancelled.
     });
   });
 
@@ -44,9 +68,17 @@ if (Platform.OS === 'android') {
         await stopAlarm(notification?.id);
       } else if (pressAction?.id === 'snooze') {
         await stopAlarm(notification?.id);
-        // Schedule snooze alarm 5 minutes from now
+        // Schedule snooze alarm using the configured duration + sound.
+        const cfg = await readAlarmConfig();
+        const snoozeMinutes =
+          typeof cfg.snoozeMinutes === 'number' ? cfg.snoozeMinutes : 5;
+        const soundName = cfg.alarmSound === 'default' ? 'default' : 'custom';
         const { scheduleSnoozeAlarm } = require('./utils/notifeeAlarmService');
-        await scheduleSnoozeAlarm(notification?.id || 'snooze');
+        await scheduleSnoozeAlarm(
+          notification?.id || 'snooze',
+          soundName,
+          snoozeMinutes,
+        );
       }
     }
 

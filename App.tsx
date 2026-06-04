@@ -18,7 +18,7 @@ import SettingsView from './components/SettingsView';
 import SunCycleView from './components/SunCycleView';
 import DarshanOverlay from './components/DarshanOverlay';
 import { fetchLocationDirect, calculateSunTimes } from './utils/sgvdApi';
-import { initializeNotifications, scheduleAlarms, addNotificationReceivedListener, addNotificationResponseReceivedListener, handleNotificationAction, scheduleTestNotificationIn, cancelAllAlarms } from './utils/alarmManager';
+import { initializeNotifications, scheduleAlarms, addNotificationReceivedListener, addNotificationResponseReceivedListener, handleNotificationAction, scheduleTestNotificationIn, cancelAllAlarms, getAlarmConfig } from './utils/alarmManager';
 import { stopAlarmNotification, scheduleSnoozeAlarm, scheduleNotifeeAlarm } from './utils/notifeeAlarmService';
 import { ThemeMode, Tab, TargetLocation, SunEventInfo } from './types';
 import {
@@ -229,8 +229,15 @@ function App(): React.JSX.Element {
               if (notification?.id) {
                 notifee.cancelNotification(notification.id);
               }
-              // Reschedule 5 minutes out (matches the background handler).
-              scheduleSnoozeAlarm(notification?.id || 'snooze');
+              // Reschedule using the configured snooze duration + sound
+              // (matches the background handler in index.js).
+              getAlarmConfig().then((cfg) => {
+                scheduleSnoozeAlarm(
+                  notification?.id || 'snooze',
+                  cfg.alarmSound,
+                  cfg.snoozeMinutes,
+                );
+              });
             }
           }
 

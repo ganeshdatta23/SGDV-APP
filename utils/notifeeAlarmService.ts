@@ -63,6 +63,7 @@ export const scheduleNotifeeAlarm = async (
   body: string,
   triggerTimestamp: number,
   soundName: 'default' | 'custom' = 'custom',
+  snoozeMinutes: number = 5,
 ): Promise<string | null> => {
   try {
     // Don't schedule if in the past
@@ -136,7 +137,7 @@ export const scheduleNotifeeAlarm = async (
               pressAction: { id: 'stop' },
             },
             {
-              title: 'Snooze 5min',
+              title: `Snooze ${snoozeMinutes}min`,
               pressAction: { id: 'snooze' },
             },
           ],
@@ -160,6 +161,7 @@ export const displayImmediateAlarm = async (
   title: string = 'Test Alarm',
   body: string = 'This is a test alarm!',
   soundName: 'default' | 'custom' = 'default',
+  snoozeMinutes: number = 5,
 ): Promise<void> => {
   try {
     // Ensure the alarm channels exist before posting (see scheduleNotifeeAlarm).
@@ -201,7 +203,7 @@ export const displayImmediateAlarm = async (
             pressAction: { id: 'stop' },
           },
           {
-            title: 'Snooze 5min',
+            title: `Snooze ${snoozeMinutes}min`,
             pressAction: { id: 'snooze' },
           },
         ],
@@ -238,14 +240,16 @@ export const cancelAllNotifeeAlarms = async (): Promise<void> => {
 export const scheduleSnoozeAlarm = async (
   originalId: string,
   soundName: 'default' | 'custom' = 'custom',
+  snoozeMinutes: number = 5,
 ): Promise<void> => {
-  const snoozeTime = Date.now() + 5 * 60 * 1000;
+  const snoozeTime = Date.now() + snoozeMinutes * 60 * 1000;
   await scheduleNotifeeAlarm(
     `${originalId}-snooze`,
     'Snoozed Alarm',
     'Your snoozed alarm is now ringing!',
     snoozeTime,
     soundName,
+    snoozeMinutes,
   );
 };
 

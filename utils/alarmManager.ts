@@ -44,6 +44,8 @@ interface AlarmConfig {
   sunriseNotificationEnabled: boolean; // Sunrise notifications
   sunsetNotificationEnabled: boolean; // Sunset notifications
   alarmSound: 'default' | 'custom';
+  alarmTimeoutMs: number; // auto-stop the ringing alarm after N ms (0 = never)
+  snoozeMinutes: number; // snooze duration in minutes
   scheduleDaysAhead: number; // Number of days ahead to schedule alarms (default: 1 = today + tomorrow)
 }
 
@@ -59,6 +61,8 @@ const DEFAULT_ALARM_CONFIG: AlarmConfig = {
   sunriseNotificationEnabled: true, // Sunrise notifications enabled by default
   sunsetNotificationEnabled: true, // Sunset notifications enabled by default
   alarmSound: 'custom',
+  alarmTimeoutMs: 60000, // 1 minute
+  snoozeMinutes: 5, // 5 minutes
   scheduleDaysAhead: 1, // Schedule for today + 1 day ahead (total 2 days) by default
 };
 
@@ -259,7 +263,8 @@ const scheduleNotification = async (
   body: string,
   triggerDate: Date,
   isAlarm: boolean = false,
-  alarmSound: AlarmConfig['alarmSound'] = 'custom'
+  alarmSound: AlarmConfig['alarmSound'] = 'custom',
+  snoozeMinutes: number = 5
 ): Promise<string | null> => {
   try {
     // Don't schedule if the date is in the past
@@ -276,6 +281,7 @@ const scheduleNotification = async (
         body,
         triggerDate.getTime(),
         alarmSound,
+        snoozeMinutes,
       );
     }
 
@@ -492,7 +498,8 @@ export const scheduleAlarmsForNext3Days = async (latitude: number, longitude: nu
             `Sunrise in ${config.sunriseOffset} minutes! Time for morning prayers.`,
             sunriseAlarmTime,
             isAlarm,
-            config.alarmSound
+            config.alarmSound,
+            config.snoozeMinutes
           );
         }
       }
@@ -508,7 +515,8 @@ export const scheduleAlarmsForNext3Days = async (latitude: number, longitude: nu
             `Sunset in ${config.sunsetOffset} minutes! Time for evening prayers.`,
             sunsetAlarmTime,
             isAlarm,
-            config.alarmSound
+            config.alarmSound,
+            config.snoozeMinutes
           );
         }
       }
@@ -588,7 +596,7 @@ export const handleNotificationAction = async (response: Notifications.Notificat
       try {
         const config = await getAlarmConfig();
         const snoozeDate = new Date();
-        snoozeDate.setMinutes(snoozeDate.getMinutes() + 5);
+        snoozeDate.setMinutes(snoozeDate.getMinutes() + config.snoozeMinutes);
 
         await scheduleNotification(
           `${notification.request.identifier}-snooze`,
@@ -596,7 +604,8 @@ export const handleNotificationAction = async (response: Notifications.Notificat
           'Your snoozed alarm is now ringing!',
           snoozeDate,
           true,
-          config.alarmSound
+          config.alarmSound,
+          config.snoozeMinutes
         );
 
         // Dismiss the current notification
@@ -648,6 +657,7 @@ export const sendTestAlarm = async (): Promise<void> => {
         'Test Alarm',
         'This is a test alarm! The alarm sound should be playing continuously.',
         config.alarmSound,
+        config.snoozeMinutes,
       );
       console.log(`Notifee test alarm displayed (sound: ${config.alarmSound})`);
       return;
