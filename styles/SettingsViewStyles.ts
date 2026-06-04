@@ -125,6 +125,22 @@ export const settingsViewStyles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
   },
+  // Wrapping row of auto-width chips, for selectors with several options.
+  optionRowWrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+    gap: 8,
+  },
+  optionChip: {
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   versionContainer: {
     alignItems: 'center',
     paddingVertical: 10,

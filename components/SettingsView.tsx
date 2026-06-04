@@ -18,6 +18,12 @@ import {
   TEXT_SCHEDULE_MODE,
   TEXT_SCHEDULE_MODE_ALARM,
   TEXT_SCHEDULE_MODE_NOTIFICATION,
+  TEXT_ALARM_TIMEOUT,
+  TEXT_ALARM_TIMEOUT_SUBTITLE,
+  TEXT_SNOOZE_DURATION,
+  TEXT_SNOOZE_DURATION_SUBTITLE,
+  ALARM_TIMEOUT_OPTIONS,
+  SNOOZE_DURATION_OPTIONS,
   APP_NAME,
   APP_VERSION,
 } from '../constants';
@@ -117,6 +123,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const isAlarmMode = alarmConfig?.alarmEnabled ?? false;
   const isNotificationMode = alarmConfig?.notificationsEnabled ?? true;
   const alarmSound = alarmConfig?.alarmSound ?? 'custom';
+  const alarmTimeoutMs = alarmConfig?.alarmTimeoutMs ?? 60000;
+  const snoozeMinutes = alarmConfig?.snoozeMinutes ?? 5;
 
   return (
     <View style={[settingsViewStyles.wrapper, style]}>
@@ -394,6 +402,84 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     {TEXT_ALARM_SOUND_CUSTOM}
                   </Text>
                 </TouchableOpacity>
+              </View>
+
+              {/* Alarm Timeout */}
+              <View style={settingsViewStyles.settingRow}>
+                <View style={settingsViewStyles.settingLeft}>
+                  <View style={[settingsViewStyles.iconContainer, { backgroundColor: theme.accent + '20' }]}>
+                    <Ionicons name="timer-outline" size={22} color={theme.accent} />
+                  </View>
+                  <View style={settingsViewStyles.settingInfo}>
+                    <Text style={[settingsViewStyles.settingTitle, { color: theme.itemText }]}>
+                      {TEXT_ALARM_TIMEOUT}
+                    </Text>
+                    <Text style={[settingsViewStyles.settingSubtitle, { color: theme.itemSubtext }]}>
+                      {TEXT_ALARM_TIMEOUT_SUBTITLE}{' '}
+                      {ALARM_TIMEOUT_OPTIONS.find((o) => o.value === alarmTimeoutMs)?.label ?? '1 min'}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+              <View style={settingsViewStyles.optionRowWrap}>
+                {ALARM_TIMEOUT_OPTIONS.map((opt) => (
+                  <TouchableOpacity
+                    key={opt.value}
+                    style={[
+                      settingsViewStyles.optionChip,
+                      { borderColor: alarmTimeoutMs === opt.value ? theme.accent : theme.sectionBorder },
+                      alarmTimeoutMs === opt.value && { backgroundColor: theme.selectedBg },
+                    ]}
+                    onPress={() => updateAlarmConfig({ alarmTimeoutMs: opt.value })}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={[
+                      settingsViewStyles.optionButtonText,
+                      { color: alarmTimeoutMs === opt.value ? theme.accent : theme.itemText }
+                    ]}>
+                      {opt.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              {/* Snooze Duration */}
+              <View style={settingsViewStyles.settingRow}>
+                <View style={settingsViewStyles.settingLeft}>
+                  <View style={[settingsViewStyles.iconContainer, { backgroundColor: theme.accent + '20' }]}>
+                    <Ionicons name="alarm-outline" size={22} color={theme.accent} />
+                  </View>
+                  <View style={settingsViewStyles.settingInfo}>
+                    <Text style={[settingsViewStyles.settingTitle, { color: theme.itemText }]}>
+                      {TEXT_SNOOZE_DURATION}
+                    </Text>
+                    <Text style={[settingsViewStyles.settingSubtitle, { color: theme.itemSubtext }]}>
+                      {TEXT_SNOOZE_DURATION_SUBTITLE}{' '}
+                      {SNOOZE_DURATION_OPTIONS.find((o) => o.value === snoozeMinutes)?.label ?? '5 min'}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+              <View style={settingsViewStyles.optionRowWrap}>
+                {SNOOZE_DURATION_OPTIONS.map((opt) => (
+                  <TouchableOpacity
+                    key={opt.value}
+                    style={[
+                      settingsViewStyles.optionChip,
+                      { borderColor: snoozeMinutes === opt.value ? theme.accent : theme.sectionBorder },
+                      snoozeMinutes === opt.value && { backgroundColor: theme.selectedBg },
+                    ]}
+                    onPress={() => updateAlarmConfig({ snoozeMinutes: opt.value })}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={[
+                      settingsViewStyles.optionButtonText,
+                      { color: snoozeMinutes === opt.value ? theme.accent : theme.itemText }
+                    ]}>
+                      {opt.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
               </View>
             </>
           )}

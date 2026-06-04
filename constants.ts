@@ -552,6 +552,24 @@ export const TEXT_ALARM_SOUND_CUSTOM = 'Sri Natha Charana Dwandvam';
 export const TEXT_SCHEDULE_MODE = 'Schedule Mode';
 export const TEXT_SCHEDULE_MODE_ALARM = 'Alarm';
 export const TEXT_SCHEDULE_MODE_NOTIFICATION = 'Notification';
+export const TEXT_ALARM_TIMEOUT = 'Alarm Timeout';
+export const TEXT_ALARM_TIMEOUT_SUBTITLE = 'Auto-stop the ringing alarm after';
+export const TEXT_SNOOZE_DURATION = 'Snooze Duration';
+export const TEXT_SNOOZE_DURATION_SUBTITLE = 'Ring again after';
+
+export const ALARM_TIMEOUT_OPTIONS: { label: string; value: number }[] = [
+  { label: '30s', value: 30000 },
+  { label: '1 min', value: 60000 },
+  { label: '2 min', value: 120000 },
+  { label: '5 min', value: 300000 },
+  { label: 'Never', value: 0 },
+];
+export const SNOOZE_DURATION_OPTIONS: { label: string; value: number }[] = [
+  { label: '1 min', value: 1 },
+  { label: '5 min', value: 5 },
+  { label: '10 min', value: 10 },
+  { label: '15 min', value: 15 },
+];
 export const TEXT_APPEARANCE = 'APPEARANCE';
 export const TEXT_SOUND = 'SOUND';
 export const TEXT_CHOOSE_THEME = 'Choose Theme';
