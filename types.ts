@@ -110,6 +110,23 @@ export interface NavItem {
 }
 
 // ============================================================================
+// WALKTHROUGH / ONBOARDING TYPES
+// ============================================================================
+
+export interface WalkthroughStep {
+  icon: keyof typeof Ionicons.glyphMap;
+  title: string;
+  body: string;
+}
+
+export interface WalkthroughProps {
+  visible: boolean;
+  theme?: ThemeMode;
+  // Called when the user finishes the last step ("Get Started") or taps "Skip".
+  onComplete: () => void;
+}
+
+// ============================================================================
 // LOCATION & COORDINATES TYPES
 // ============================================================================
 

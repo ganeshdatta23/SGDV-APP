@@ -7,6 +7,7 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { StatusBar, StyleSheet, Text, View, AppState, TouchableOpacity, Modal, Platform, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
 import { RadialGradient } from 'react-native-gradients';
 import { VideoView, useVideoPlayer } from 'expo-video';
@@ -17,6 +18,7 @@ import EventsView from './components/EventsView';
 import SettingsView from './components/SettingsView';
 import SunCycleView from './components/SunCycleView';
 import DarshanOverlay from './components/DarshanOverlay';
+import Walkthrough from './components/Walkthrough';
 import { fetchLocationDirect, calculateSunTimes } from './utils/sgvdApi';
 import { initializeNotifications, scheduleAlarms, addNotificationReceivedListener, addNotificationResponseReceivedListener, handleNotificationAction, scheduleTestNotificationIn, cancelAllAlarms, getAlarmConfig } from './utils/alarmManager';
 import { stopAlarmNotification, scheduleSnoozeAlarm, scheduleNotifeeAlarm } from './utils/notifeeAlarmService';
@@ -38,6 +40,7 @@ import {
   TEXT_CUSTOMIZE_EXPERIENCE,
   TEXT_TIME_FOR_PRAYERS,
   TEXT_STOP_ALARM,
+  WALKTHROUGH_STORAGE_KEY,
 } from './constants';
 import { appStyles } from './styles/AppStyles';
 
@@ -67,6 +70,9 @@ function App(): React.JSX.Element {
   
   // Navigation state
   const [currentTab, setCurrentTab] = useState<Tab>('home');
+
+  // First-run walkthrough: shown once, gated by an AsyncStorage flag.
+  const [showWalkthrough, setShowWalkthrough] = useState(false);
   
   // Theme state - allows dynamic theme switching
   const [currentTheme, setCurrentTheme] = useState<ThemeMode>(COMPASS_THEME);
@@ -114,6 +120,37 @@ function App(): React.JSX.Element {
     });
 
     return () => subscription?.remove();
+  }, []);
+
+  // First-run walkthrough check: show the onboarding overlay only if the user
+  // has not seen it yet. Runs once on mount; failures are non-fatal (we simply
+  // don't show it rather than blocking the app).
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const seen = await AsyncStorage.getItem(WALKTHROUGH_STORAGE_KEY);
+        if (mounted && seen !== 'true') {
+          setShowWalkthrough(true);
+        }
+      } catch (error) {
+        console.log('Walkthrough flag read failed:', error);
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  // Persist that the walkthrough has been seen, then dismiss it. Called from
+  // both "Get Started" (last step) and "Skip".
+  const handleWalkthroughComplete = useCallback(async () => {
+    setShowWalkthrough(false);
+    try {
+      await AsyncStorage.setItem(WALKTHROUGH_STORAGE_KEY, 'true');
+    } catch (error) {
+      console.log('Walkthrough flag write failed:', error);
+    }
   }, []);
 
   // Fetch location on component mount
@@ -679,6 +716,13 @@ function App(): React.JSX.Element {
       <SafeAreaView style={appStyles.safeArea}>
         {appContent}
       </SafeAreaView>
+
+      {/* First-run onboarding overlay (renders above everything via its Modal) */}
+      <Walkthrough
+        visible={showWalkthrough}
+        theme={currentTheme}
+        onComplete={handleWalkthroughComplete}
+      />
     </View>
   );
 }

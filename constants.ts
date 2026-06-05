@@ -14,6 +14,7 @@ import {
   CompassConfig,
   AlarmConfig,
   NavItem,
+  WalkthroughStep,
 } from './types';
 
 // ============================================================================
@@ -595,4 +596,48 @@ export const ANIMATION_SPRING_CONFIG = {
   friction: 8,
   tension: 40,
 };
+
+// ============================================================================
+// WALKTHROUGH / ONBOARDING
+// ============================================================================
+
+// AsyncStorage key that records the first-run walkthrough has been seen.
+// Versioned so a future redesign can re-show it to everyone by bumping `_vN`.
+export const WALKTHROUGH_STORAGE_KEY = 'hasSeenWalkthrough_v1';
+
+export const TEXT_WALKTHROUGH_SKIP = 'Skip';
+export const TEXT_WALKTHROUGH_NEXT = 'Next';
+export const TEXT_WALKTHROUGH_BACK = 'Back';
+export const TEXT_WALKTHROUGH_GET_STARTED = 'Get Started';
+
+// One slide per app capability, shown in order on first launch. Icons reuse the
+// same Ionicons names as the bottom-nav tabs so the walkthrough visually maps to
+// where each feature lives.
+export const WALKTHROUGH_STEPS: WalkthroughStep[] = [
+  {
+    icon: 'sparkles',
+    title: 'Welcome to Guru Digvandanam',
+    body: 'Offer your prayers to Appaji in the sacred direction, and never miss a sunrise or sunset.',
+  },
+  {
+    icon: 'compass',
+    title: 'Find the Sacred Direction',
+    body: 'Hold your phone flat and rotate slowly. When the compass aligns, a live darshan appears for you to offer your prayers.',
+  },
+  {
+    icon: 'alarm',
+    title: 'Sunrise & Sunset Alarms',
+    body: 'Be gently reminded at sunrise and sunset so you are always on time for your prayers — even when the app is closed.',
+  },
+  {
+    icon: 'calendar',
+    title: 'Stay Updated',
+    body: 'Browse upcoming programs and events so you never miss a special occasion.',
+  },
+  {
+    icon: 'settings-outline',
+    title: 'Make It Yours',
+    body: 'Choose a theme, pick your alarm sound, and adjust alarm timing any time from Settings.',
+  },
+];
 
