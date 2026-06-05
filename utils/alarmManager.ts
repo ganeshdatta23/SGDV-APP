@@ -7,7 +7,8 @@ import {
   initializeNotifeeChannels,
   scheduleNotifeeAlarm,
   cancelAllNotifeeAlarms,
-  displayImmediateAlarm,
+  cancelNotifeeAlarm,
+  getScheduledNotifeeAlarms,
 } from './notifeeAlarmService';
 
 // Check if running in Expo Go (custom sounds don't work there)
@@ -535,7 +536,11 @@ export const scheduleAlarmsForNext3Days = async (latitude: number, longitude: nu
   }
 };
 
-// Get all scheduled notifications
+// Get all scheduled notifications.
+// On Android, alarm-mode alarms are scheduled via notifee while notification-mode
+// alerts go through expo-notifications, so we merge both sources. Querying only
+// expo (as before) made the count read 0 in alarm mode even though alarms were
+// scheduled correctly — which looked like "the alarm is not being scheduled".
 export const getScheduledNotifications = async (): Promise<Array<{
   id: string;
   title: string;
@@ -543,9 +548,9 @@ export const getScheduledNotifications = async (): Promise<Array<{
   date: Date;
 }>> => {
   try {
-    const notifications = await Notifications.getAllScheduledNotificationsAsync();
+    const expoNotifications = await Notifications.getAllScheduledNotificationsAsync();
 
-    return notifications.map(notification => ({
+    const expoScheduled = expoNotifications.map(notification => ({
       id: notification.identifier,
       title: notification.content.title || 'Alarm',
       body: notification.content.body || '',
@@ -553,9 +558,36 @@ export const getScheduledNotifications = async (): Promise<Array<{
         ? new Date(notification.trigger.date as number)
         : new Date(),
     }));
+
+    const notifeeScheduled =
+      Platform.OS === 'android' ? await getScheduledNotifeeAlarms() : [];
+
+    // Merge, de-duplicating by id (notifee and expo share the same identifiers,
+    // e.g. `sunrise-today`), then sort earliest-first for display.
+    const byId = new Map<string, { id: string; title: string; body: string; date: Date }>();
+    for (const item of [...expoScheduled, ...notifeeScheduled]) {
+      byId.set(item.id, item);
+    }
+    return Array.from(byId.values()).sort((a, b) => a.date.getTime() - b.date.getTime());
   } catch (error) {
     console.error('Error getting scheduled notifications:', error);
     return [];
+  }
+};
+
+// Cancel a single scheduled alarm/notification by id. On Android the id may
+// belong to either backend (notifee for alarm mode, expo for notification mode),
+// so we cancel from both; on iOS everything goes through expo-notifications.
+export const cancelScheduledNotification = async (id: string): Promise<void> => {
+  try {
+    if (Platform.OS === 'android') {
+      await cancelNotifeeAlarm(id);
+    }
+    await Notifications.cancelScheduledNotificationAsync(id);
+    scheduledNotificationIds = scheduledNotificationIds.filter(existing => existing !== id);
+    console.log(`Cancelled scheduled notification: ${id}`);
+  } catch (error) {
+    console.error(`Error cancelling scheduled notification ${id}:`, error);
   }
 };
 
@@ -652,27 +684,33 @@ export const sendTestNotification = async (): Promise<void> => {
 };
 
 // Send a test alarm (scheduled for 10 seconds from now)
+const TEST_ALARM_DELAY_MS = 10000;
+
 export const sendTestAlarm = async (): Promise<void> => {
   try {
     // Use the configured alarm sound (defaults to 'custom') so the Test Alarm
     // button plays the same sound as real alarms, not the system default.
     const config = await getAlarmConfig();
 
-    // On Android: use notifee for full alarm experience
+    // On Android: schedule a real notifee trigger 10s out (NOT displayImmediateAlarm,
+    // which fired instantly and ignored the "10 sec" label). The delay lets the user
+    // lock the phone / background the app, and it exercises the exact SET_ALARM_CLOCK
+    // + foreground-service path real alarms use — so the test reflects production.
     if (Platform.OS === 'android') {
-      await displayImmediateAlarm(
+      await scheduleNotifeeAlarm(
+        'test-alarm',
         'Test Alarm',
         'This is a test alarm! The alarm sound should be playing continuously.',
+        Date.now() + TEST_ALARM_DELAY_MS,
         config.alarmSound,
         config.snoozeMinutes,
       );
-      console.log(`Notifee test alarm displayed (sound: ${config.alarmSound})`);
+      console.log(`Notifee test alarm scheduled for 10s (sound: ${config.alarmSound})`);
       return;
     }
 
     // On iOS: use expo-notifications
-    const triggerDate = new Date();
-    triggerDate.setSeconds(triggerDate.getSeconds() + 10);
+    const triggerDate = new Date(Date.now() + TEST_ALARM_DELAY_MS);
 
     await Notifications.scheduleNotificationAsync({
       identifier: 'test-alarm',

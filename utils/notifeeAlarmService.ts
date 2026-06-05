@@ -216,6 +216,32 @@ export const displayImmediateAlarm = async (
   }
 };
 
+// List all scheduled (pending) notifee alarms. Android alarm-mode alarms are
+// scheduled through notifee (not expo-notifications), so this is the only way to
+// see them — expo's getAllScheduledNotificationsAsync() does not know about them.
+export const getScheduledNotifeeAlarms = async (): Promise<Array<{
+  id: string;
+  title: string;
+  body: string;
+  date: Date;
+}>> => {
+  try {
+    const triggers = await notifee.getTriggerNotifications();
+    return triggers.map(({ notification, trigger }) => ({
+      id: notification.id ?? '',
+      title: notification.title || 'Alarm',
+      body: notification.body || '',
+      date:
+        trigger && 'timestamp' in trigger
+          ? new Date((trigger as TimestampTrigger).timestamp)
+          : new Date(),
+    }));
+  } catch (error) {
+    console.error('Error getting scheduled notifee alarms:', error);
+    return [];
+  }
+};
+
 // Cancel a specific notifee alarm
 export const cancelNotifeeAlarm = async (id: string): Promise<void> => {
   try {

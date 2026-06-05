@@ -171,6 +171,38 @@ export const sunCycleViewStyles = StyleSheet.create({
     marginLeft: 8,
     flex: 1,
   },
+  scheduledRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    marginTop: 8,
+  },
+  scheduledInfo: {
+    flex: 1,
+    paddingRight: 8,
+  },
+  scheduledTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  scheduledTime: {
+    fontSize: 13,
+    color: '#FFFFFF',
+    opacity: 0.7,
+    marginTop: 2,
+  },
+  scheduledRemove: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(220, 53, 69, 0.8)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   testNotificationButton: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -1,5 +1,9 @@
 import notifee, { AlarmType, AndroidForegroundServiceType } from '@notifee/react-native';
-import { scheduleNotifeeAlarm, displayImmediateAlarm } from '../utils/notifeeAlarmService';
+import {
+  scheduleNotifeeAlarm,
+  displayImmediateAlarm,
+  getScheduledNotifeeAlarms,
+} from '../utils/notifeeAlarmService';
 
 // Mock notifee so the alarm-scheduling logic can be asserted without a device.
 // These tests guard the fixes that make the alarm survive background/closed
@@ -10,6 +14,7 @@ jest.mock('@notifee/react-native', () => ({
   default: {
     createChannel: jest.fn().mockResolvedValue('chan'),
     createTriggerNotification: jest.fn().mockResolvedValue('notif-id'),
+    getTriggerNotifications: jest.fn().mockResolvedValue([]),
     displayNotification: jest.fn().mockResolvedValue('notif-id'),
     cancelNotification: jest.fn().mockResolvedValue(undefined),
     cancelAllNotifications: jest.fn().mockResolvedValue(undefined),
@@ -67,5 +72,34 @@ describe('notifee alarm scheduling (background / closed-app correctness)', () =>
     expect(notif.android.foregroundServiceTypes).toContain(
       AndroidForegroundServiceType.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK,
     );
+  });
+
+  // Android alarm-mode alarms live in notifee, not expo-notifications. The
+  // scheduled-count UI read 0 until getScheduledNotifeeAlarms() surfaced them,
+  // which is why "the alarm is not being scheduled" was reported.
+  it('lists pending notifee alarms with their trigger time', async () => {
+    const ts = Date.now() + 3_600_000;
+    (notifee as any).getTriggerNotifications.mockResolvedValueOnce([
+      {
+        notification: { id: 'sunrise-today', title: 'Sunrise Alert', body: 'Soon' },
+        trigger: { type: 0, timestamp: ts },
+      },
+    ]);
+
+    const alarms = await getScheduledNotifeeAlarms();
+
+    expect(alarms).toEqual([
+      {
+        id: 'sunrise-today',
+        title: 'Sunrise Alert',
+        body: 'Soon',
+        date: new Date(ts),
+      },
+    ]);
+  });
+
+  it('returns an empty list (not a throw) when notifee has no pending alarms', async () => {
+    (notifee as any).getTriggerNotifications.mockResolvedValueOnce([]);
+    expect(await getScheduledNotifeeAlarms()).toEqual([]);
   });
 });

@@ -18,6 +18,7 @@ import {
   saveAlarmConfig,
   scheduleAlarmsForNext3Days,
   getScheduledNotifications,
+  cancelScheduledNotification,
   sendTestAlarm,
 } from '../utils/alarmManager';
 import { SunCycleViewProps, AlarmConfig } from '../types';
@@ -50,7 +51,9 @@ export default function SunCycleView({ latitude, longitude }: SunCycleViewProps)
     nextEventType: 'sunrise' | 'sunset';
   } | null>(null);
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [scheduledCount, setScheduledCount] = useState(0);
+  const [scheduledAlarms, setScheduledAlarms] = useState<
+    Array<{ id: string; title: string; body: string; date: Date }>
+  >([]);
 
   // Load configuration and sun times
   useEffect(() => {
@@ -79,13 +82,29 @@ export default function SunCycleView({ latitude, longitude }: SunCycleViewProps)
         setSunTimes(times);
       }
 
-      // Get scheduled notification count
+      // Get scheduled alarms/notifications (includes Android notifee alarms)
       const scheduled = await getScheduledNotifications();
-      setScheduledCount(scheduled.length);
+      setScheduledAlarms(scheduled);
     } catch (error) {
       console.error('Error loading sun cycle data:', error);
     }
   };
+
+  // Cancel a single scheduled alarm and refresh the list
+  const removeScheduledAlarm = async (id: string) => {
+    await cancelScheduledNotification(id);
+    const scheduled = await getScheduledNotifications();
+    setScheduledAlarms(scheduled);
+  };
+
+  // e.g. "Fri 5:42 AM" — alarms span several days, so include the weekday.
+  const formatAlarmDateTime = (date: Date) =>
+    date.toLocaleString('en-US', {
+      weekday: 'short',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+    });
 
   // Update config and reschedule alarms
   const updateConfig = async (newConfig: Partial<AlarmConfig>) => {
@@ -120,9 +139,9 @@ export default function SunCycleView({ latitude, longitude }: SunCycleViewProps)
       await scheduleAlarmsForNext3Days(latitude, longitude);
     }
     
-    // Refresh scheduled count
+    // Refresh scheduled alarms
     const scheduled = await getScheduledNotifications();
-    setScheduledCount(scheduled.length);
+    setScheduledAlarms(scheduled);
   };
 
   if (!config || !sunTimes) {
@@ -257,14 +276,37 @@ export default function SunCycleView({ latitude, longitude }: SunCycleViewProps)
           </View>
         )}
 
-        {/* Scheduled Count */}
+        {/* Scheduled alarms list (with per-alarm remove) */}
         {(config.notificationsEnabled || config.alarmEnabled) && (
-          <View style={sunCycleViewStyles.infoBox}>
-            <Ionicons name="calendar" size={20} color={SUN_SUNRISE_ICON_COLOR} />
-            <Text style={sunCycleViewStyles.infoText}>
-              {scheduledCount} alarms scheduled for the next 3 days
-            </Text>
-          </View>
+          <>
+            <View style={sunCycleViewStyles.infoBox}>
+              <Ionicons name="calendar" size={20} color={SUN_SUNRISE_ICON_COLOR} />
+              <Text style={sunCycleViewStyles.infoText}>
+                {scheduledAlarms.length} alarms scheduled for the next 3 days
+              </Text>
+            </View>
+
+            {scheduledAlarms.map((alarm) => (
+              <View key={alarm.id} style={sunCycleViewStyles.scheduledRow}>
+                <View style={sunCycleViewStyles.scheduledInfo}>
+                  <Text style={sunCycleViewStyles.scheduledTitle} numberOfLines={1}>
+                    {alarm.title}
+                  </Text>
+                  <Text style={sunCycleViewStyles.scheduledTime}>
+                    {formatAlarmDateTime(alarm.date)}
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  style={sunCycleViewStyles.scheduledRemove}
+                  onPress={() => removeScheduledAlarm(alarm.id)}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  accessibilityLabel={`Remove ${alarm.title} alarm`}
+                >
+                  <Ionicons name="close" size={20} color="#FFFFFF" />
+                </TouchableOpacity>
+              </View>
+            ))}
+          </>
         )}
 
         {/* Test Alarm Button - schedules alarm for 10 seconds from now */}
