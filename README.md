@@ -14,7 +14,30 @@ A spiritual compass mobile application that helps devotees orient themselves tow
 - 🎨 **Multiple Themes**: Light, Dark, and Cosmic visual themes
 - ⚙️ **Customizable Settings**: Audio controls, volume adjustment, and theme selection
 
+## 📂 Repository Structure (Monorepo)
+
+This repository contains **both** the mobile app and its backend API:
+
+```
+SGDV-APP/
+├── (root)        # 📱 Expo / React Native mobile app (Guru Digvandanam)
+└── backend/      # 🗄️ FastAPI backend (SGVD API) — see backend/README.md
+```
+
+- **Mobile app** (repo root) — the Expo app documented below.
+- **Backend** (`backend/`) — the FastAPI service that powers locations, sun
+  times, and events. The app talks to it at `https://sgvd-backend.vercel.app`
+  (configured in `utils/sgvdApi.ts` and `constants.ts`). See the
+  [🗄️ Backend section](#️-backend-sgvd-api) and [`backend/README.md`](backend/README.md).
+
+> The `backend/` folder was merged in from the standalone `SGVD-Backend` repo.
+> Only source files are tracked here — secrets (`.env*`), the virtualenv, and
+> Python build artifacts are git-ignored via `backend/.gitignore`.
+
 ## 🚀 Quick Start
+
+> The Quick Start below covers the **mobile app**. To run the API locally, see
+> the [🗄️ Backend section](#️-backend-sgvd-api).
 
 ### Prerequisites
 
@@ -107,7 +130,16 @@ SGDV-APP/
 │   ├── COMPASS_README.md        # Compass component docs
 │   ├── COMPASS_CONFIG_GUIDE.md  # Configuration guide
 │   └── COMPASS_SENSOR_GUIDE.md  # Sensor calibration
-└── app.json                     # Expo configuration
+├── app.json                     # Expo configuration
+└── backend/                     # 🗄️ FastAPI backend (SGVD API)
+    ├── app/                     # API routes, models, schemas, services
+    ├── migrations/              # SQL migrations
+    ├── cloudflare/              # Edge reverse-proxy worker
+    ├── benchmarks/              # Cold-start & latency reports
+    ├── scripts/                 # Seed / smoke-test / deploy helpers
+    ├── requirements.txt         # Python dependencies
+    ├── vercel.json              # Vercel serverless config
+    └── README.md                # Backend documentation
 ```
 
 ### Component Hierarchy
@@ -237,11 +269,14 @@ const FALLBACK_LOCATION = {
 
 ### Backend API
 
-The app connects to a Vercel-hosted backend:
-- **Base URL**: `https://sgvd-backend.vercel.app`
+The app connects to a Vercel-hosted backend (source now lives in [`backend/`](backend/README.md)):
+- **Base URL**: `https://sgvd-backend.vercel.app` (set in `utils/sgvdApi.ts` / `constants.ts`)
 - **Endpoints**:
   - `/sgvd/locations/` - Fetch sacred location data
   - `/sgvd/events/` - Fetch upcoming events
+
+To point the app at a different backend (e.g. a local instance), change
+`SGVD_API_BASE_URL` in `utils/sgvdApi.ts`.
 
 ### Asset Configuration
 
@@ -731,6 +766,33 @@ cd android
 ./gradlew assembleRelease
 # APK: android/app/build/outputs/apk/release/app-release.apk
 ```
+
+## 🗄️ Backend (SGVD API)
+
+The `backend/` folder holds the **FastAPI** service that powers the app's
+location, sun-times, events, spiritual-activity, and auth features. Full details
+are in [`backend/README.md`](backend/README.md); a summary:
+
+### Stack
+- **Framework**: FastAPI (async end-to-end) on Uvicorn
+- **Database**: dual backend selected by the `DB_BACKEND` env flag —
+  **Postgres** (SQLAlchemy 2.0 + asyncpg) or **Turso / libSQL** (pure-Python
+  `libsql-client`, used for Vercel serverless). See [`backend/TURSO.md`](backend/TURSO.md).
+- **Auth**: JWT (python-jose) + bcrypt (passlib); optional Google OAuth
+- **Deployment**: Vercel serverless (`backend/vercel.json`) with a Cloudflare
+  edge reverse-proxy worker (`backend/cloudflare/`) for caching
+
+### Run locally
+```bash
+cd backend
+python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+cp .env.example .env            # then fill in DATABASE_URL / SECRET_KEY (or Turso vars)
+uvicorn app.main:app --reload   # http://127.0.0.1:8000/docs
+```
+
+All API routes are served under the `/sgvd` prefix (e.g. `/sgvd/locations/`,
+`/sgvd/events/`, `/sgvd/auth/login`).
 
 ## 🤝 Contributing
 

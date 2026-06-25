@@ -1,0 +1,15 @@
+{
+  // SGVD-Backend reverse proxy — stable client-facing URL in front of the
+  // swappable Vercel origin, with edge caching of the hot GET endpoints.
+  // Deploy:  cd cloudflare && wrangler deploy
+  "name": "sgvd-proxy",
+  "main": "worker-proxy.js",
+  "compatibility_date": "2026-06-01",
+  "observability": { "enabled": true },
+  "vars": {
+    "ORIGIN": "https://sgvd-backend-ten.vercel.app",
+    "CACHE_TTL": "3600",
+    "CACHE_PATHS": "/sgvd/locations,/sgvd/events",
+    "BROWSER_TTL": "0"
+  }
+}
