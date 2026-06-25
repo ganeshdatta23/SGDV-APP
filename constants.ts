@@ -534,6 +534,9 @@ export const TEXT_ABOUT_DESC =
   `${APP_NAME} helps devotees face the sacred direction of Pujya Sri Swamiji for ` +
   `darshan — track sunrise and sunset, receive gentle reminders, and stay updated ` +
   `on temple programs.`;
+// Subtitle on the About app row (the full description lives behind a tap, in a popup).
+export const TEXT_ABOUT_TAP_HINT = 'Tap to learn more';
+export const TEXT_ABOUT_CLOSE = 'Close';
 
 // ============================================================================
 // WALKTHROUGH PREVIEW SAMPLE DATA
@@ -624,6 +627,8 @@ export const TEXT_SUNSET_ALARM = 'Sunset Alarm';
 export const TEXT_SUNRISE_ALERTS = 'Sunrise Alerts';
 export const TEXT_SUNSET_ALERTS = 'Sunset Alerts';
 export const TEXT_ALARM_NOTIFICATION_SETTINGS = 'Alarm & Notification Settings';
+// Generic subtitle for the collapsed Alarm section row (no mode revealed, per design).
+export const TEXT_ALARM_NOTIFICATION_SUB = 'Sunrise & sunset reminders';
 export const TEXT_SCHEDULE_AHEAD = 'Schedule ahead';
 // How many days ahead the user can choose to pre-schedule alarms. Kept small so
 // the OS isn't flooded with exact alarms; alarms are refreshed on every app open.

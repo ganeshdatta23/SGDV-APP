@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Image, ScrollView, TouchableOpacity, LayoutAnimation, Platform, UIManager } from 'react-native';
+import { View, Text, Image, Modal, ScrollView, TouchableOpacity, LayoutAnimation, Platform, UIManager } from 'react-native';
 import Slider from '@react-native-community/slider';
 import { Ionicons } from '@expo/vector-icons';
 import { AlarmConfig, SettingsViewProps, StreakState, ThemeMode } from '../types';
@@ -22,6 +22,7 @@ import {
   TEXT_SHOW_WALKTHROUGH_SUB,
   TEXT_DARSHAN_AUDIO_VOLUME,
   TEXT_ALARM_NOTIFICATION_SETTINGS,
+  TEXT_ALARM_NOTIFICATION_SUB,
   TEXT_ALARM_SOUND,
   TEXT_ALARM_SOUND_DEFAULT,
   TEXT_ALARM_SOUND_CUSTOM,
@@ -41,6 +42,9 @@ import {
   APP_VERSION,
   TEXT_ABOUT_SECTION,
   TEXT_ABOUT_DESC,
+  TEXT_ABOUT_TAP_HINT,
+  TEXT_ABOUT_CLOSE,
+  APP_BACKGROUNDS,
 } from '../constants';
 import { settingsViewStyles } from '../styles/SettingsViewStyles';
 
@@ -73,9 +77,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const [isSoundExpanded, setIsSoundExpanded] = useState(false);
   const [isAlarmExpanded, setIsAlarmExpanded] = useState(false);
   const [isStreakExpanded, setIsStreakExpanded] = useState(false);
+  const [isAboutVisible, setIsAboutVisible] = useState(false);
   const [alarmConfig, setAlarmConfig] = useState<AlarmConfig | null>(null);
   const [streak, setStreak] = useState<StreakState | null>(null);
   const theme = SETTINGS_THEMES[currentTheme];
+  const bg = APP_BACKGROUNDS[currentTheme];
 
   // All sections share one expand/collapse animation for a consistent feel.
   const toggleSection = (setter: React.Dispatch<React.SetStateAction<boolean>>) => {
@@ -321,13 +327,37 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         )}
         </View>
 
-        {/* Alarm & Notification Settings */}
+        {/* Alarm & Notification Settings — the whole section collapses to just
+            its title; tapping the header reveals Schedule Mode + all controls. */}
         <View style={[settingsViewStyles.section, { backgroundColor: theme.sectionBg, borderColor: theme.sectionBorder }]}>
-          <Text style={[settingsViewStyles.sectionHeader, { color: theme.sectionTitle }]}>
-            {TEXT_ALARM_NOTIFICATION_SETTINGS}
-          </Text>
+          <TouchableOpacity
+            testID="settings-alarm-toggle"
+            style={settingsViewStyles.settingRow}
+            onPress={toggleAlarmSection}
+            activeOpacity={0.7}
+          >
+            <View style={settingsViewStyles.settingLeft}>
+              <View style={[settingsViewStyles.iconContainer, { backgroundColor: theme.accent + '20' }]}>
+                <Ionicons name="alarm" size={22} color={theme.accent} />
+              </View>
+              <View style={settingsViewStyles.settingInfo}>
+                <Text style={[settingsViewStyles.settingTitle, { color: theme.itemText }]}>
+                  {TEXT_ALARM_NOTIFICATION_SETTINGS}
+                </Text>
+                <Text style={[settingsViewStyles.settingSubtitle, { color: theme.itemSubtext }]}>
+                  {TEXT_ALARM_NOTIFICATION_SUB}
+                </Text>
+              </View>
+            </View>
+            <Ionicons
+              name={isAlarmExpanded ? 'chevron-up' : 'chevron-down'}
+              size={20}
+              color={theme.chevron}
+            />
+          </TouchableOpacity>
 
-          {!alarmConfig ? (
+          {isAlarmExpanded && (
+            !alarmConfig ? (
             <View style={settingsViewStyles.loadingRow}>
               <Text style={[settingsViewStyles.settingSubtitle, { color: theme.itemSubtext }]}>
                 Loading alarm settings...
@@ -335,15 +365,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             </View>
           ) : (
             <>
-              {/* Schedule Mode — tapping expands the full alarm controls. */}
-              <TouchableOpacity
-                style={settingsViewStyles.settingRow}
-                onPress={toggleAlarmSection}
-                activeOpacity={0.7}
-              >
+              {/* Schedule Mode — current mode summary. */}
+              <View style={settingsViewStyles.settingRow}>
                 <View style={settingsViewStyles.settingLeft}>
                   <View style={[settingsViewStyles.iconContainer, { backgroundColor: theme.accent + '20' }]}>
-                    <Ionicons name="alarm" size={22} color={theme.accent} />
+                    <Ionicons name="options-outline" size={22} color={theme.accent} />
                   </View>
                   <View style={settingsViewStyles.settingInfo}>
                     <Text style={[settingsViewStyles.settingTitle, { color: theme.itemText }]}>
@@ -354,14 +380,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     </Text>
                   </View>
                 </View>
-                <Ionicons
-                  name={isAlarmExpanded ? 'chevron-up' : 'chevron-down'}
-                  size={20}
-                  color={theme.chevron}
-                />
-              </TouchableOpacity>
-              {isAlarmExpanded && (
-              <>
+              </View>
               <View style={settingsViewStyles.optionRow}>
                 <TouchableOpacity
                   style={[
@@ -566,9 +585,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   </TouchableOpacity>
                 ))}
               </View>
-              </>
-              )}
             </>
+          )
           )}
         </View>
 
@@ -661,8 +679,14 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             {TEXT_ABOUT_SECTION}
           </Text>
 
-          {/* App identity (icon + name + version) */}
-          <View style={settingsViewStyles.settingRow}>
+          {/* App identity (icon + name) — tap to open the About popup with the
+              full app image + description (kept collapsed here by default). */}
+          <TouchableOpacity
+            testID="settings-about-app"
+            style={settingsViewStyles.settingRow}
+            onPress={() => setIsAboutVisible(true)}
+            activeOpacity={0.7}
+          >
             <View style={settingsViewStyles.settingLeft}>
               <View style={[settingsViewStyles.iconContainer, { backgroundColor: theme.accent + '20' }]}>
                 <Image
@@ -676,21 +700,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   {APP_NAME}
                 </Text>
                 <Text style={[settingsViewStyles.settingSubtitle, { color: theme.itemSubtext }]}>
-                  v{APP_VERSION}
+                  {TEXT_ABOUT_TAP_HINT}
                 </Text>
               </View>
             </View>
-          </View>
-
-          {/* What the app does */}
-          <Text
-            style={[
-              settingsViewStyles.settingSubtitle,
-              { color: theme.itemSubtext, paddingHorizontal: 4, paddingBottom: 14, lineHeight: 20 },
-            ]}
-          >
-            {TEXT_ABOUT_DESC}
-          </Text>
+            <Ionicons name="chevron-forward" size={20} color={theme.chevron} />
+          </TouchableOpacity>
 
           {/* How to use the app — replay the first-run walkthrough on demand. */}
           <TouchableOpacity
@@ -724,6 +739,51 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           {APP_NAME} v{APP_VERSION}
         </Text>
       </View>
+
+      {/* About popup — full app image + description, opened from the About row. */}
+      <Modal
+        visible={isAboutVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setIsAboutVisible(false)}
+      >
+        <TouchableOpacity
+          style={settingsViewStyles.aboutModalOverlay}
+          activeOpacity={1}
+          onPress={() => setIsAboutVisible(false)}
+        >
+          <TouchableOpacity
+            testID="settings-about-modal"
+            activeOpacity={1}
+            style={[settingsViewStyles.aboutModalCard, { backgroundColor: bg.modalBg, borderColor: bg.modalBorder }]}
+          >
+            <Image
+              source={require('../assets/images/app_full_image_icon.png')}
+              style={settingsViewStyles.aboutModalImage}
+              resizeMode="contain"
+            />
+            <Text style={[settingsViewStyles.aboutModalTitle, { color: bg.modalTitle }]}>
+              {APP_NAME}
+            </Text>
+            <Text style={[settingsViewStyles.aboutModalVersion, { color: bg.modalText }]}>
+              v{APP_VERSION}
+            </Text>
+            <Text style={[settingsViewStyles.aboutModalDesc, { color: bg.modalText }]}>
+              {TEXT_ABOUT_DESC}
+            </Text>
+            <TouchableOpacity
+              testID="settings-about-close"
+              style={[settingsViewStyles.aboutModalClose, { borderColor: bg.modalBorder }]}
+              onPress={() => setIsAboutVisible(false)}
+              activeOpacity={0.7}
+            >
+              <Text style={[settingsViewStyles.aboutModalCloseText, { color: bg.modalTitle }]}>
+                {TEXT_ABOUT_CLOSE}
+              </Text>
+            </TouchableOpacity>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
     </View>
   );
 };

@@ -164,6 +164,56 @@ export const settingsViewStyles = StyleSheet.create({
     flexShrink: 1,
     marginRight: 8,
   },
+  // About popup (modal) — full app image + description behind a tap.
+  aboutModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 32,
+  },
+  aboutModalCard: {
+    width: '100%',
+    maxWidth: 360,
+    borderRadius: 20,
+    borderWidth: 1,
+    paddingVertical: 28,
+    paddingHorizontal: 24,
+    alignItems: 'center',
+  },
+  aboutModalImage: {
+    width: 128,
+    height: 128,
+    borderRadius: 24,
+    marginBottom: 18,
+  },
+  aboutModalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    textAlign: 'center',
+    marginBottom: 2,
+  },
+  aboutModalVersion: {
+    fontSize: 13,
+    marginBottom: 16,
+  },
+  aboutModalDesc: {
+    fontSize: 14,
+    lineHeight: 21,
+    textAlign: 'center',
+    marginBottom: 22,
+  },
+  aboutModalClose: {
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingVertical: 11,
+    paddingHorizontal: 32,
+    alignItems: 'center',
+  },
+  aboutModalCloseText: {
+    fontSize: 15,
+    fontWeight: '600',
+  },
   versionContainer: {
     alignItems: 'center',
     paddingVertical: 10,
