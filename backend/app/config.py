@@ -26,7 +26,7 @@ class Settings(BaseSettings):
 
     # Turso (libSQL) backend - pure-Python async client, no native deps.
     # The database URL is not secret and defaults to the provisioned DB; the
-    # auth token IS secret and must come from the environment (.env / .env.turso).
+    # auth token IS secret and must come from the environment (.env).
     TURSO_DATABASE_URL: Optional[str] = (
         "libsql://sgvd-amardattadola.aws-ap-south-1.turso.io"
     )

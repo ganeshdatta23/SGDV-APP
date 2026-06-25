@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Deploy the FastAPI app to Vercel and sync the required environment variables.
 #
-# Requires a VALID, full-access Vercel token (the limited token in .env.vercel
+# Requires a VALID, full-access Vercel token (the limited VERCEL_API_KEY in .env
 # is not sufficient — `vercel` reports "token not valid" / cannot list teams).
 # Create one at https://vercel.com/account/tokens.
 #
@@ -9,7 +9,7 @@
 #   VERCEL_TOKEN=xxxx ./scripts/deploy_vercel.sh            # preview deploy
 #   VERCEL_TOKEN=xxxx ./scripts/deploy_vercel.sh --prod     # production deploy
 #
-# It reads connection/secret values from .env.turso and .env (repo root).
+# It reads connection/secret values from .env (repo root).
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
@@ -42,7 +42,6 @@ load_env() {
     export "$key=$(echo "$value" | sed -e 's/^ *//' -e 's/ *$//')"
   done < "$f"
 }
-load_env .env.turso
 load_env .env
 
 # Project name must be lowercase; the directory (SGVD-Backend) isn't valid.

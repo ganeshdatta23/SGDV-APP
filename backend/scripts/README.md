@@ -1,7 +1,7 @@
 # Maintenance scripts
 
 Reusable scripts for the **Turso (libSQL)** backend. They read the connection
-from `.env.turso` / `.env` at the repo root (`TURSO_DATABASE_URL` +
+from the single `.env` at the repo root (`TURSO_DATABASE_URL` +
 `TURSO_AUTH_TOKEN`) and target the app's live database.
 
 Run them from the repo root with the project venv:

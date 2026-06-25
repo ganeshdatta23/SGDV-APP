@@ -14,7 +14,7 @@ This is an idempotent maintenance script: edit the ``DEFAULT_LOCATIONS`` and
     defaults are cleaned up automatically.
 
 It targets the **Turso** backend (the app's active DB). Connection comes from
-the environment / ``.env.turso`` (``TURSO_DATABASE_URL`` + ``TURSO_AUTH_TOKEN``).
+the environment / ``.env`` (``TURSO_DATABASE_URL`` + ``TURSO_AUTH_TOKEN``).
 
 Usage:
     python scripts/seed_defaults.py            # apply changes
@@ -270,7 +270,6 @@ def _load_env_file(name: str) -> None:
 
 # Make the Turso connection available before importing the app, and provide a
 # throwaway SECRET_KEY (required by Settings but unused for DB access here).
-_load_env_file(".env.turso")
 _load_env_file(".env")
 os.environ.setdefault("SECRET_KEY", "seed-defaults-script")
 
@@ -408,7 +407,7 @@ async def main(dry_run: bool) -> None:
     print(f"Target: {settings.TURSO_DATABASE_URL}")
     if not settings.TURSO_AUTH_TOKEN:
         raise SystemExit(
-            "TURSO_AUTH_TOKEN is not set. Put it in .env.turso / .env or export it."
+            "TURSO_AUTH_TOKEN is not set. Put it in .env or export it."
         )
     if not dry_run:
         await ensure_tables()

@@ -12,13 +12,13 @@ serverless and keeps the app's fully-async request handling.
 
 ## Enabling Turso
 
-Set these in the environment the app loads (e.g. `.env`, or Vercel project
-env). The connection values are in `.env.turso`:
+Set these in the environment the app loads (the single repo-root `.env`, or the
+Vercel project env). The connection values live in that `.env`:
 
 ```
 DB_BACKEND=turso
 TURSO_DATABASE_URL=libsql://sgvd-amardattadola.aws-ap-south-1.turso.io
-TURSO_AUTH_TOKEN=<token from .env.turso>
+TURSO_AUTH_TOKEN=<token from .env>
 SECRET_KEY=<your JWT secret>
 ADMIN_EMAIL=admin@example.com        # seeded admin (optional)
 ADMIN_PASSWORD=ChangeMe123!          # seeded admin password (optional)

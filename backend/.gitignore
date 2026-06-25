@@ -27,11 +27,8 @@ ENV/
 .venv/
 
 # Environment Variables (contain secrets - never commit)
-.env
-.env.local
-.env.production
-.env.turso
-.env.vercel
+# All real config lives in a single .env; .env.example is the committed template.
+# .env* is ignored below; only .env.example is allowed back in.
 
 # IDE
 .vscode/

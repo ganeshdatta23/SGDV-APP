@@ -7,8 +7,8 @@
 # https://dash.cloudflare.com/profile/api-tokens — that bundles Workers
 # Scripts:Edit, Workers KV:Edit, Workers Routes:Edit and workers.dev rights.
 #
-# Reads the token from CLOUDFLARE_API_TOKEN, else CLOUDFLARE_API_KEY in
-# .env.cloudflare. Tunables via env: WORKER_NAME, ORIGIN, CACHE_TTL,
+# Reads the token from CLOUDFLARE_API_TOKEN, else CLOUDFLARE_API_KEY in the
+# repo-root .env. Tunables via env: WORKER_NAME, ORIGIN, CACHE_TTL,
 # CACHE_PATHS, BROWSER_TTL.
 #
 # Usage:
@@ -18,10 +18,10 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 TOKEN="${CLOUDFLARE_API_TOKEN:-}"
-if [[ -z "$TOKEN" && -f .env.cloudflare ]]; then
-  TOKEN="$(grep -E '^CLOUDFLARE_API_KEY=' .env.cloudflare | head -1 | cut -d= -f2- | xargs)"
+if [[ -z "$TOKEN" && -f .env ]]; then
+  TOKEN="$(grep -E '^CLOUDFLARE_API_KEY=' .env | head -1 | cut -d= -f2- | xargs)"
 fi
-: "${TOKEN:?Set CLOUDFLARE_API_TOKEN or put CLOUDFLARE_API_KEY in .env.cloudflare}"
+: "${TOKEN:?Set CLOUDFLARE_API_TOKEN or put CLOUDFLARE_API_KEY in .env}"
 
 NAME="${WORKER_NAME:-sgvd-api}"
 ORIGIN="${ORIGIN:-https://sgvd-backend-ten.vercel.app}"

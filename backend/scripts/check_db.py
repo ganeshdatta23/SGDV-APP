@@ -78,7 +78,7 @@ async def main() -> None:
 
     print(f"DB: {settings.TURSO_DATABASE_URL}")
     if not settings.TURSO_AUTH_TOKEN:
-        raise SystemExit("TURSO_AUTH_TOKEN is not set (.env.turso / .env / env).")
+        raise SystemExit("TURSO_AUTH_TOKEN is not set (.env / env).")
 
     try:
         if args.sql:
