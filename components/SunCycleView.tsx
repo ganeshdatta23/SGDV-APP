@@ -19,7 +19,6 @@ import {
   scheduleAlarmsForNext3Days,
   getScheduledNotifications,
   cancelScheduledNotification,
-  sendTestAlarm,
 } from '../utils/alarmManager';
 import { SunCycleViewProps, AlarmConfig } from '../types';
 import {
@@ -34,7 +33,6 @@ import {
   TEXT_SUNSET_ALARM,
   TEXT_SUNRISE_ALERTS,
   TEXT_SUNSET_ALERTS,
-  TEXT_TEST_ALARM_5_SEC,
   TEXT_ALARM_NOTIFICATION_SETTINGS,
   TEXT_SCHEDULE_AHEAD,
   SCHEDULE_DAYS_OPTIONS,
@@ -137,6 +135,16 @@ export default function SunCycleView({ latitude, longitude }: SunCycleViewProps)
         sunriseNotificationEnabled: true,
         sunsetNotificationEnabled: true,
       };
+    }
+
+    // Alarm and Notification modes are mutually exclusive (an event fires as a
+    // loud alarm OR a silent notification, never both). Enabling one disables
+    // the other — matching the Settings tab so both screens stay consistent.
+    if (nextConfig.alarmEnabled === true) {
+      nextConfig = { ...nextConfig, notificationsEnabled: false };
+    }
+    if (nextConfig.notificationsEnabled === true) {
+      nextConfig = { ...nextConfig, alarmEnabled: false };
     }
 
     const updatedConfig = { ...config, ...nextConfig };
@@ -350,16 +358,6 @@ export default function SunCycleView({ latitude, longitude }: SunCycleViewProps)
           </>
         )}
 
-        {/* Test Alarm Button - schedules alarm for 10 seconds from now */}
-        <TouchableOpacity
-          style={sunCycleViewStyles.testAlarmButton}
-          onPress={async () => {
-            await sendTestAlarm();
-          }}
-        >
-          <Ionicons name="alarm-outline" size={24} color="#FFFFFF" />
-          <Text style={sunCycleViewStyles.testButtonText}>{TEXT_TEST_ALARM_5_SEC}</Text>
-        </TouchableOpacity>
       </View>
     </ScrollView>
   );

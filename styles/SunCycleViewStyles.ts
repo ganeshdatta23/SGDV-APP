@@ -149,15 +149,6 @@ export const sunCycleViewStyles = StyleSheet.create({
     padding: SUN_TEST_BUTTON_PADDING,
     marginTop: 16,
   },
-  testButtonActive: {
-    backgroundColor: '#DC3545',
-  },
-  testButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#FFFFFF',
-    marginLeft: 8,
-  },
   scheduleAheadRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -241,24 +232,6 @@ export const sunCycleViewStyles = StyleSheet.create({
     backgroundColor: 'rgba(220, 53, 69, 0.8)',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  testNotificationButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#4A90D9',
-    borderRadius: SUN_TEST_BUTTON_BORDER_RADIUS,
-    padding: SUN_TEST_BUTTON_PADDING,
-    marginTop: 16,
-  },
-  testAlarmButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#FF6B35',
-    borderRadius: SUN_TEST_BUTTON_BORDER_RADIUS,
-    padding: SUN_TEST_BUTTON_PADDING,
-    marginTop: 12,
   },
 });
 

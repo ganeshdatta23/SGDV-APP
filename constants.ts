@@ -548,10 +548,6 @@ export const TEXT_SUNRISE_ALARM = 'Sunrise Alarm';
 export const TEXT_SUNSET_ALARM = 'Sunset Alarm';
 export const TEXT_SUNRISE_ALERTS = 'Sunrise Alerts';
 export const TEXT_SUNSET_ALERTS = 'Sunset Alerts';
-export const TEXT_TEST_ALARM_SOUND = 'Test Alarm Sound';
-export const TEXT_STOP_TEST_ALARM = 'Stop Test Alarm';
-export const TEXT_SEND_TEST_NOTIFICATION = 'Send Test Notification';
-export const TEXT_TEST_ALARM_5_SEC = 'Test Alarm (10 sec)';
 export const TEXT_ALARM_NOTIFICATION_SETTINGS = 'Alarm & Notification Settings';
 export const TEXT_SCHEDULE_AHEAD = 'Schedule ahead';
 // How many days ahead the user can choose to pre-schedule alarms. Kept small so
