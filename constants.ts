@@ -544,7 +544,12 @@ export const TEXT_ABOUT_CLOSE = 'Close';
 // (components/walkthroughPreviews/). Centralized here so the sample copy stays
 // configurable in one place rather than hardcoded across the preview components.
 // ============================================================================
-export const WALKTHROUGH_PREVIEW_HEADING_DEG = 45;
+// Compass preview teaches "rotate to align": the phone currently faces
+// WALKTHROUGH_PREVIEW_HEADING_DEG (north-up, so N stays at the top) and the
+// sacred direction is WALKTHROUGH_PREVIEW_TARGET_DEG — the gap drives the
+// on-screen target pointer + curved rotation arrow.
+export const WALKTHROUGH_PREVIEW_HEADING_DEG = 0;
+export const WALKTHROUGH_PREVIEW_TARGET_DEG = 45;
 export const WALKTHROUGH_PREVIEW_NEXT_SUNRISE_TIME = '5:42 AM';
 export const WALKTHROUGH_PREVIEW_SUNRISE_TIME = '6:12 AM';
 export const WALKTHROUGH_PREVIEW_SUNSET_TIME = '6:48 PM';

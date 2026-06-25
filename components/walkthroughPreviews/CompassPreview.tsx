@@ -1,31 +1,48 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import Svg, { Circle, Line, Path, Text as SvgText } from 'react-native-svg';
+import Svg, { Circle, Line, Path, Polygon, Text as SvgText } from 'react-native-svg';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemeMode } from '../../types';
 import {
   COMPASS_THEMES,
   TEXT_HEADING,
   TEXT_TURN_RIGHT,
+  TEXT_TURN_LEFT,
   WALKTHROUGH_PREVIEW_HEADING_DEG,
+  WALKTHROUGH_PREVIEW_TARGET_DEG,
 } from '../../constants';
 
 /**
- * Static mini compass dial mirroring CompassView (the dial, tick ring, N/E/S/W
- * labels, center hub readout, gold pointer, and the "ROTATE RIGHT" pill) using
- * the real COMPASS_THEMES palette. No magnetometer / reanimated — just SVG.
+ * Static mini compass dial mirroring CompassView, but built to *teach the
+ * rotation*: the white phone marker sits at the top (where you're facing now),
+ * the gold pointer marks the sacred direction off to the side, and a curved
+ * gold arrow sweeps between them so it's obvious which way — and how far — to
+ * turn. No magnetometer / reanimated — just plain react-native-svg.
  */
 const SIZE = 220;
 const C = SIZE / 2;
 const DIAL_R = 96;
 const HUB_R = 50;
 
-const CARDINALS: Array<[string, number]> = [
+const CARDINALS: [string, number][] = [
   ['N', 0],
   ['E', 90],
   ['S', 180],
   ['W', 270],
 ];
+
+// Phone faces HEADING (north-up → N stays at the top); the sacred direction is
+// TARGET. DELTA is the signed shortest turn [-180,180]; ≥0 means rotate right.
+const HEADING = WALKTHROUGH_PREVIEW_HEADING_DEG;
+const TARGET = WALKTHROUGH_PREVIEW_TARGET_DEG;
+const DELTA = ((TARGET - HEADING + 540) % 360) - 180;
+const ROTATE_RIGHT = DELTA >= 0;
+
+// Polar → screen point. `angleDeg` is measured clockwise from the top (N).
+const polar = (angleDeg: number, r: number) => {
+  const rad = (angleDeg * Math.PI) / 180;
+  return { x: C + r * Math.sin(rad), y: C - r * Math.cos(rad) };
+};
 
 const CompassPreview: React.FC<{ theme: ThemeMode }> = ({ theme }) => {
   const c = COMPASS_THEMES[theme];
@@ -51,6 +68,40 @@ const CompassPreview: React.FC<{ theme: ThemeMode }> = ({ theme }) => {
   }
 
   const labelR = DIAL_R - 30;
+
+  // Curved rotation arrow: an arc near the rim from just past the top marker to
+  // just before the target pointer, plus an arrowhead at the leading end.
+  const arcR = DIAL_R - 22;
+  const gap = 8; // degrees of breathing room at each end
+  const startA = ROTATE_RIGHT ? gap : -gap;
+  const endA = DELTA - (ROTATE_RIGHT ? gap : -gap);
+  const arcStart = polar(startA, arcR);
+  const arcEnd = polar(endA, arcR);
+  const sweepFlag = ROTATE_RIGHT ? 1 : 0;
+  const arcPath = `M ${arcStart.x} ${arcStart.y} A ${arcR} ${arcR} 0 0 ${sweepFlag} ${arcEnd.x} ${arcEnd.y}`;
+
+  // Arrowhead oriented along the arc's tangent at the leading (target) end.
+  const dir = ROTATE_RIGHT ? 1 : -1;
+  const headRad = (endA * Math.PI) / 180;
+  const tx = Math.cos(headRad) * dir;
+  const ty = Math.sin(headRad) * dir;
+  const px = -ty;
+  const py = tx;
+  const tip = polar(endA + dir * 5, arcR);
+  const HL = 13;
+  const HW = 7;
+  const bx = tip.x - tx * HL;
+  const by = tip.y - ty * HL;
+  const head = `${tip.x},${tip.y} ${bx + px * HW},${by + py * HW} ${bx - px * HW},${by - py * HW}`;
+
+  // Gold pointer at the rim marking the sacred direction (points inward).
+  const tIn = polar(DELTA, DIAL_R - 34);
+  const toL = polar(DELTA - 6, DIAL_R - 6);
+  const toR = polar(DELTA + 6, DIAL_R - 6);
+  const targetPointer = `${tIn.x},${tIn.y} ${toL.x},${toL.y} ${toR.x},${toR.y}`;
+
+  // Fixed phone marker at the top — the direction you're facing right now.
+  const phoneMarker = `${C},${C - DIAL_R + 10} ${C - 8},${C - DIAL_R - 10} ${C + 8},${C - DIAL_R - 10}`;
 
   return (
     <View style={styles.wrap}>
@@ -80,11 +131,29 @@ const CompassPreview: React.FC<{ theme: ThemeMode }> = ({ theme }) => {
             </SvgText>
           );
         })}
-        {/* Gold pointer toward N */}
+
+        {/* Curved rotation arrow (which way + how far to turn) */}
         <Path
-          d={`M ${C} ${C - 34} L ${C - 9} ${C - 4} L ${C} ${C - 14} L ${C + 9} ${C - 4} Z`}
-          fill={c.gold}
+          d={arcPath}
+          stroke={c.gold}
+          strokeWidth={3}
+          fill="none"
+          strokeLinecap="round"
+          opacity={0.9}
         />
+        <Polygon points={head} fill={c.gold} />
+
+        {/* Sacred-direction pointer at the rim */}
+        <Polygon points={targetPointer} fill={c.gold} stroke={c.dialBackground} strokeWidth={0.5} />
+
+        {/* Phone marker at the top — where you're facing now */}
+        <Polygon
+          points={phoneMarker}
+          fill={c.phoneMarkerFill}
+          stroke={c.phoneMarkerStroke}
+          strokeWidth={1}
+        />
+
         {/* Center hub readout */}
         <Circle
           cx={C}
@@ -112,7 +181,7 @@ const CompassPreview: React.FC<{ theme: ThemeMode }> = ({ theme }) => {
           fontWeight="bold"
           textAnchor="middle"
         >
-          {`${WALKTHROUGH_PREVIEW_HEADING_DEG}°`}
+          {`${HEADING}°`}
         </SvgText>
         <Line
           x1={C - 22}
@@ -123,7 +192,7 @@ const CompassPreview: React.FC<{ theme: ThemeMode }> = ({ theme }) => {
           strokeWidth={1}
         />
         <SvgText x={C} y={C + 33} fill={c.gold} fontSize={10} textAnchor="middle">
-          {`▲ ${WALKTHROUGH_PREVIEW_HEADING_DEG}°`}
+          {`▲ ${TARGET}°`}
         </SvgText>
       </Svg>
 
@@ -133,8 +202,15 @@ const CompassPreview: React.FC<{ theme: ThemeMode }> = ({ theme }) => {
           { backgroundColor: c.turnContainerBg, borderColor: c.turnContainerBorder },
         ]}
       >
-        <Ionicons name="refresh-outline" size={14} color={c.gold} />
-        <Text style={[styles.pillText, { color: c.gold }]}>{TEXT_TURN_RIGHT}</Text>
+        <Ionicons
+          name="refresh-outline"
+          size={14}
+          color={c.gold}
+          style={ROTATE_RIGHT ? undefined : styles.flip}
+        />
+        <Text style={[styles.pillText, { color: c.gold }]}>
+          {ROTATE_RIGHT ? TEXT_TURN_RIGHT : TEXT_TURN_LEFT}
+        </Text>
       </View>
     </View>
   );
@@ -159,6 +235,9 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 0.5,
     marginLeft: 6,
+  },
+  flip: {
+    transform: [{ scaleX: -1 }],
   },
 });
 
