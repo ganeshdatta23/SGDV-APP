@@ -50,18 +50,13 @@ export default function SunCycleView({ latitude, longitude }: SunCycleViewProps)
     nextEvent: Date;
     nextEventType: 'sunrise' | 'sunset';
   } | null>(null);
-  const [currentTime, setCurrentTime] = useState(new Date());
   const [scheduledAlarms, setScheduledAlarms] = useState<
     Array<{ id: string; title: string; body: string; date: Date }>
   >([]);
 
-  // Load configuration and sun times
+  // Load configuration and sun times when the location changes.
   useEffect(() => {
     loadData();
-    const interval = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 1000);
-    return () => clearInterval(interval);
   }, [latitude, longitude]);
 
   const loadData = async () => {
