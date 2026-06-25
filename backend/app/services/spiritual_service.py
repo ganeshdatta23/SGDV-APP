@@ -16,7 +16,7 @@ if TYPE_CHECKING:  # type hints only; SQLAlchemy/ORM unused on the Turso path
 
 logger = logging.getLogger(__name__)
 
-_VALID_ACTIVITIES = {"japa", "pranayama", "darshan"}
+_LOGGABLE_ACTIVITIES = {"darshan"}
 
 
 class SpiritualService:
@@ -64,6 +64,11 @@ class SpiritualService:
         2. Creates SpiritualActivityHistory entry (audit trail)
         3. Returns the updated totals
         """
+        if activity_type not in _LOGGABLE_ACTIVITIES:
+            raise HTTPException(
+                status_code=404, detail="Activity logging endpoint not found"
+            )
+
         if settings.use_turso:
             return await _log_activity_turso(
                 user_id, activity_type, count, notes, location_id
@@ -95,16 +100,8 @@ class SpiritualService:
                 activity = SpiritualActivity(user_id=user_id, activity_date=today)
                 db.add(activity)
 
-            # Update the appropriate count and timestamp
-            if activity_type == "japa":
-                activity.japa_count = (activity.japa_count or 0) + count
-                activity.japa_last_updated = now
-            elif activity_type == "pranayama":
-                activity.pranayama_count = (activity.pranayama_count or 0) + count
-                activity.pranayama_last_updated = now
-            elif activity_type == "darshan":
-                activity.darshan_count = (activity.darshan_count or 0) + count
-                activity.darshan_last_updated = now
+            activity.darshan_count = (activity.darshan_count or 0) + count
+            activity.darshan_last_updated = now
 
             activity.updated_at = now
 
@@ -124,14 +121,15 @@ class SpiritualService:
             await db.commit()
 
             logger.info(
-                f"{activity_type} logged for user {user_id}: +{count} (total: {getattr(activity, f'{activity_type}_count')})"
+                f"{activity_type} logged for user {user_id}: +{count} "
+                f"(total: {activity.darshan_count})"
             )
 
             return {
                 "status": "success",
                 "activity_type": activity_type,
                 "count_added": count,
-                "daily_total": getattr(activity, f"{activity_type}_count"),
+                "daily_total": activity.darshan_count,
                 "updated_at": activity.updated_at,
             }
 
@@ -294,8 +292,10 @@ async def _log_activity_turso(
 ) -> dict:
     from app import turso
 
-    if activity_type not in _VALID_ACTIVITIES:
-        raise HTTPException(status_code=400, detail="Invalid activity type")
+    if activity_type not in _LOGGABLE_ACTIVITIES:
+        raise HTTPException(
+            status_code=404, detail="Activity logging endpoint not found"
+        )
 
     uid = str(user_id)
     today = date.today().isoformat()
@@ -303,7 +303,7 @@ async def _log_activity_turso(
 
     try:
         row = await turso.fetch_one(
-            "SELECT id, japa_count, pranayama_count, darshan_count "
+            "SELECT id, darshan_count "
             "FROM spiritual_activity WHERE user_id = ? AND activity_date = ?",
             [uid, today],
         )
@@ -319,13 +319,13 @@ async def _log_activity_turso(
             current = 0
         else:
             sa_id = row["id"]
-            current = row[f"{activity_type}_count"] or 0
+            current = row["darshan_count"] or 0
 
         new_total = current + count
         await turso.execute(
-            f"UPDATE spiritual_activity "
-            f"SET {activity_type}_count = ?, {activity_type}_last_updated = ?, updated_at = ? "
-            f"WHERE id = ?",
+            "UPDATE spiritual_activity "
+            "SET darshan_count = ?, darshan_last_updated = ?, updated_at = ? "
+            "WHERE id = ?",
             [new_total, now, now, sa_id],
         )
 
@@ -345,7 +345,9 @@ async def _log_activity_turso(
             ],
         )
 
-        logger.info(f"{activity_type} logged for user {uid}: +{count} (total: {new_total})")
+        logger.info(
+            f"{activity_type} logged for user {uid}: +{count} (total: {new_total})"
+        )
         return {
             "status": "success",
             "activity_type": activity_type,

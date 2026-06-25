@@ -81,7 +81,7 @@ async def run():
             ("GET  /health", "GET", "/health", {}),
             ("POST /auth/token (login)", "POST", "/sgvd/auth/token",
              {"data": {"username": bench_email, "password": "password123"}}),
-            ("POST /spiritual/japa", "POST", "/sgvd/spiritual/japa",
+            ("POST /spiritual/darshan", "POST", "/sgvd/spiritual/darshan",
              {"json": {"count": 1}, "headers": uh}),
             ("GET  /spiritual/stats", "GET", "/sgvd/spiritual/stats", {"headers": uh}),
             ("GET  /spiritual/stats/today", "GET", "/sgvd/spiritual/stats/today", {"headers": uh}),

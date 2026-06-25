@@ -14,50 +14,6 @@ router = APIRouter()
 # ============================================================================
 
 
-@router.post("/japa")
-async def log_japa(
-    payload: LogActivityRequest,
-    db=Depends(get_session),
-    current_user=Depends(get_current_user),
-):
-    """
-    Log japa (chanting) activity.
-
-    - Aggregates multiple logs on the same day
-    - Updates existing day's record, doesn't create duplicates
-    - Tracks last update time
-    """
-    return await SpiritualService.log_activity(
-        db=db,
-        user_id=current_user.id,
-        activity_type="japa",
-        count=payload.count,
-        notes=payload.notes,
-    )
-
-
-@router.post("/pranayama")
-async def log_pranayama(
-    payload: LogActivityRequest,
-    db=Depends(get_session),
-    current_user=Depends(get_current_user),
-):
-    """
-    Log pranayama (breathing exercise) activity.
-
-    - Aggregates multiple logs on the same day
-    - Updates existing day's record, doesn't create duplicates
-    - Tracks last update time
-    """
-    return await SpiritualService.log_activity(
-        db=db,
-        user_id=current_user.id,
-        activity_type="pranayama",
-        count=payload.count,
-        notes=payload.notes,
-    )
-
-
 @router.post("/darshan")
 async def log_darshan(
     payload: LogActivityRequest,

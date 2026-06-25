@@ -24,7 +24,7 @@
 ## ✨ Features
 
 ### 🧘‍♂️ Spiritual Activity Tracking
-- **Daily Aggregation**: Track japa, pranayama, darshan with automatic daily rollup
+- **Daily Aggregation**: Track darshan with automatic daily rollup
 - **Smart Limits**: Darshan limited to 1 per day (realistic tracking)
 - **History & Analytics**: Complete audit trail and statistical analysis
 - **Admin Dashboard**: View all users' spiritual activities with filtering
@@ -140,8 +140,6 @@ SGVD-Backend/
 - `POST /sgvd/auth/google` - Google OAuth login
 
 ### Spiritual Activities (User)
-- `POST /sgvd/spiritual/japa` - Log japa (chanting)
-- `POST /sgvd/spiritual/pranayama` - Log pranayama (breathing)
 - `POST /sgvd/spiritual/darshan` - Log darshan (temple visit)
 - `GET /sgvd/spiritual/stats` - Get user statistics
 - `GET /sgvd/spiritual/stats/today` - Get today's stats
