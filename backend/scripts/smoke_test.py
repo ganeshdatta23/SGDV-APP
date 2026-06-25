@@ -2,7 +2,7 @@
 """End-to-end smoke test of every endpoint against the live Turso DB.
 
 Runs the FastAPI app in-process (httpx ASGI transport) and exercises auth,
-spiritual darshan logging/stats, user profile, events, locations, compass, admin stats,
+spiritual darshan logging/stats, user profile, events, locations, admin stats,
 and config. Exits non-zero on the first failure. Creates one throwaway user and
 deletes it (and its activity) at the end.
 
@@ -73,8 +73,6 @@ async def main() -> int:
             "name": "Smoke Loc", "description": "test",
             "google_maps_url": "https://www.google.com/maps/place/X/@12.9716,77.5946,15z"}))
         check("locations", await c.get("/sgvd/locations"))
-        check("compass", await c.post("/sgvd/compass/bearing",
-                                      json={"current_lat": 13.0, "current_lon": 77.6}))
         check("admin stats", await c.get("/sgvd/admin/spiritual-stats", headers=ah))
         check("admin stats filter", await c.get(
             "/sgvd/admin/spiritual-stats?filter_by=darshan_count&filter_value=min:1", headers=ah))

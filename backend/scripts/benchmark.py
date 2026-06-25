@@ -87,8 +87,6 @@ async def run():
             ("GET  /spiritual/stats/today", "GET", "/sgvd/spiritual/stats/today", {"headers": uh}),
             ("GET  /events/", "GET", "/sgvd/events/", {}),
             ("GET  /locations", "GET", "/sgvd/locations", {}),
-            ("POST /compass/bearing", "POST", "/sgvd/compass/bearing",
-             {"json": {"current_lat": 13.0, "current_lon": 77.6}}),
             ("GET  /config/app", "GET", "/sgvd/config/app", {}),
             ("GET  /admin/spiritual-stats", "GET", "/sgvd/admin/spiritual-stats", {"headers": ah}),
         ]

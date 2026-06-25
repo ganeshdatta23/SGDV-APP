@@ -5,8 +5,9 @@
  */
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { StatusBar, StyleSheet, Text, View, AppState, TouchableOpacity, Modal, Platform, Linking } from 'react-native';
+import { StatusBar, StyleSheet, Text, View, AppState, TouchableOpacity, Modal, Platform, Linking, Animated, Easing } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
 import { RadialGradient } from 'react-native-gradients';
@@ -38,7 +39,6 @@ import {
   TEXT_STAY_UPDATED,
   TEXT_SETTINGS,
   TEXT_CUSTOMIZE_EXPERIENCE,
-  TEXT_TIME_FOR_PRAYERS,
   TEXT_STOP_ALARM,
   WALKTHROUGH_STORAGE_KEY,
 } from './constants';
@@ -103,6 +103,11 @@ function App(): React.JSX.Element {
   
   // Track if alarm is currently playing
   const [isAlarmPlaying, setIsAlarmPlaying] = useState(false);
+
+  // Live clock shown on the full-screen alarm; ticks only while the alarm is up.
+  const [alarmNow, setAlarmNow] = useState<Date>(() => new Date());
+  // Gentle pulse for the alarm icon while ringing.
+  const alarmPulse = useRef(new Animated.Value(1)).current;
 
   // Track active notifee alarm notification ID (Android only)
   const [activeAlarmNotificationId, setActiveAlarmNotificationId] = useState<string | null>(null);
@@ -401,6 +406,68 @@ function App(): React.JSX.Element {
       }
     }
   }, [alarmPlayer, isAlarmPlaying, activeAlarmNotificationId]);
+
+  // Snooze the alarm from the full-screen overlay: stop the current ring and
+  // reschedule it for the configured snooze interval (mirrors the notification's
+  // "Snooze" action so both entry points behave identically).
+  const snoozeAlarm = useCallback(async () => {
+    if (alarmTimeoutRef.current) {
+      clearTimeout(alarmTimeoutRef.current);
+      alarmTimeoutRef.current = null;
+    }
+    try {
+      const cfg = await getAlarmConfig();
+      if (Platform.OS === 'android' && activeAlarmNotificationId) {
+        await stopAlarmNotification(activeAlarmNotificationId);
+      } else if (alarmPlayer && isAlarmPlaying) {
+        alarmPlayer.pause();
+      }
+      await scheduleSnoozeAlarm(
+        activeAlarmNotificationId || 'snooze',
+        cfg.alarmSound,
+        cfg.snoozeMinutes,
+      );
+      console.log(`Alarm snoozed for ${cfg.snoozeMinutes} min`);
+    } catch (error) {
+      console.log('Could not snooze alarm:', error);
+    } finally {
+      setActiveAlarmNotificationId(null);
+      setIsAlarmPlaying(false);
+    }
+  }, [alarmPlayer, isAlarmPlaying, activeAlarmNotificationId]);
+
+  // While the alarm overlay is visible, tick the live clock once a second and
+  // run a looping pulse on the icon. Both are torn down when it dismisses.
+  useEffect(() => {
+    if (!isAlarmPlaying) {
+      alarmPulse.setValue(1);
+      return;
+    }
+    setAlarmNow(new Date());
+    const tick = setInterval(() => setAlarmNow(new Date()), 1000);
+    const pulse = Animated.loop(
+      Animated.sequence([
+        Animated.timing(alarmPulse, { toValue: 1.12, duration: 650, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+        Animated.timing(alarmPulse, { toValue: 1, duration: 650, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+      ]),
+    );
+    pulse.start();
+    return () => {
+      clearInterval(tick);
+      pulse.stop();
+    };
+  }, [isAlarmPlaying]);
+
+  // Warm, time-of-day-aware caption for the alarm overlay. Sunrise alarms fire in
+  // the morning and sunset alarms in the evening, so the hour cleanly maps to the
+  // right prayer caption without needing to thread the alarm type through.
+  const alarmCaption = useMemo(() => {
+    const hour = alarmNow.getHours();
+    if (hour >= 4 && hour < 12) return { greeting: 'Good Morning', message: 'Time for your morning prayers' };
+    if (hour >= 12 && hour < 17) return { greeting: 'Good Afternoon', message: 'Time for your afternoon prayers' };
+    if (hour >= 17 && hour < 21) return { greeting: 'Good Evening', message: 'Time for your evening prayers' };
+    return { greeting: 'Namaste', message: 'Time for your prayers' };
+  }, [alarmNow]);
   
   // Listen for alarm notifications (when app is in foreground)
   useEffect(() => {
@@ -674,15 +741,39 @@ function App(): React.JSX.Element {
         transparent={true}
         animationType="fade"
         onRequestClose={stopAlarm}
+        statusBarTranslucent={true}
       >
         <View style={appStyles.alarmOverlay}>
           <View style={appStyles.alarmCard}>
-            <Text style={appStyles.alarmIcon}>Alarm</Text>
-            <Text style={appStyles.alarmTitle}>Alarm!</Text>
-            <Text style={appStyles.alarmMessage}>{TEXT_TIME_FOR_PRAYERS}</Text>
-            <TouchableOpacity style={appStyles.stopAlarmButton} onPress={stopAlarm}>
-              <Text style={appStyles.stopAlarmText}>{TEXT_STOP_ALARM}</Text>
-            </TouchableOpacity>
+            {/* Pulsing alarm icon */}
+            <Animated.View style={[appStyles.alarmIconOuter, { transform: [{ scale: alarmPulse }] }]}>
+              <View style={appStyles.alarmIconInner}>
+                <Ionicons name="alarm" size={52} color="#FF6B35" />
+              </View>
+            </Animated.View>
+
+            {/* Live clock */}
+            <Text style={appStyles.alarmTime}>
+              {alarmNow.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
+            </Text>
+            <Text style={appStyles.alarmDate}>
+              {alarmNow.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' })}
+            </Text>
+
+            <Text style={appStyles.alarmTitle}>{alarmCaption.greeting}</Text>
+            <Text style={appStyles.alarmMessage}>{alarmCaption.message}</Text>
+
+            {/* Snooze + Stop actions (mirror the notification actions) */}
+            <View style={appStyles.alarmButtonRow}>
+              <TouchableOpacity style={appStyles.snoozeButton} onPress={snoozeAlarm} activeOpacity={0.8}>
+                <Ionicons name="time-outline" size={20} color="#FF6B35" />
+                <Text style={appStyles.snoozeButtonText}>Snooze</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={appStyles.stopAlarmButton} onPress={stopAlarm} activeOpacity={0.8}>
+                <Ionicons name="stop" size={20} color="#FFFFFF" />
+                <Text style={appStyles.stopAlarmText}>{TEXT_STOP_ALARM}</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>

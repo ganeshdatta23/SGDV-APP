@@ -21,7 +21,10 @@ import {
 // API CONFIGURATION
 // ============================================================================
 
-export const SGVD_API_BASE_URL = 'https://sgvd-backend.vercel.app';
+// Stable Cloudflare Worker proxy in front of the backend. The Vercel origin URL
+// can change (new deployment/host); only the Worker's ORIGIN var is updated and
+// clients keep using this URL. See backend/cloudflare/.
+export const SGVD_API_BASE_URL = 'https://sgvd-proxy.sgvd-datta.workers.dev';
 export const SGVD_API_URL = `${SGVD_API_BASE_URL}/sgvd/locations/`;
 export const SGVD_EVENTS_URL = `${SGVD_API_BASE_URL}/sgvd/events/`;
 

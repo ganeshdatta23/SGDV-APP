@@ -156,9 +156,6 @@ SGVD-Backend/
 - `GET /sgvd/events` - Get published events
 - `POST /sgvd/events/bulk` - Create multiple events (Admin)
 
-### Compass
-- `GET /sgvd/compass` - Get direction to location
-
 ### Users (Admin)
 - `GET /sgvd/users` - List all users
 - `POST /sgvd/users/bulk-create` - Create multiple users

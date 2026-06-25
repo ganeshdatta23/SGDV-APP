@@ -8,10 +8,8 @@ _PROC_START = _t.perf_counter()
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
-from fastapi.openapi.docs import get_swagger_ui_html, get_redoc_html
 from app.api import (
     auth,
-    compass,
     locations,
     spiritual,
     users,
@@ -92,7 +90,6 @@ app.include_router(auth.router, prefix="/sgvd/auth", tags=["auth"])
 app.include_router(google_auth.router, prefix="/sgvd/auth", tags=["auth"])
 app.include_router(users.router, prefix="/sgvd/users", tags=["users"])
 app.include_router(locations.router, prefix="/sgvd/locations", tags=["locations"])
-app.include_router(compass.router, prefix="/sgvd/compass", tags=["compass"])
 app.include_router(spiritual.router, prefix="/sgvd/spiritual", tags=["spiritual"])
 app.include_router(admin_spiritual.router, prefix="/sgvd")
 app.include_router(events.router, prefix="/sgvd/events", tags=["events"])
@@ -133,7 +130,9 @@ def custom_openapi():
 
 
 
-# Add Scalar docs
+# API docs are served only by Scalar at /docs. The duplicate Swagger UI
+# (/swagger) and ReDoc (/redoc) renderings of the same OpenAPI schema were
+# removed — one docs UI is enough.
 @app.get("/docs", include_in_schema=False)
 async def scalar_docs():
     # Lazy import: scalar_fastapi is only needed to render this page, so keep it
@@ -145,22 +144,5 @@ async def scalar_docs():
         title=app.title,
     )
 
-
-# Keep Swagger UI at /swagger
-@app.get("/swagger", include_in_schema=False)
-async def get_swagger_documentation():
-    return get_swagger_ui_html(
-        openapi_url=app.openapi_url,
-        title=app.title,
-    )
-
-
-# Keep Redoc at /redoc
-@app.get("/redoc", include_in_schema=False)
-async def redoc_html():
-    return get_redoc_html(
-        openapi_url=app.openapi_url,
-        title=app.title,
-    )
 
 app.openapi = custom_openapi

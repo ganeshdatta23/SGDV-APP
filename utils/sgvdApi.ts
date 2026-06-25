@@ -9,7 +9,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 // CONFIGURATION
 // ============================================================================
 
-const SGVD_API_BASE_URL = 'https://sgvd-backend.vercel.app';
+// Stable Cloudflare Worker proxy in front of the backend (see backend/cloudflare/).
+// The swappable Vercel origin lives behind the Worker's ORIGIN var, so this URL
+// never changes even when the backend is redeployed to a new Vercel URL.
+const SGVD_API_BASE_URL = 'https://sgvd-proxy.sgvd-datta.workers.dev';
 const SGVD_API_URL = `${SGVD_API_BASE_URL}/sgvd/locations/`;
 const SGVD_EVENTS_URL = `${SGVD_API_BASE_URL}/sgvd/events/`;
 
