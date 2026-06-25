@@ -21,7 +21,11 @@ import SunCycleView from './components/SunCycleView';
 import DarshanOverlay from './components/DarshanOverlay';
 import Walkthrough from './components/Walkthrough';
 import ConnectivityPrompt from './components/ConnectivityPrompt';
-import { fetchLocationDirect, calculateSunTimes } from './utils/sgvdApi';
+import StreakCelebrationModal from './components/StreakCelebrationModal';
+import StreakSharePrompt from './components/StreakSharePrompt';
+import StreakBadge from './components/StreakBadge';
+import StreakShareCard from './components/StreakShareCard';
+import { fetchLocationDirect, calculateSunTimes, postSunriseCompletion } from './utils/sgvdApi';
 import { getConnectivity, subscribeConnectivity, isOnline } from './utils/connectivity';
 import {
   evaluateSyncOnOpen,
@@ -31,7 +35,19 @@ import {
 } from './utils/locationSync';
 import { initializeNotifications, scheduleAlarms, addNotificationReceivedListener, addNotificationResponseReceivedListener, handleNotificationAction, scheduleTestNotificationIn, cancelAllAlarms, getAlarmConfig } from './utils/alarmManager';
 import { stopAlarmNotification, scheduleSnoozeAlarm, scheduleNotifeeAlarm } from './utils/notifeeAlarmService';
-import { ThemeMode, Tab, TargetLocation, SunEventInfo } from './types';
+import { getInstallId } from './utils/installId';
+import {
+  recordSunriseDarshanCompletion,
+  reconcileWithBackend,
+  getStreakState,
+  getPendingSharePrompt,
+  markMilestoneShared,
+  dismissSharePrompt,
+  localDateKey,
+  resetStreakForTesting,
+} from './utils/streakManager';
+import { shareStreakCard } from './utils/shareStreak';
+import { ThemeMode, Tab, TargetLocation, SunEventInfo, StreakState } from './types';
 import {
   APP_BACKGROUNDS,
   COMPASS_THEME,
@@ -52,8 +68,10 @@ import {
   CONNECTIVITY_DEBOUNCE_MS,
   LOCATION_LAST_SYNC_KEY,
   LOCATION_TIMESTAMP_KEY,
+  SUNRISE_WINDOW_MINUTES,
 } from './constants';
 import { appStyles } from './styles/AppStyles';
+import { streakStyles } from './styles/StreakStyles';
 
 // ============================================================================
 // APP BACKGROUND THEMES (synced with CompassView theme)
@@ -81,6 +99,18 @@ function App(): React.JSX.Element {
   
   // Navigation state
   const [currentTab, setCurrentTab] = useState<Tab>('home');
+
+  // Sunrise darshan streak state (local-first; synced to backend on app open).
+  const [streakState, setStreakState] = useState<StreakState | null>(null);
+  // When set to a milestone (1/3/7), the celebration modal pops once.
+  const [celebrationMilestone, setCelebrationMilestone] = useState<number | null>(null);
+  // Today's sunrise time, captured from the sun-times fetch — used to decide
+  // whether an alignment falls inside the sunrise window.
+  const todaySunriseRef = useRef<Date | null>(null);
+  // Session guard so the repeated onAlignmentChange storm records at most once/day.
+  const recordedTodayRef = useRef<string | null>(null);
+  // Off-screen card captured for sharing.
+  const shareCardRef = useRef<View | null>(null);
 
   // First-run walkthrough: shown once, gated by an AsyncStorage flag.
   const [showWalkthrough, setShowWalkthrough] = useState(false);
@@ -179,6 +209,30 @@ function App(): React.JSX.Element {
   const handleShowWalkthrough = useCallback(() => {
     setCurrentTab('home');
     setShowWalkthrough(true);
+  }, []);
+
+  // Load + reconcile the streak on app open: pull the on-device state and merge
+  // it with the backend (best-effort) so a reinstall recovers and the server
+  // stays in sync. Fire-and-forget; never blocks the UI, never celebrates.
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const state = await reconcileWithBackend();
+        if (mounted) setStreakState(state);
+      } catch (error) {
+        console.log('Streak reconcile failed, using local state:', error);
+        try {
+          const local = await getStreakState();
+          if (mounted) setStreakState(local);
+        } catch {
+          /* leave null */
+        }
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   // Fetch location on component mount
@@ -425,6 +479,18 @@ function App(): React.JSX.Element {
             [LOCATION_TIMESTAMP_KEY, backdated],
           ]);
           console.log(`age-sync: backdated last-sync + cache by ${days} days`);
+        } else if (action === 'record-darshan') {
+          // E2E: record a sunrise darshan for an explicit date (bypasses the
+          // sunrise-window check) so multi-day streaks/milestones are testable
+          //   adb shell am start -a android.intent.action.VIEW -d "sgdv://record-darshan?date=2026-06-24"
+          const dateMatch = url.match(/[?&]date=(\d{4}-\d{2}-\d{2})/);
+          const when = dateMatch ? new Date(`${dateMatch[1]}T08:00:00`) : new Date();
+          const { state, newlyReachedMilestone } = await recordSunriseDarshanCompletion(when);
+          setStreakState(state);
+          if (newlyReachedMilestone != null) setCelebrationMilestone(newlyReachedMilestone);
+        } else if (action === 'reset-streak') {
+          await resetStreakForTesting();
+          setStreakState(await getStreakState());
         }
       } catch (error) {
         console.log('Deep-link handler error:', error);
@@ -664,6 +730,9 @@ function App(): React.JSX.Element {
         try {
           // Get today's sun times (cached after first call)
           const sunTimes = await calculateSunTimes(targetLocation.latitude, targetLocation.longitude);
+          // Remember today's sunrise so an alignment can be checked against the
+          // sunrise window for the streak (no extra network call).
+          todaySunriseRef.current = sunTimes.sunrise;
           const now = new Date();
           
           // Determine next event
@@ -707,6 +776,53 @@ function App(): React.JSX.Element {
     }
   }, [appStateVisible, targetLocation]);
 
+  // Record a sunrise darshan when this alignment falls within the sunrise
+  // window, at most once per local day. Offline-first: updates the local streak
+  // (which pops the milestone celebration), then best-effort mirrors to backend.
+  const maybeRecordSunriseDarshan = useCallback(async () => {
+    const sunrise = todaySunriseRef.current;
+    if (!sunrise) return;
+    const now = new Date();
+    if (Math.abs(now.getTime() - sunrise.getTime()) > SUNRISE_WINDOW_MINUTES * 60 * 1000) return;
+    const todayKey = localDateKey(now);
+    if (recordedTodayRef.current === todayKey) return;
+    recordedTodayRef.current = todayKey;
+    try {
+      const { state, newlyReachedMilestone } = await recordSunriseDarshanCompletion(now);
+      setStreakState(state);
+      if (newlyReachedMilestone != null) setCelebrationMilestone(newlyReachedMilestone);
+      const installId = await getInstallId();
+      postSunriseCompletion(installId, todayKey); // best-effort, not awaited
+    } catch (error) {
+      console.log('Streak record failed:', error);
+    }
+  }, []);
+
+  // Share the streak card (image + prefilled caption). When sharing from a
+  // milestone, mark it shared so its contextual pill clears.
+  const handleShareStreak = useCallback(
+    async (milestone?: number | null) => {
+      const count = streakState?.currentStreak ?? 0;
+      if (milestone != null) {
+        try {
+          setStreakState(await markMilestoneShared(milestone));
+        } catch (error) {
+          console.log('markMilestoneShared failed:', error);
+        }
+      }
+      await shareStreakCard(shareCardRef, count);
+    },
+    [streakState],
+  );
+
+  const handleDismissSharePrompt = useCallback(async (milestone: number) => {
+    try {
+      setStreakState(await dismissSharePrompt(milestone));
+    } catch (error) {
+      console.log('dismissSharePrompt failed:', error);
+    }
+  }, []);
+
   const handleAlignmentChange = (aligned: boolean) => {
     console.log('Alignment changed:', aligned);
     console.log('App state:', appStateVisible);
@@ -718,6 +834,8 @@ function App(): React.JSX.Element {
     if (aligned && !isClosedManually) {
       console.log('Setting aligned to TRUE - Video overlay will render');
       setIsAligned(true);
+      // A genuine darshan — count it toward the sunrise streak if in-window.
+      maybeRecordSunriseDarshan();
     } else if (!aligned) {
       console.log('Setting aligned to FALSE - Video overlay will hide');
       setIsAligned(false);
@@ -735,6 +853,10 @@ function App(): React.JSX.Element {
       console.log('Alignment blocked - manually closed');
     }
   };
+
+  // The highest milestone the user reached but hasn't shared/dismissed — drives
+  // the contextual "Share your N-day streak" pill on the Darshan screen.
+  const pendingShareMilestone = getPendingSharePrompt(streakState);
 
   // Determine if we should use radial gradient (for cosmic theme)
   const useRadialGradient = 'isRadial' in currentBgTheme && currentBgTheme.isRadial;
@@ -775,6 +897,25 @@ function App(): React.JSX.Element {
       {/* Main Content Area - Conditional based on tab */}
       {currentTab === 'home' && (
         <>
+          {/* Streak badge (tap to share) - top right over the compass area */}
+          <View style={streakStyles.badgeHost} pointerEvents="box-none">
+            <StreakBadge
+              count={streakState?.currentStreak ?? 0}
+              theme={currentTheme}
+              onPress={() => handleShareStreak(null)}
+            />
+          </View>
+
+          {/* Contextual share prompt for an un-shared milestone */}
+          <StreakSharePrompt
+            milestone={pendingShareMilestone}
+            theme={currentTheme}
+            onShare={() => handleShareStreak(pendingShareMilestone)}
+            onDismiss={() => {
+              if (pendingShareMilestone != null) handleDismissSharePrompt(pendingShareMilestone);
+            }}
+          />
+
           {/* Compass Component */}
           {targetLocation ? (
             <SimpleCompassView 
@@ -813,6 +954,7 @@ function App(): React.JSX.Element {
           onVolumeChange={setAudioVolume}
           targetLocation={targetLocation}
           onShowWalkthrough={handleShowWalkthrough}
+          onShareStreak={() => handleShareStreak(null)}
         />
       )}
 
@@ -884,6 +1026,20 @@ function App(): React.JSX.Element {
         </View>
       </Modal>
 
+      {/* Streak milestone celebration (auto-pops once at 1/3/7) */}
+      <StreakCelebrationModal
+        visible={celebrationMilestone != null}
+        milestone={celebrationMilestone}
+        currentStreak={streakState?.currentStreak ?? 0}
+        theme={currentTheme}
+        onShare={() => {
+          const m = celebrationMilestone;
+          setCelebrationMilestone(null);
+          handleShareStreak(m);
+        }}
+        onClose={() => setCelebrationMilestone(null)}
+      />
+
     </>
   );
 
@@ -935,6 +1091,17 @@ function App(): React.JSX.Element {
         }}
         onDismiss={() => setSyncPromptReason(null)}
       />
+
+      {/* Hidden, laid-out share card — captured to a PNG by shareStreakCard.
+          Kept mounted with opacity 0 (not display:none / off-window) so Android
+          captures pixels instead of a blank image. */}
+      <View style={streakStyles.hiddenCardHost} pointerEvents="none">
+        <StreakShareCard
+          ref={shareCardRef}
+          currentStreak={streakState?.currentStreak ?? 0}
+          milestone={celebrationMilestone}
+        />
+      </View>
     </View>
   );
 }

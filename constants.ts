@@ -676,6 +676,63 @@ export const TEXT_WALKTHROUGH_GET_STARTED = 'Get Started';
 export const TEXT_SHOW_WALKTHROUGH = 'How to use the app';
 export const TEXT_SHOW_WALKTHROUGH_SUB = 'Replay the welcome tour';
 
+// ============================================================================
+// SUNRISE DARSHAN STREAK
+// ============================================================================
+
+// Per-install anonymous id + local streak state (single JSON blob, like the
+// alarm config). The streak is local-first (works offline, drives the
+// celebration) and synced to the backend keyed by INSTALL_ID for durable
+// backup + reinstall recovery.
+export const INSTALL_ID_KEY = '@sgvd_install_id';
+export const STREAK_STATE_KEY = '@sgvd_streak_state';
+
+// A darshan counts toward the streak only if it happens within this many
+// minutes either side of that day's actual sunrise. Tunable.
+export const SUNRISE_WINDOW_MINUTES = 60;
+
+// Milestones that trigger a celebration + share prompt (day 2 intentionally
+// omitted to avoid nagging). Used by both the modal and the contextual pill.
+export const STREAK_MILESTONES: number[] = [1, 3, 7];
+
+export const STREAK_MILESTONE_LABELS: Record<number, string> = {
+  1: 'First Sunrise Darshan!',
+  3: '3-Day Streak',
+  7: '7-Day Streak — a full week!',
+};
+
+// Backend streak endpoint (POST to record a completion, GET /{install_id} to
+// read). Routed through the same stable Cloudflare proxy; not edge-cached.
+export const SGVD_STREAKS_URL = `${SGVD_API_BASE_URL}/sgvd/streaks`;
+
+// Shown in the share caption so recipients can install the app. Update with the
+// real Play Store / App Store / landing URL once published.
+export const APP_DOWNLOAD_URL =
+  'https://play.google.com/store/apps/details?id=com.darshanamcompassnative';
+
+// Builds the prefilled caption that accompanies the shared streak card image.
+export const buildStreakShareMessage = (streak: number): string =>
+  `🌅 I've kept a ${streak}-day sunrise darshan streak on ${TEXT_GURU_DIGVANDANAM}! ` +
+  `Offer your prayers to Appaji in the sacred direction and never miss a sunrise. ` +
+  `Download the app: ${APP_DOWNLOAD_URL}`;
+
+// Share-card palette (cosmic temple theme) + capture size.
+export const STREAK_CARD_BG = ['#b45309', '#4c0519', '#020617'] as const;
+export const STREAK_CARD_GOLD = '#fbbf24';
+export const STREAK_CARD_CREAM = '#fef3c7';
+export const STREAK_CARD_SIZE = 340;
+
+// Streak UI text labels.
+export const TEXT_STREAK_SECTION = 'YOUR STREAK';
+export const TEXT_STREAK_CURRENT = 'Current streak';
+export const TEXT_STREAK_LONGEST = 'Longest streak';
+export const TEXT_STREAK_LAST = 'Last darshan';
+export const TEXT_STREAK_SHARE = 'Share my streak';
+export const TEXT_STREAK_CONTINUE = 'Continue';
+export const TEXT_STREAK_DAYS = 'days';
+export const TEXT_STREAK_DAY = 'day';
+export const TEXT_STREAK_NONE = 'No streak yet — align at sunrise to begin';
+
 // One slide per app capability, shown in order on first launch. Each slide
 // renders a live, theme-aware preview of the real screen it describes (see
 // `preview` → components/walkthroughPreviews/). `icon` reuses the bottom-nav Ionicon

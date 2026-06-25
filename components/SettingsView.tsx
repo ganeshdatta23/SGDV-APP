@@ -2,9 +2,17 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, LayoutAnimation, Platform, UIManager } from 'react-native';
 import Slider from '@react-native-community/slider';
 import { Ionicons } from '@expo/vector-icons';
-import { AlarmConfig, SettingsViewProps, ThemeMode } from '../types';
+import { AlarmConfig, SettingsViewProps, StreakState, ThemeMode } from '../types';
 import { getAlarmConfig, saveAlarmConfig, scheduleAlarmsForNext3Days } from '../utils/alarmManager';
+import { getStreakState } from '../utils/streakManager';
 import {
+  TEXT_STREAK_SECTION,
+  TEXT_STREAK_CURRENT,
+  TEXT_STREAK_LONGEST,
+  TEXT_STREAK_SHARE,
+  TEXT_STREAK_NONE,
+  TEXT_STREAK_DAYS,
+  TEXT_STREAK_DAY,
   SETTINGS_THEMES,
   THEME_INFO,
   TEXT_APPEARANCE,
@@ -56,22 +64,26 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   onVolumeChange,
   targetLocation,
   onShowWalkthrough,
+  onShareStreak,
   style
 }) => {
   const [isThemeExpanded, setIsThemeExpanded] = useState(false);
   const [isSoundExpanded, setIsSoundExpanded] = useState(false);
+  const [isAlarmExpanded, setIsAlarmExpanded] = useState(false);
+  const [isStreakExpanded, setIsStreakExpanded] = useState(false);
   const [alarmConfig, setAlarmConfig] = useState<AlarmConfig | null>(null);
+  const [streak, setStreak] = useState<StreakState | null>(null);
   const theme = SETTINGS_THEMES[currentTheme];
 
-  const toggleThemeSection = () => {
+  // All sections share one expand/collapse animation for a consistent feel.
+  const toggleSection = (setter: React.Dispatch<React.SetStateAction<boolean>>) => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setIsThemeExpanded(!isThemeExpanded);
+    setter((prev) => !prev);
   };
-
-  const toggleSoundSection = () => {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setIsSoundExpanded(!isSoundExpanded);
-  };
+  const toggleThemeSection = () => toggleSection(setIsThemeExpanded);
+  const toggleSoundSection = () => toggleSection(setIsSoundExpanded);
+  const toggleAlarmSection = () => toggleSection(setIsAlarmExpanded);
+  const toggleStreakSection = () => toggleSection(setIsStreakExpanded);
 
   const handleThemeSelect = (selectedTheme: ThemeMode) => {
     onThemeChange(selectedTheme);
@@ -88,6 +100,17 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
     loadAlarmConfig();
   }, []);
+
+  // Load the streak for display each time Settings opens (the tab remounts).
+  useEffect(() => {
+    getStreakState()
+      .then(setStreak)
+      .catch(() => setStreak(null));
+  }, []);
+
+  const currentStreak = streak?.currentStreak ?? 0;
+  const longestStreak = streak?.longestStreak ?? 0;
+  const dayWord = (n: number) => (n === 1 ? TEXT_STREAK_DAY : TEXT_STREAK_DAYS);
 
   const updateAlarmConfig = async (newConfig: Partial<AlarmConfig>) => {
     if (!alarmConfig) return;
@@ -333,8 +356,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             </View>
           ) : (
             <>
-              {/* Schedule Mode */}
-              <View style={settingsViewStyles.settingRow}>
+              {/* Schedule Mode — tapping expands the full alarm controls. */}
+              <TouchableOpacity
+                style={settingsViewStyles.settingRow}
+                onPress={toggleAlarmSection}
+                activeOpacity={0.7}
+              >
                 <View style={settingsViewStyles.settingLeft}>
                   <View style={[settingsViewStyles.iconContainer, { backgroundColor: theme.accent + '20' }]}>
                     <Ionicons name="alarm" size={22} color={theme.accent} />
@@ -348,7 +375,14 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     </Text>
                   </View>
                 </View>
-              </View>
+                <Ionicons
+                  name={isAlarmExpanded ? 'chevron-up' : 'chevron-down'}
+                  size={20}
+                  color={theme.chevron}
+                />
+              </TouchableOpacity>
+              {isAlarmExpanded && (
+              <>
               <View style={settingsViewStyles.optionRow}>
                 <TouchableOpacity
                   style={[
@@ -553,6 +587,91 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   </TouchableOpacity>
                 ))}
               </View>
+              </>
+              )}
+            </>
+          )}
+        </View>
+
+        {/* Your Streak Section (collapsible; kept last for consistency) */}
+        <View style={[settingsViewStyles.section, { backgroundColor: theme.sectionBg, borderColor: theme.sectionBorder }]}>
+          <Text style={[settingsViewStyles.sectionHeader, { color: theme.sectionTitle }]}>
+            {TEXT_STREAK_SECTION}
+          </Text>
+
+          {/* Current streak — tap to expand longest + share. */}
+          <TouchableOpacity
+            testID="settings-streak-toggle"
+            style={settingsViewStyles.settingRow}
+            onPress={toggleStreakSection}
+            activeOpacity={0.7}
+          >
+            <View style={settingsViewStyles.settingLeft}>
+              <View style={[settingsViewStyles.iconContainer, { backgroundColor: theme.accent + '20' }]}>
+                <Ionicons name="flame" size={22} color={theme.accent} />
+              </View>
+              <View style={settingsViewStyles.settingInfo}>
+                <Text style={[settingsViewStyles.settingTitle, { color: theme.itemText }]}>
+                  {TEXT_STREAK_CURRENT}
+                </Text>
+                <Text style={[settingsViewStyles.settingSubtitle, { color: theme.itemSubtext }]}>
+                  {currentStreak > 0
+                    ? `${currentStreak} ${dayWord(currentStreak)}`
+                    : TEXT_STREAK_NONE}
+                </Text>
+              </View>
+            </View>
+            <Ionicons
+              name={isStreakExpanded ? 'chevron-up' : 'chevron-down'}
+              size={20}
+              color={theme.chevron}
+            />
+          </TouchableOpacity>
+
+          {isStreakExpanded && (
+            <>
+              {/* Longest streak */}
+              <View style={settingsViewStyles.settingRow}>
+                <View style={settingsViewStyles.settingLeft}>
+                  <View style={[settingsViewStyles.iconContainer, { backgroundColor: theme.accent + '20' }]}>
+                    <Ionicons name="trophy" size={20} color={theme.accent} />
+                  </View>
+                  <View style={settingsViewStyles.settingInfo}>
+                    <Text style={[settingsViewStyles.settingTitle, { color: theme.itemText }]}>
+                      {TEXT_STREAK_LONGEST}
+                    </Text>
+                    <Text style={[settingsViewStyles.settingSubtitle, { color: theme.itemSubtext }]}>
+                      {`${longestStreak} ${dayWord(longestStreak)}`}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+
+              {/* Share my streak */}
+              <TouchableOpacity
+                testID="settings-share-streak"
+                style={settingsViewStyles.settingRow}
+                onPress={onShareStreak}
+                activeOpacity={0.7}
+                disabled={!onShareStreak || currentStreak <= 0}
+              >
+                <View style={settingsViewStyles.settingLeft}>
+                  <View style={[settingsViewStyles.iconContainer, { backgroundColor: theme.accent + '20' }]}>
+                    <Ionicons name="share-social" size={20} color={theme.accent} />
+                  </View>
+                  <View style={settingsViewStyles.settingInfo}>
+                    <Text
+                      style={[
+                        settingsViewStyles.settingTitle,
+                        { color: currentStreak > 0 ? theme.accent : theme.itemSubtext },
+                      ]}
+                    >
+                      {TEXT_STREAK_SHARE}
+                    </Text>
+                  </View>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color={theme.chevron} />
+              </TouchableOpacity>
             </>
           )}
         </View>

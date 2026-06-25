@@ -177,6 +177,14 @@ SCHEMA: List[str] = [
         created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
         updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     )""",
+    """CREATE TABLE IF NOT EXISTS darshan_streaks (
+        id TEXT PRIMARY KEY,
+        install_id TEXT NOT NULL,
+        completion_date TEXT NOT NULL,
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT uq_streak_install_date UNIQUE (install_id, completion_date)
+    )""",
+    "CREATE INDEX IF NOT EXISTS idx_streak_install ON darshan_streaks(install_id)",
 ]
 
 

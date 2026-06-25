@@ -334,6 +334,8 @@ export interface SettingsViewProps {
   targetLocation?: TargetLocation | null;
   // Re-launches the first-run walkthrough on demand (Settings → "How to use the app").
   onShowWalkthrough?: () => void;
+  // Share the user's current streak card (the capture target lives in App).
+  onShareStreak?: () => void;
   style?: object;
 }
 
@@ -352,6 +354,49 @@ export interface FlowerAnimationRef {
 
 export interface AartiAnimationRef {
   trigger: () => void;
+}
+
+// ============================================================================
+// STREAK TYPES
+// ============================================================================
+
+export interface StreakState {
+  currentStreak: number;
+  longestStreak: number;
+  lastCompletionDate: string | null; // local 'YYYY-MM-DD'
+  completionDates: string[]; // sorted, unique, local 'YYYY-MM-DD'
+  milestonesCelebrated: number[]; // milestones whose auto-modal has shown
+  milestonesShared: number[]; // milestones the user actually shared
+  sharePromptDismissed: number[]; // milestones whose contextual pill was dismissed
+  schemaVersion: number;
+}
+
+export interface StreakCelebrationModalProps {
+  visible: boolean;
+  milestone: number | null;
+  currentStreak: number;
+  theme?: ThemeMode;
+  onShare: () => void;
+  onClose: () => void;
+}
+
+export interface StreakSharePromptProps {
+  milestone: number | null;
+  theme?: ThemeMode;
+  onShare: () => void;
+  onDismiss: () => void;
+}
+
+export interface StreakBadgeProps {
+  count: number;
+  theme?: ThemeMode;
+  onPress?: () => void;
+}
+
+export interface StreakShareCardProps {
+  currentStreak: number;
+  milestone?: number | null;
+  theme?: ThemeMode;
 }
 
 // ============================================================================

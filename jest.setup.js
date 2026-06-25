@@ -81,6 +81,25 @@ jest.mock('expo-audio', () => {
   };
 });
 
+// react-native-view-shot is a native module; capture resolves to a fake uri.
+jest.mock('react-native-view-shot', () => ({
+  __esModule: true,
+  captureRef: jest.fn().mockResolvedValue('file:///mock/streak-card.png'),
+}));
+
+// react-native-share is a native module; the share sheet resolves a no-op.
+jest.mock('react-native-share', () => ({
+  __esModule: true,
+  default: { open: jest.fn().mockResolvedValue({ success: true }) },
+}));
+
+// expo-application: provide the id getters the install-id helper calls.
+jest.mock('expo-application', () => ({
+  __esModule: true,
+  getAndroidId: () => 'jest-android-id',
+  getIosIdForVendorAsync: jest.fn().mockResolvedValue('jest-ios-id'),
+}));
+
 // @notifee/react-native is a native module; provide the surface the app uses.
 jest.mock('@notifee/react-native', () => ({
   __esModule: true,
