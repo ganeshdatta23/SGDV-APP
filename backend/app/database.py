@@ -66,6 +66,7 @@ async def init_db():
         event,
         spiritual_activity,
         app_config,
+        streak,
     )  # noqa: F401
 
     async with engine.begin() as conn:

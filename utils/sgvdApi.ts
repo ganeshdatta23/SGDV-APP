@@ -15,6 +15,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const SGVD_API_BASE_URL = 'https://sgvd-proxy.sgvd-datta.workers.dev';
 const SGVD_API_URL = `${SGVD_API_BASE_URL}/sgvd/locations/`;
 const SGVD_EVENTS_URL = `${SGVD_API_BASE_URL}/sgvd/events/`;
+const SGVD_STREAKS_URL = `${SGVD_API_BASE_URL}/sgvd/streaks`;
+
+// Best-effort streak sync timeout — never let a hung request wedge the UI.
+const STREAK_REQUEST_TIMEOUT_MS = 6000;
 
 // Fallback location data for Avadhoota Datta Peetham
 const FALLBACK_LOCATION = {
@@ -672,6 +676,88 @@ export async function fetchEvents(): Promise<EventData[]> {
     }
     
     return [];
+  }
+}
+
+// ============================================================================
+// STREAK API (sunrise darshan streak — local-first, this is the backend mirror)
+// ============================================================================
+
+export interface BackendStreak {
+  currentStreak: number;
+  longestStreak: number;
+  lastCompletionDate: string | null;
+  completionDates: string[];
+}
+
+/** Small fetch-with-timeout wrapper so a hung streak request never blocks. */
+const fetchWithTimeout = async (url: string, init: RequestInit): Promise<Response> => {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), STREAK_REQUEST_TIMEOUT_MS);
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+};
+
+/**
+ * Record a sunrise darshan completion on the backend (mirror of the local
+ * store). Fully best-effort: any failure is logged and swallowed — the local
+ * streak is authoritative, so a failed sync never affects the UI.
+ */
+export async function postSunriseCompletion(
+  installId: string,
+  dateKey: string,
+): Promise<void> {
+  try {
+    const response = await fetchWithTimeout(`${SGVD_STREAKS_URL}/record`, {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ install_id: installId, completion_date: dateKey }),
+    });
+    if (!response.ok) {
+      console.log('Streak POST: non-OK status', response.status);
+    }
+  } catch (error) {
+    console.log('Streak POST failed (ignored, local is source of truth):', error);
+  }
+}
+
+/**
+ * Fetch the backend's view of an install's streak for reconciliation. Returns
+ * null on any error (caller keeps local state). A brand-new install returns
+ * zeros/empty from the backend (200, not 404).
+ */
+export async function getStreakFromBackend(installId: string): Promise<BackendStreak | null> {
+  try {
+    const response = await fetchWithTimeout(
+      `${SGVD_STREAKS_URL}/${encodeURIComponent(installId)}`,
+      {
+        method: 'GET',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
+      },
+    );
+    if (!response.ok) {
+      console.log('Streak GET: non-OK status', response.status);
+      return null;
+    }
+    const data = await response.json();
+    return {
+      currentStreak: data?.current_streak ?? 0,
+      longestStreak: data?.longest_streak ?? 0,
+      lastCompletionDate: data?.last_completion_date ?? null,
+      completionDates: Array.isArray(data?.completion_dates) ? data.completion_dates : [],
+    };
+  } catch (error) {
+    console.log('Streak GET failed (ignored, keeping local state):', error);
+    return null;
   }
 }
 

@@ -17,6 +17,7 @@ from app.api import (
     admin_spiritual,
     google_auth,
     config,
+    streaks,
 )
 from app.database import init_db
 
@@ -94,6 +95,7 @@ app.include_router(spiritual.router, prefix="/sgvd/spiritual", tags=["spiritual"
 app.include_router(admin_spiritual.router, prefix="/sgvd")
 app.include_router(events.router, prefix="/sgvd/events", tags=["events"])
 app.include_router(config.router, prefix="/sgvd/config", tags=["config"])
+app.include_router(streaks.router, prefix="/sgvd/streaks", tags=["streaks"])
 
 
 @app.get("/health")
