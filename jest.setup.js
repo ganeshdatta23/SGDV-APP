@@ -11,6 +11,19 @@ jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
 );
 
+// expo-network is a native module; stub the surface utils/connectivity uses.
+// Default: connected + reachable. Tests override per-case via the mock.
+jest.mock('expo-network', () => ({
+  __esModule: true,
+  getNetworkStateAsync: jest.fn().mockResolvedValue({
+    type: 'WIFI',
+    isConnected: true,
+    isInternetReachable: true,
+  }),
+  addNetworkStateListener: jest.fn().mockReturnValue({ remove: jest.fn() }),
+  NetworkStateType: { NONE: 'NONE', UNKNOWN: 'UNKNOWN', WIFI: 'WIFI', CELLULAR: 'CELLULAR' },
+}));
+
 // react-native-reanimated ships a jest mock (CompassView/animations use it).
 jest.mock('react-native-reanimated', () => {
   const Reanimated = require('react-native-reanimated/mock');

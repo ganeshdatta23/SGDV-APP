@@ -40,6 +40,51 @@ export const LOCATION_CACHE_KEY = '@sgvd_location_cache';
 export const LOCATION_TIMESTAMP_KEY = '@sgvd_location_timestamp';
 
 // ============================================================================
+// LOCATION SYNC LIFECYCLE
+// ============================================================================
+// Internet-aware location syncing. The app is local-first: it works offline on
+// the cached (or hardcoded fallback) location, but nudges the user to turn on
+// internet so sunrise/sunset times stay fresh, and re-syncs automatically when
+// connectivity returns.
+
+// A successful API sync is considered "stale" after this long. When the app is
+// opened offline and the last successful sync is older than this, we prompt the
+// user to turn on internet so we can refresh. 1 week.
+export const LOCATION_SYNC_STALE_MS = 7 * 24 * 60 * 60 * 1000;
+
+// Cached location is served as an offline fallback only up to this age; older
+// than this it is purged and we drop to the hardcoded FALLBACK_LOCATION. Kept as
+// its own constant (separate from LOCATION_SYNC_STALE_MS) so the "prompt" and
+// "purge" thresholds differ: we purge the cached location after 3 days, but only
+// nag about being unsynced after a week.
+export const LOCATION_CACHE_MAX_AGE_MS = 3 * 24 * 60 * 60 * 1000;
+
+// Timestamp (ms epoch, stringified) of the last SUCCESSFUL API sync. Distinct
+// from LOCATION_TIMESTAMP_KEY, which records when the cache row was last written
+// (used for the 60s in-memory freshness check). This one drives the weekly
+// staleness prompt + purge, and is set ONLY on a real API success.
+export const LOCATION_LAST_SYNC_KEY = '@sgvd_location_last_sync';
+
+// Debounce window for connectivity transitions, so rapid offline<->online
+// flapping triggers at most one background re-fetch.
+export const CONNECTIVITY_DEBOUNCE_MS = 3000;
+
+// Dedicated channel for a "turn on internet" local notification, kept separate
+// from the alarm channels so it can be muted independently. Reserved for the
+// future notification-presentation path (the v1 prompt is an in-app banner).
+export const SYNC_NOTIFICATION_CHANNEL = 'sgvd-sync-reminders-v1';
+export const SYNC_NOTIFICATION_CHANNEL_NAME = 'Location Sync Reminders';
+
+// Text labels for the "turn on internet" prompt (banner + first-run modal).
+export const TEXT_SYNC_PROMPT_TITLE = 'Connect to refresh';
+export const TEXT_SYNC_PROMPT_FIRST_RUN =
+  'Turn on internet so we can fetch the temple location and accurate sun times. The app still works offline.';
+export const TEXT_SYNC_PROMPT_STALE =
+  'Your saved location is over a week old. Turn on internet to refresh sunrise and sunset times.';
+export const TEXT_SYNC_PROMPT_DISMISS = 'Not now';
+export const TEXT_SYNC_PROMPT_RETRY = 'Open settings';
+
+// ============================================================================
 // FALLBACK VALUES
 // ============================================================================
 

@@ -4287,6 +4287,11 @@ expo-modules-core@3.0.26:
   dependencies:
     invariant "^2.2.4"
 
+expo-network@~8.0.8:
+  version "8.0.8"
+  resolved "https://registry.npmjs.org/expo-network/-/expo-network-8.0.8.tgz"
+  integrity sha512-dgrL8UHAmWofqeY4UEjWskCl/RoQAM0DG6PZR8xz2WZt+6aQEboQgFRXowCfhbKZ71d16sNuKXtwBEsp2DtdNw==
+
 expo-notifications@~0.32.13:
   version "0.32.13"
   resolved "https://registry.npmjs.org/expo-notifications/-/expo-notifications-0.32.13.tgz"

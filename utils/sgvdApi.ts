@@ -4,6 +4,11 @@
  */
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {
+  LOCATION_SYNC_STALE_MS,
+  LOCATION_CACHE_MAX_AGE_MS,
+  LOCATION_LAST_SYNC_KEY,
+} from '../constants';
 
 // ============================================================================
 // CONFIGURATION
@@ -276,25 +281,34 @@ const loadCachedLocation = async (): Promise<LocationData | null> => {
     
     if (cachedLocationStr && cachedTimestamp) {
       const cacheAge = Date.now() - parseInt(cachedTimestamp, 10);
-      
-      if (cacheAge < CACHE_VALIDITY_MS) {
-        console.log('Using AsyncStorage cached location data');
+
+      // Offline fallback: serve the cached location for up to LOCATION_CACHE_MAX_AGE_MS
+      // (3 days) so the app stays usable offline. We deliberately do NOT call updateCache here
+      // — that would rewrite LOCATION_TIMESTAMP_KEY to now and the cache would
+      // never age out, defeating the weekly purge/staleness logic. We only
+      // re-anchor the stored sunrise/sunset onto today's date so alarms and
+      // countdowns schedule against valid future times rather than the (stale)
+      // day the data was originally fetched.
+      if (cacheAge < LOCATION_CACHE_MAX_AGE_MS) {
+        console.log(
+          `Using AsyncStorage cached location data (age: ${Math.floor(cacheAge / 1000)}s)`,
+        );
         const cachedData = JSON.parse(cachedLocationStr);
-        
-        // Restore Date objects from ISO strings
+
         const location: LocationData = {
           ...cachedData,
-          sunrise: new Date(cachedData.sunrise),
-          sunset: new Date(cachedData.sunset),
+          sunrise: applyTimeToToday(cachedData.sunrise),
+          sunset: applyTimeToToday(cachedData.sunset),
         };
-        
-        // Restore to in-memory cache for faster subsequent access
-        await updateCache(location);
-        
+
         return location;
-      } else {
-        console.log('AsyncStorage cache expired');
       }
+
+      // Older than the max age (3 days): purge the stale cache and fall through
+      // so the caller drops to the hardcoded fallback location.
+      console.log('AsyncStorage location cache older than max age — purging');
+      cache = null;
+      await AsyncStorage.multiRemove([LOCATION_CACHE_KEY, LOCATION_TIMESTAMP_KEY]);
     }
   } catch (error) {
     console.warn('Failed to read from AsyncStorage:', error);
@@ -373,10 +387,19 @@ export const fetchLocationDirect = async (): Promise<LocationData> => {
       
       // Update cache with location data (saves to both in-memory and AsyncStorage)
       await updateCache(location);
-      
+
+      // Record the last SUCCESSFUL API sync. This drives the weekly staleness
+      // prompt + purge, and is set ONLY here (not in updateCache, which also runs
+      // on cache restore) so a served-from-cache read never advances the clock.
+      try {
+        await AsyncStorage.setItem(LOCATION_LAST_SYNC_KEY, Date.now().toString());
+      } catch (error) {
+        console.warn('Failed to record last sync timestamp:', error);
+      }
+
       return location;
     }
-    
+
     throw new Error('No location found in API response');
   } catch (apiError) {
     // STEP 2: API failed - try internal cache (in-memory + AsyncStorage)
@@ -587,6 +610,7 @@ export async function cleanCache(): Promise<void> {
     await AsyncStorage.multiRemove([
       LOCATION_CACHE_KEY,
       LOCATION_TIMESTAMP_KEY,
+      LOCATION_LAST_SYNC_KEY,
       EVENTS_CACHE_KEY,
       EVENTS_TIMESTAMP_KEY,
     ]);
@@ -594,6 +618,72 @@ export async function cleanCache(): Promise<void> {
   } catch (error) {
     console.warn('Failed to clear AsyncStorage cache:', error);
   }
+}
+
+// ============================================================================
+// SYNC LIFECYCLE HELPERS
+// ============================================================================
+
+/**
+ * Read the timestamp (ms epoch) of the last successful API sync, or null if the
+ * app has never successfully synced (e.g. installed while offline).
+ */
+export async function getLastSyncTimestamp(): Promise<number | null> {
+  try {
+    const raw = await AsyncStorage.getItem(LOCATION_LAST_SYNC_KEY);
+    if (!raw) return null;
+    const ts = parseInt(raw, 10);
+    return Number.isFinite(ts) ? ts : null;
+  } catch (error) {
+    console.warn('Failed to read last sync timestamp:', error);
+    return null;
+  }
+}
+
+/**
+ * Pure: has the location not synced for longer than `staleAfterMs`? A null
+ * `lastSync` (never synced) counts as stale.
+ */
+export function isSyncStale(
+  lastSync: number | null,
+  now: number = Date.now(),
+  staleAfterMs: number = LOCATION_SYNC_STALE_MS,
+): boolean {
+  if (lastSync == null) return true;
+  return now - lastSync >= staleAfterMs;
+}
+
+/**
+ * Purge the persisted location cache if it is older than `maxAgeMs` (3 days by
+ * default). Returns true if a purge happened. Safe to call on every app open.
+ */
+export async function purgeStaleLocationCache(
+  now: number = Date.now(),
+  maxAgeMs: number = LOCATION_CACHE_MAX_AGE_MS,
+): Promise<boolean> {
+  try {
+    const cachedTimestamp = await AsyncStorage.getItem(LOCATION_TIMESTAMP_KEY);
+    if (!cachedTimestamp) return false;
+    const age = now - parseInt(cachedTimestamp, 10);
+    if (age < maxAgeMs) return false;
+    cache = null;
+    await AsyncStorage.multiRemove([LOCATION_CACHE_KEY, LOCATION_TIMESTAMP_KEY]);
+    console.log('purgeStaleLocationCache: purged location cache older than max age (3 days)');
+    return true;
+  } catch (error) {
+    console.warn('purgeStaleLocationCache failed:', error);
+    return false;
+  }
+}
+
+/**
+ * Force a fresh API fetch, bypassing the 60s in-memory freshness short-circuit.
+ * Used by the offline->online background refresh. The fallback chain inside
+ * fetchLocationDirect still protects against the API being unreachable.
+ */
+export async function forceRefreshLocation(): Promise<LocationData> {
+  cache = null;
+  return fetchLocationDirect();
 }
 
 // ============================================================================

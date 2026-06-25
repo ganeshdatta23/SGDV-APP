@@ -20,7 +20,15 @@ import SettingsView from './components/SettingsView';
 import SunCycleView from './components/SunCycleView';
 import DarshanOverlay from './components/DarshanOverlay';
 import Walkthrough from './components/Walkthrough';
+import ConnectivityPrompt from './components/ConnectivityPrompt';
 import { fetchLocationDirect, calculateSunTimes } from './utils/sgvdApi';
+import { getConnectivity, subscribeConnectivity, isOnline } from './utils/connectivity';
+import {
+  evaluateSyncOnOpen,
+  handleCameOnline,
+  shouldRefetchOnTransition,
+  SyncPromptReason,
+} from './utils/locationSync';
 import { initializeNotifications, scheduleAlarms, addNotificationReceivedListener, addNotificationResponseReceivedListener, handleNotificationAction, scheduleTestNotificationIn, cancelAllAlarms, getAlarmConfig } from './utils/alarmManager';
 import { stopAlarmNotification, scheduleSnoozeAlarm, scheduleNotifeeAlarm } from './utils/notifeeAlarmService';
 import { ThemeMode, Tab, TargetLocation, SunEventInfo } from './types';
@@ -41,6 +49,9 @@ import {
   TEXT_CUSTOMIZE_EXPERIENCE,
   TEXT_STOP_ALARM,
   WALKTHROUGH_STORAGE_KEY,
+  CONNECTIVITY_DEBOUNCE_MS,
+  LOCATION_LAST_SYNC_KEY,
+  LOCATION_TIMESTAMP_KEY,
 } from './constants';
 import { appStyles } from './styles/AppStyles';
 
@@ -73,6 +84,10 @@ function App(): React.JSX.Element {
 
   // First-run walkthrough: shown once, gated by an AsyncStorage flag.
   const [showWalkthrough, setShowWalkthrough] = useState(false);
+
+  // "Turn on internet" prompt reason (null = hidden). Set on app open when
+  // offline (first install or data unsynced > 1 week); cleared on sync/dismiss.
+  const [syncPromptReason, setSyncPromptReason] = useState<SyncPromptReason>(null);
   
   // Theme state - allows dynamic theme switching
   const [currentTheme, setCurrentTheme] = useState<ThemeMode>(COMPASS_THEME);
@@ -228,10 +243,65 @@ function App(): React.JSX.Element {
     };
     
     setupNotifications();
-    
+
     loadLocation();
   }, []);
-  
+
+  // On app open: purge a location cache older than 3 days and, if we are
+  // offline, decide whether to nudge the user to turn on internet (first install,
+  // or data not synced for over a week). Best-effort; never blocks the UI. The
+  // prompt only ever appears while offline, so it never races with an online
+  // sync. The actual location fetch is handled by loadLocation above.
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      const reason = await evaluateSyncOnOpen();
+      if (mounted && reason) setSyncPromptReason(reason);
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  // Background re-sync when internet returns. We seed the previous state with the
+  // current connectivity (the initial fetch is already done on mount), then react
+  // only to genuine offline->online transitions: force a fresh location fetch
+  // (debounced against flapping) and update targetLocation — which makes the
+  // alarm-refresh effect below reschedule sunrise/sunset alarms with fresh times.
+  useEffect(() => {
+    let active = true;
+    let prevOnline: boolean | null = null;
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+    let unsubscribe: () => void = () => {};
+
+    (async () => {
+      const initial = await getConnectivity();
+      if (!active) return;
+      prevOnline = isOnline(initial);
+      unsubscribe = subscribeConnectivity((state) => {
+        const nextOnline = isOnline(state);
+        if (shouldRefetchOnTransition(prevOnline, nextOnline)) {
+          if (debounceTimer) clearTimeout(debounceTimer);
+          debounceTimer = setTimeout(async () => {
+            const fresh = await handleCameOnline();
+            if (fresh) {
+              console.log('Connectivity restored — refreshed location, rescheduling alarms');
+              setTargetLocation(fresh);
+              setSyncPromptReason(null);
+            }
+          }, CONNECTIVITY_DEBOUNCE_MS);
+        }
+        prevOnline = nextOnline;
+      });
+    })();
+
+    return () => {
+      active = false;
+      unsubscribe();
+      if (debounceTimer) clearTimeout(debounceTimer);
+    };
+  }, []);
+
   // Notifee foreground event listener + initial notification check (Android only)
   useEffect(() => {
     if (Platform.OS !== 'android') return;
@@ -342,6 +412,19 @@ function App(): React.JSX.Element {
           await scheduleTestNotificationIn(secs);
         } else if (action === 'cancel-all') {
           await cancelAllAlarms();
+        } else if (action === 'age-sync') {
+          // Backdate the last-sync + cache write timestamps by ?days=N so the
+          // 3-day cache purge and 1-week staleness prompt can be exercised in an
+          // E2E run without waiting. e.g.:
+          //   adb shell am start -a android.intent.action.VIEW -d "sgdv://age-sync?days=8"
+          const daysMatch = url.match(/[?&]days=(\d+)/);
+          const days = daysMatch ? parseInt(daysMatch[1], 10) : 8;
+          const backdated = (Date.now() - days * 24 * 60 * 60 * 1000).toString();
+          await AsyncStorage.multiSet([
+            [LOCATION_LAST_SYNC_KEY, backdated],
+            [LOCATION_TIMESTAMP_KEY, backdated],
+          ]);
+          console.log(`age-sync: backdated last-sync + cache by ${days} days`);
         }
       } catch (error) {
         console.log('Deep-link handler error:', error);
@@ -836,6 +919,21 @@ function App(): React.JSX.Element {
         visible={showWalkthrough}
         theme={currentTheme}
         onComplete={handleWalkthroughComplete}
+      />
+
+      {/* "Turn on internet" prompt: first-install modal / week-stale banner. */}
+      <ConnectivityPrompt
+        reason={syncPromptReason}
+        theme={currentTheme}
+        onOpenSettings={() => {
+          // Nudge toward connectivity settings; we can't toggle the radio.
+          if (Platform.OS === 'android') {
+            Linking.sendIntent('android.settings.WIRELESS_SETTINGS').catch(() => {});
+          } else {
+            Linking.openSettings().catch(() => {});
+          }
+        }}
+        onDismiss={() => setSyncPromptReason(null)}
       />
     </View>
   );
