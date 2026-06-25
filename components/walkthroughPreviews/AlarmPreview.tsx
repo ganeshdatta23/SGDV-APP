@@ -8,6 +8,10 @@ import {
   TEXT_NEXT_SUNRISE,
   TEXT_SUNRISE,
   TEXT_SUNSET,
+  TEXT_PREVIEW_ALARM_LABEL,
+  WALKTHROUGH_PREVIEW_NEXT_SUNRISE_TIME,
+  WALKTHROUGH_PREVIEW_SUNRISE_TIME,
+  WALKTHROUGH_PREVIEW_SUNSET_TIME,
 } from '../../constants';
 
 /**
@@ -20,25 +24,25 @@ const AlarmPreview: React.FC<{ theme: ThemeMode }> = () => {
   return (
     <View style={styles.wrap}>
       <Text style={styles.countLabel}>{TEXT_NEXT_SUNRISE}</Text>
-      <Text style={styles.countTime}>5:42 AM</Text>
+      <Text style={styles.countTime}>{WALKTHROUGH_PREVIEW_NEXT_SUNRISE_TIME}</Text>
 
       <View style={styles.cards}>
         <View style={styles.card}>
           <Ionicons name="sunny" size={28} color={SUN_SUNRISE_ICON_COLOR} />
           <Text style={styles.cardLabel}>{TEXT_SUNRISE}</Text>
-          <Text style={styles.cardTime}>6:12 AM</Text>
+          <Text style={styles.cardTime}>{WALKTHROUGH_PREVIEW_SUNRISE_TIME}</Text>
         </View>
         <View style={styles.card}>
           <Ionicons name="moon" size={28} color={SUN_SUNSET_ICON_COLOR} />
           <Text style={styles.cardLabel}>{TEXT_SUNSET}</Text>
-          <Text style={styles.cardTime}>6:48 PM</Text>
+          <Text style={styles.cardTime}>{WALKTHROUGH_PREVIEW_SUNSET_TIME}</Text>
         </View>
       </View>
 
       <View style={styles.control}>
         <View style={styles.controlLeft}>
           <Ionicons name="alarm" size={22} color={SUN_SUNSET_ICON_COLOR} />
-          <Text style={styles.controlText}>Alarm</Text>
+          <Text style={styles.controlText}>{TEXT_PREVIEW_ALARM_LABEL}</Text>
         </View>
         <Switch
           value

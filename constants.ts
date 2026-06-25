@@ -527,6 +527,36 @@ export const APP_VERSION = '1.0.0';
 export const APP_NAME = 'Guru Dhigvandanam';
 
 // ============================================================================
+// ABOUT SECTION (Settings → bottom)
+// ============================================================================
+export const TEXT_ABOUT_SECTION = 'ABOUT';
+export const TEXT_ABOUT_DESC =
+  `${APP_NAME} helps devotees face the sacred direction of Pujya Sri Swamiji for ` +
+  `darshan — track sunrise and sunset, receive gentle reminders, and stay updated ` +
+  `on temple programs.`;
+
+// ============================================================================
+// WALKTHROUGH PREVIEW SAMPLE DATA
+// Illustrative content rendered inside the first-run walkthrough previews
+// (components/walkthroughPreviews/). Centralized here so the sample copy stays
+// configurable in one place rather than hardcoded across the preview components.
+// ============================================================================
+export const WALKTHROUGH_PREVIEW_HEADING_DEG = 45;
+export const WALKTHROUGH_PREVIEW_NEXT_SUNRISE_TIME = '5:42 AM';
+export const WALKTHROUGH_PREVIEW_SUNRISE_TIME = '6:12 AM';
+export const WALKTHROUGH_PREVIEW_SUNSET_TIME = '6:48 PM';
+export const TEXT_PREVIEW_ALARM_LABEL = 'Alarm';
+export const WALKTHROUGH_PREVIEW_EVENTS: readonly {
+  month: string;
+  day: string;
+  title: string;
+  sub: string;
+}[] = [
+  { month: 'JUL', day: '29', title: 'Guru Purnima', sub: 'Karya Siddhi Hanuman Temple, Dallas' },
+  { month: 'DEC', day: '21', title: 'Datta Jayanti', sub: 'Datta Peetham, Mysuru' },
+];
+
+// ============================================================================
 // SUN CYCLE VIEW CONFIGURATION
 // ============================================================================
 

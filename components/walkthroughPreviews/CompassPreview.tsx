@@ -3,7 +3,12 @@ import { View, Text, StyleSheet } from 'react-native';
 import Svg, { Circle, Line, Path, Text as SvgText } from 'react-native-svg';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemeMode } from '../../types';
-import { COMPASS_THEMES, TEXT_HEADING, TEXT_TURN_RIGHT } from '../../constants';
+import {
+  COMPASS_THEMES,
+  TEXT_HEADING,
+  TEXT_TURN_RIGHT,
+  WALKTHROUGH_PREVIEW_HEADING_DEG,
+} from '../../constants';
 
 /**
  * Static mini compass dial mirroring CompassView (the dial, tick ring, N/E/S/W
@@ -107,7 +112,7 @@ const CompassPreview: React.FC<{ theme: ThemeMode }> = ({ theme }) => {
           fontWeight="bold"
           textAnchor="middle"
         >
-          45°
+          {`${WALKTHROUGH_PREVIEW_HEADING_DEG}°`}
         </SvgText>
         <Line
           x1={C - 22}
@@ -118,7 +123,7 @@ const CompassPreview: React.FC<{ theme: ThemeMode }> = ({ theme }) => {
           strokeWidth={1}
         />
         <SvgText x={C} y={C + 33} fill={c.gold} fontSize={10} textAnchor="middle">
-          ▲ 45°
+          {`▲ ${WALKTHROUGH_PREVIEW_HEADING_DEG}°`}
         </SvgText>
       </Svg>
 

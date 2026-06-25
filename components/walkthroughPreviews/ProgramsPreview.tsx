@@ -1,22 +1,18 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { ThemeMode } from '../../types';
-import { EVENTS_THEMES } from '../../constants';
+import { EVENTS_THEMES, WALKTHROUGH_PREVIEW_EVENTS } from '../../constants';
 
 /**
  * Mirrors EventsView's event card (date chip + title + place + chevron), themed
- * via the real EVENTS_THEMES palette. Two sample cards so it reads as a list.
+ * via the real EVENTS_THEMES palette. Two sample cards (WALKTHROUGH_PREVIEW_EVENTS
+ * in constants.ts) so it reads as a list.
  */
-const SAMPLE_EVENTS = [
-  { month: 'JUN', day: '26', title: 'Guru Purnima', sub: 'Ashrama • 6:30 AM' },
-  { month: 'JUL', day: '12', title: 'Datta Jayanti', sub: 'Main Temple • 5:00 PM' },
-];
-
 const ProgramsPreview: React.FC<{ theme: ThemeMode }> = ({ theme }) => {
   const e = EVENTS_THEMES[theme];
   return (
     <View style={styles.wrap}>
-      {SAMPLE_EVENTS.map((ev) => (
+      {WALKTHROUGH_PREVIEW_EVENTS.map((ev) => (
         <View
           key={ev.title}
           style={[styles.card, { backgroundColor: e.cardBg, borderColor: e.cardBorder }]}

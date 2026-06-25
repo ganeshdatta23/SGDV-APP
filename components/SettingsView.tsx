@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, LayoutAnimation, Platform, UIManager } from 'react-native';
+import { View, Text, Image, ScrollView, TouchableOpacity, LayoutAnimation, Platform, UIManager } from 'react-native';
 import Slider from '@react-native-community/slider';
 import { Ionicons } from '@expo/vector-icons';
 import { AlarmConfig, SettingsViewProps, StreakState, ThemeMode } from '../types';
@@ -39,6 +39,8 @@ import {
   SCHEDULE_DAYS_AHEAD_OPTIONS,
   APP_NAME,
   APP_VERSION,
+  TEXT_ABOUT_SECTION,
+  TEXT_ABOUT_DESC,
 } from '../constants';
 import { settingsViewStyles } from '../styles/SettingsViewStyles';
 
@@ -259,29 +261,6 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           </View>
         )}
 
-        {/* How to use the app — replay the first-run walkthrough on demand. */}
-        <TouchableOpacity
-          testID="settings-show-walkthrough"
-          style={settingsViewStyles.settingRow}
-          onPress={onShowWalkthrough}
-          activeOpacity={0.7}
-          disabled={!onShowWalkthrough}
-        >
-          <View style={settingsViewStyles.settingLeft}>
-            <View style={[settingsViewStyles.iconContainer, { backgroundColor: theme.accent + '20' }]}>
-              <Ionicons name="help-circle-outline" size={20} color={theme.accent} />
-            </View>
-            <View style={settingsViewStyles.settingInfo}>
-              <Text style={[settingsViewStyles.settingTitle, { color: theme.itemText }]}>
-                {TEXT_SHOW_WALKTHROUGH}
-              </Text>
-              <Text style={[settingsViewStyles.settingSubtitle, { color: theme.itemSubtext }]}>
-                {TEXT_SHOW_WALKTHROUGH_SUB}
-              </Text>
-            </View>
-          </View>
-          <Ionicons name="chevron-forward" size={20} color={theme.chevron} />
-        </TouchableOpacity>
       </View>
 
       {/* Sound Section */}
@@ -674,6 +653,68 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               </TouchableOpacity>
             </>
           )}
+        </View>
+
+        {/* About Section — app info + replay the first-run walkthrough on demand. */}
+        <View style={[settingsViewStyles.section, { backgroundColor: theme.sectionBg, borderColor: theme.sectionBorder }]}>
+          <Text style={[settingsViewStyles.sectionHeader, { color: theme.sectionTitle }]}>
+            {TEXT_ABOUT_SECTION}
+          </Text>
+
+          {/* App identity (icon + name + version) */}
+          <View style={settingsViewStyles.settingRow}>
+            <View style={settingsViewStyles.settingLeft}>
+              <View style={[settingsViewStyles.iconContainer, { backgroundColor: theme.accent + '20' }]}>
+                <Image
+                  source={require('../assets/images/app_icon.png')}
+                  style={{ width: 28, height: 28, borderRadius: 6 }}
+                  resizeMode="contain"
+                />
+              </View>
+              <View style={settingsViewStyles.settingInfo}>
+                <Text style={[settingsViewStyles.settingTitle, { color: theme.itemText }]}>
+                  {APP_NAME}
+                </Text>
+                <Text style={[settingsViewStyles.settingSubtitle, { color: theme.itemSubtext }]}>
+                  v{APP_VERSION}
+                </Text>
+              </View>
+            </View>
+          </View>
+
+          {/* What the app does */}
+          <Text
+            style={[
+              settingsViewStyles.settingSubtitle,
+              { color: theme.itemSubtext, paddingHorizontal: 4, paddingBottom: 14, lineHeight: 20 },
+            ]}
+          >
+            {TEXT_ABOUT_DESC}
+          </Text>
+
+          {/* How to use the app — replay the first-run walkthrough on demand. */}
+          <TouchableOpacity
+            testID="settings-show-walkthrough"
+            style={settingsViewStyles.settingRow}
+            onPress={onShowWalkthrough}
+            activeOpacity={0.7}
+            disabled={!onShowWalkthrough}
+          >
+            <View style={settingsViewStyles.settingLeft}>
+              <View style={[settingsViewStyles.iconContainer, { backgroundColor: theme.accent + '20' }]}>
+                <Ionicons name="help-circle-outline" size={20} color={theme.accent} />
+              </View>
+              <View style={settingsViewStyles.settingInfo}>
+                <Text style={[settingsViewStyles.settingTitle, { color: theme.itemText }]}>
+                  {TEXT_SHOW_WALKTHROUGH}
+                </Text>
+                <Text style={[settingsViewStyles.settingSubtitle, { color: theme.itemSubtext }]}>
+                  {TEXT_SHOW_WALKTHROUGH_SUB}
+                </Text>
+              </View>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color={theme.chevron} />
+          </TouchableOpacity>
         </View>
       </ScrollView>
 
