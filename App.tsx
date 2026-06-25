@@ -588,9 +588,6 @@ function App(): React.JSX.Element {
             setNextSunEvent({ time: tomorrowTimes.sunrise, type: 'sunrise', isToday: false });
           }
           
-          // Schedule alarms for sunrise/sunset
-          console.log('Scheduling alarms for sunrise/sunset...');
-          await scheduleAlarms(targetLocation.latitude, targetLocation.longitude);
         } catch (error) {
           console.error('Error getting sun times:', error);
           // Fallback to show a generic message
@@ -598,9 +595,26 @@ function App(): React.JSX.Element {
         }
       }
     };
-    
+
     getSunEvent();
   }, [targetLocation]);
+
+  // Keep the scheduled alarms fresh: (re)schedule whenever the app is in the
+  // foreground and we have a location. This fires when the location is first
+  // resolved, when it changes (a new location must replace stale alarms), and
+  // every time the user re-opens the app — so a schedule built against an old
+  // location or now in the past is always refreshed. scheduleAlarms cancels and
+  // re-creates the alarms, so repeated calls are safe and idempotent.
+  useEffect(() => {
+    if (
+      appStateVisible === 'active' &&
+      targetLocation?.latitude &&
+      targetLocation?.longitude
+    ) {
+      console.log('Refreshing scheduled alarms (app active + location available)');
+      scheduleAlarms(targetLocation.latitude, targetLocation.longitude);
+    }
+  }, [appStateVisible, targetLocation]);
 
   const handleAlignmentChange = (aligned: boolean) => {
     console.log('Alignment changed:', aligned);
@@ -792,7 +806,7 @@ function App(): React.JSX.Element {
             y="60%"
             rx="100%"
             ry="100%"
-            colorList={currentBgTheme.radialColorList}
+            colorList={currentBgTheme.radialColorList ?? []}
           />
         </View>
       ) : (

@@ -15,6 +15,7 @@ import {
   SUN_CONTROL_TEXT_NESTED_FONT_SIZE,
   SUN_TEST_BUTTON_BORDER_RADIUS,
   SUN_TEST_BUTTON_PADDING,
+  SUN_SUNRISE_ICON_COLOR,
 } from '../constants';
 
 export const sunCycleViewStyles = StyleSheet.create({
@@ -156,6 +157,44 @@ export const sunCycleViewStyles = StyleSheet.create({
     fontWeight: '600',
     color: '#FFFFFF',
     marginLeft: 8,
+  },
+  scheduleAheadRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 16,
+  },
+  scheduleAheadLabel: {
+    fontSize: 14,
+    color: '#FFFFFF',
+    opacity: 0.85,
+  },
+  scheduleAheadOptions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  scheduleAheadChip: {
+    minWidth: 44,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.25)',
+    alignItems: 'center',
+  },
+  scheduleAheadChipActive: {
+    backgroundColor: SUN_SUNRISE_ICON_COLOR,
+    borderColor: SUN_SUNRISE_ICON_COLOR,
+  },
+  scheduleAheadChipText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    opacity: 0.85,
+  },
+  scheduleAheadChipTextActive: {
+    color: '#1a1a2e',
+    opacity: 1,
   },
   infoBox: {
     flexDirection: 'row',

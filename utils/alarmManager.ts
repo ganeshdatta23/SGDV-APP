@@ -10,6 +10,7 @@ import {
   cancelNotifeeAlarm,
   getScheduledNotifeeAlarms,
 } from './notifeeAlarmService';
+import type { AlarmConfig } from '../types';
 
 // Check if running in Expo Go (custom sounds don't work there)
 const isExpoGo = Constants.appOwnership === 'expo';
@@ -32,23 +33,8 @@ Notifications.setNotificationHandler({
   }),
 });
 
-// Alarm configuration
-interface AlarmConfig {
-  sunriseEnabled: boolean;
-  sunsetEnabled: boolean;
-  sunriseOffset: number; // minutes before sunrise
-  sunsetOffset: number; // minutes before sunset
-  alarmEnabled: boolean; // Loud alarm mode
-  sunriseAlarmEnabled: boolean; // Sunrise alarm
-  sunsetAlarmEnabled: boolean; // Sunset alarm
-  notificationsEnabled: boolean; // Silent notifications
-  sunriseNotificationEnabled: boolean; // Sunrise notifications
-  sunsetNotificationEnabled: boolean; // Sunset notifications
-  alarmSound: 'default' | 'custom';
-  alarmTimeoutMs: number; // auto-stop the ringing alarm after N ms (0 = never)
-  snoozeMinutes: number; // snooze duration in minutes
-  scheduleDaysAhead: number; // Number of days ahead to schedule alarms (default: 1 = today + tomorrow)
-}
+// Alarm configuration — the canonical AlarmConfig type lives in ../types and is
+// imported above so this module and the UI components never drift apart.
 
 const DEFAULT_ALARM_CONFIG: AlarmConfig = {
   sunriseEnabled: false,
@@ -64,7 +50,7 @@ const DEFAULT_ALARM_CONFIG: AlarmConfig = {
   alarmSound: 'custom',
   alarmTimeoutMs: 60000, // 1 minute
   snoozeMinutes: 5, // 5 minutes
-  scheduleDaysAhead: 1, // Schedule for today + 1 day ahead (total 2 days) by default
+  scheduleDaysAhead: 1, // default: today + tomorrow. User can raise to 2 or 4 in settings.
 };
 
 // Store notification IDs for cleanup
@@ -310,6 +296,10 @@ const scheduleNotification = async (
           type: identifier.includes('sunrise') ? 'sunrise' : 'sunset',
           isAlarm,
           alarmSound: isAlarm ? alarmSound : 'default',
+          // Persist the fire time so the scheduled-list UI can show the real
+          // date. On Android expo returns a timeInterval trigger (no date), so
+          // reading it back from the trigger is unreliable.
+          scheduledTime: triggerDate.getTime(),
         },
         categoryIdentifier: isAlarm ? 'ALARM_CATEGORY' : 'NOTIFICATION_CATEGORY',
         vibrate: isAlarm ? [0, 500, 200, 500] : [0, 250, 250, 250],
@@ -486,18 +476,25 @@ export const scheduleAlarmsForNext3Days = async (latitude: number, longitude: nu
 
     const isAlarm = config.alarmEnabled;
     const now = new Date();
+    const DAY_MS = 24 * 60 * 60 * 1000;
+
+    // calculateSunTimes returns the sun times for *today* only (the backend
+    // serves a single day and the client applies that time-of-day to today).
+    // Fetch once, then derive each future day by shifting whole days: sunrise/
+    // sunset drift only seconds per day, which is negligible for a 2-minute
+    // pre-alarm. Calling calculateSunTimes per day would just return today's
+    // times again — so once today's events had passed (e.g. opening the app in
+    // the evening) nothing got scheduled and the UI showed "0 alarms scheduled".
+    const baseSun = await calculateSunTimes(latitude, longitude);
 
     // Schedule for today and next N days (where N = scheduleDaysAhead)
     for (let dayOffset = 0; dayOffset <= daysAhead; dayOffset++) {
-      const date = new Date(now);
-      date.setDate(date.getDate() + dayOffset);
-
-      const sunTimes = await calculateSunTimes(latitude, longitude, date);
       const dayLabel = dayOffset === 0 ? 'today' : dayOffset === 1 ? 'tomorrow' : `day${dayOffset}`;
 
       if (shouldScheduleSunrise) {
-        const sunriseAlarmTime = new Date(sunTimes.sunrise);
-        sunriseAlarmTime.setMinutes(sunriseAlarmTime.getMinutes() - config.sunriseOffset);
+        const sunriseAlarmTime = new Date(
+          baseSun.sunrise.getTime() + dayOffset * DAY_MS - config.sunriseOffset * 60000,
+        );
 
         if (sunriseAlarmTime > now) {
           await scheduleNotification(
@@ -513,8 +510,9 @@ export const scheduleAlarmsForNext3Days = async (latitude: number, longitude: nu
       }
 
       if (shouldScheduleSunset) {
-        const sunsetAlarmTime = new Date(sunTimes.sunset);
-        sunsetAlarmTime.setMinutes(sunsetAlarmTime.getMinutes() - config.sunsetOffset);
+        const sunsetAlarmTime = new Date(
+          baseSun.sunset.getTime() + dayOffset * DAY_MS - config.sunsetOffset * 60000,
+        );
 
         if (sunsetAlarmTime > now) {
           await scheduleNotification(
@@ -550,14 +548,33 @@ export const getScheduledNotifications = async (): Promise<Array<{
   try {
     const expoNotifications = await Notifications.getAllScheduledNotificationsAsync();
 
-    const expoScheduled = expoNotifications.map(notification => ({
-      id: notification.identifier,
-      title: notification.content.title || 'Alarm',
-      body: notification.content.body || '',
-      date: notification.trigger && 'date' in notification.trigger
-        ? new Date(notification.trigger.date as number)
-        : new Date(),
-    }));
+    const expoScheduled = expoNotifications.map(notification => {
+      // Prefer the fire time we stamped into data — robust across platforms.
+      // On Android expo reports a timeInterval trigger (no date field), so fall
+      // back to deriving it from seconds, then finally to a date/timestamp.
+      const data = notification.content.data as { scheduledTime?: number } | undefined;
+      const trigger = notification.trigger as
+        | { type?: string; date?: number; timestamp?: number; seconds?: number }
+        | null;
+      let date: Date;
+      if (data?.scheduledTime) {
+        date = new Date(data.scheduledTime);
+      } else if (trigger?.type === 'timeInterval' && typeof trigger.seconds === 'number') {
+        date = new Date(Date.now() + trigger.seconds * 1000);
+      } else if (trigger?.date) {
+        date = new Date(trigger.date);
+      } else if (trigger?.timestamp) {
+        date = new Date(trigger.timestamp);
+      } else {
+        date = new Date();
+      }
+      return {
+        id: notification.identifier,
+        title: notification.content.title || 'Alarm',
+        body: notification.content.body || '',
+        date,
+      };
+    });
 
     const notifeeScheduled =
       Platform.OS === 'android' ? await getScheduledNotifeeAlarms() : [];

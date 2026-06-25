@@ -73,3 +73,6 @@ vendor/
 .bundle/
 
 *.log
+
+# Claude Code local state (ralph loop, etc.)
+.claude/

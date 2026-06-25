@@ -24,6 +24,9 @@ import {
   TEXT_SNOOZE_DURATION_SUBTITLE,
   ALARM_TIMEOUT_OPTIONS,
   SNOOZE_DURATION_OPTIONS,
+  TEXT_SCHEDULE_DAYS_AHEAD,
+  TEXT_SCHEDULE_DAYS_AHEAD_SUBTITLE,
+  SCHEDULE_DAYS_AHEAD_OPTIONS,
   APP_NAME,
   APP_VERSION,
 } from '../constants';
@@ -125,6 +128,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const alarmSound = alarmConfig?.alarmSound ?? 'custom';
   const alarmTimeoutMs = alarmConfig?.alarmTimeoutMs ?? 60000;
   const snoozeMinutes = alarmConfig?.snoozeMinutes ?? 5;
+  const scheduleDaysAhead = alarmConfig?.scheduleDaysAhead ?? 1;
 
   return (
     <View style={[settingsViewStyles.wrapper, style]}>
@@ -475,6 +479,46 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     <Text style={[
                       settingsViewStyles.optionButtonText,
                       { color: snoozeMinutes === opt.value ? theme.accent : theme.itemText }
+                    ]}>
+                      {opt.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              {/* Schedule Ahead — how many days of alarms to pre-schedule.
+                  Refreshed on every app open, so a small range is enough. */}
+              <View style={settingsViewStyles.settingRow}>
+                <View style={settingsViewStyles.settingLeft}>
+                  <View style={[settingsViewStyles.iconContainer, { backgroundColor: theme.accent + '20' }]}>
+                    <Ionicons name="calendar-outline" size={22} color={theme.accent} />
+                  </View>
+                  <View style={settingsViewStyles.settingInfo}>
+                    <Text style={[settingsViewStyles.settingTitle, { color: theme.itemText }]}>
+                      {TEXT_SCHEDULE_DAYS_AHEAD}
+                    </Text>
+                    <Text style={[settingsViewStyles.settingSubtitle, { color: theme.itemSubtext }]}>
+                      {TEXT_SCHEDULE_DAYS_AHEAD_SUBTITLE}{' '}
+                      {SCHEDULE_DAYS_AHEAD_OPTIONS.find((o) => o.value === scheduleDaysAhead)?.label ?? '1 day'}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+              <View style={settingsViewStyles.optionRowWrap}>
+                {SCHEDULE_DAYS_AHEAD_OPTIONS.map((opt) => (
+                  <TouchableOpacity
+                    key={opt.value}
+                    style={[
+                      settingsViewStyles.optionChip,
+                      { borderColor: scheduleDaysAhead === opt.value ? theme.accent : theme.sectionBorder },
+                      scheduleDaysAhead === opt.value && { backgroundColor: theme.selectedBg },
+                    ]}
+                    onPress={() => updateAlarmConfig({ scheduleDaysAhead: opt.value })}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={[
+                      settingsViewStyles.optionButtonText,
+                      { color: scheduleDaysAhead === opt.value ? theme.accent : theme.itemText }
                     ]}>
                       {opt.label}
                     </Text>

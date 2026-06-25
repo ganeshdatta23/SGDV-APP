@@ -205,9 +205,9 @@ export interface AlarmConfig {
   sunriseNotificationEnabled: boolean;
   sunsetNotificationEnabled: boolean;
   alarmSound: 'default' | 'custom';
-  alarmTimeoutMs?: number; // auto-stop the ringing alarm after N ms (0 = never). Default 60000 (1 min)
-  snoozeMinutes?: number; // snooze duration in minutes. Default 5
-  scheduleDaysAhead?: number; // Number of days ahead to schedule alarms (default: 1 = today + tomorrow)
+  alarmTimeoutMs: number; // auto-stop the ringing alarm after N ms (0 = never). Default 60000 (1 min)
+  snoozeMinutes: number; // snooze duration in minutes. Default 5
+  scheduleDaysAhead: number; // Number of days ahead to schedule alarms (default: 1 = today + tomorrow)
 }
 
 // ============================================================================

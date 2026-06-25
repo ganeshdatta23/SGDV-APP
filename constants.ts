@@ -78,6 +78,9 @@ export const DEFAULT_ALARM_CONFIG: AlarmConfig = {
   sunriseNotificationEnabled: true,
   sunsetNotificationEnabled: true,
   alarmSound: 'custom',
+  alarmTimeoutMs: 60000, // 1 minute
+  snoozeMinutes: 5,
+  scheduleDaysAhead: 1, // default: today + tomorrow. User can raise to 2 or 4 in settings.
 };
 
 export const ALARM_MAX_DURATION_MS = 60000; // 1 minute
@@ -550,6 +553,10 @@ export const TEXT_STOP_TEST_ALARM = 'Stop Test Alarm';
 export const TEXT_SEND_TEST_NOTIFICATION = 'Send Test Notification';
 export const TEXT_TEST_ALARM_5_SEC = 'Test Alarm (10 sec)';
 export const TEXT_ALARM_NOTIFICATION_SETTINGS = 'Alarm & Notification Settings';
+export const TEXT_SCHEDULE_AHEAD = 'Schedule ahead';
+// How many days ahead the user can choose to pre-schedule alarms. Kept small so
+// the OS isn't flooded with exact alarms; alarms are refreshed on every app open.
+export const SCHEDULE_DAYS_OPTIONS = [1, 2, 4] as const;
 export const TEXT_ALARM_SOUND = 'Alarm Sound';
 export const TEXT_ALARM_SOUND_DEFAULT = 'Default';
 export const TEXT_ALARM_SOUND_CUSTOM = 'Sri Natha Charana Dwandvam';
@@ -573,6 +580,15 @@ export const SNOOZE_DURATION_OPTIONS: { label: string; value: number }[] = [
   { label: '5 min', value: 5 },
   { label: '10 min', value: 10 },
   { label: '15 min', value: 15 },
+];
+export const TEXT_SCHEDULE_DAYS_AHEAD = 'Schedule Ahead';
+export const TEXT_SCHEDULE_DAYS_AHEAD_SUBTITLE = 'Pre-schedule alarms for the next';
+// Days-ahead options (max 4) kept small so the OS isn't flooded with exact
+// alarms; the schedule is refreshed every time the app is opened.
+export const SCHEDULE_DAYS_AHEAD_OPTIONS: { label: string; value: number }[] = [
+  { label: '1 day', value: 1 },
+  { label: '2 days', value: 2 },
+  { label: '4 days', value: 4 },
 ];
 export const TEXT_APPEARANCE = 'APPEARANCE';
 export const TEXT_SOUND = 'SOUND';

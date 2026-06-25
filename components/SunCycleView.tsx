@@ -36,6 +36,8 @@ import {
   TEXT_SUNSET_ALERTS,
   TEXT_TEST_ALARM_5_SEC,
   TEXT_ALARM_NOTIFICATION_SETTINGS,
+  TEXT_SCHEDULE_AHEAD,
+  SCHEDULE_DAYS_OPTIONS,
   SUN_SUNRISE_ICON_COLOR,
   SUN_SUNSET_ICON_COLOR,
   SUN_ICON_SIZE,
@@ -80,6 +82,13 @@ export default function SunCycleView({ latitude, longitude }: SunCycleViewProps)
           nextEventType: times.nextEventType,
         });
         setSunTimes(times);
+
+        // Ensure alarms/notifications are actually scheduled for the saved
+        // config before reading the count. Without this, opening the Alarm tab
+        // races the app-startup scheduling and can show "0 alarms scheduled"
+        // until the user toggles a switch. scheduleAlarmsForNext3Days is
+        // idempotent (it cancels then reschedules), so this is safe to call here.
+        await scheduleAlarmsForNext3Days(latitude, longitude);
       }
 
       // Get scheduled alarms/notifications (includes Android notifee alarms)
@@ -279,10 +288,42 @@ export default function SunCycleView({ latitude, longitude }: SunCycleViewProps)
         {/* Scheduled alarms list (with per-alarm remove) */}
         {(config.notificationsEnabled || config.alarmEnabled) && (
           <>
+            {/* How many days ahead to schedule. Kept small (1/2/4) so the OS
+                isn't flooded with exact alarms; rescheduled on every app open. */}
+            <View style={sunCycleViewStyles.scheduleAheadRow}>
+              <Text style={sunCycleViewStyles.scheduleAheadLabel}>{TEXT_SCHEDULE_AHEAD}</Text>
+              <View style={sunCycleViewStyles.scheduleAheadOptions}>
+                {SCHEDULE_DAYS_OPTIONS.map((days) => {
+                  const selected = (config.scheduleDaysAhead ?? 1) === days;
+                  return (
+                    <TouchableOpacity
+                      key={days}
+                      style={[
+                        sunCycleViewStyles.scheduleAheadChip,
+                        selected && sunCycleViewStyles.scheduleAheadChipActive,
+                      ]}
+                      onPress={() => updateConfig({ scheduleDaysAhead: days })}
+                      accessibilityLabel={`Schedule ${days} day${days > 1 ? 's' : ''} ahead`}
+                    >
+                      <Text
+                        style={[
+                          sunCycleViewStyles.scheduleAheadChipText,
+                          selected && sunCycleViewStyles.scheduleAheadChipTextActive,
+                        ]}
+                      >
+                        {days}d
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
+
             <View style={sunCycleViewStyles.infoBox}>
               <Ionicons name="calendar" size={20} color={SUN_SUNRISE_ICON_COLOR} />
               <Text style={sunCycleViewStyles.infoText}>
-                {scheduledAlarms.length} alarms scheduled for the next 3 days
+                {scheduledAlarms.length} alarm{scheduledAlarms.length === 1 ? '' : 's'} scheduled for the next{' '}
+                {config.scheduleDaysAhead ?? 1} day{(config.scheduleDaysAhead ?? 1) === 1 ? '' : 's'}
               </Text>
             </View>
 

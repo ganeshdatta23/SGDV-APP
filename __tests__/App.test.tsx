@@ -4,14 +4,25 @@
 
 import 'react-native';
 import React from 'react';
+import renderer, { act } from 'react-test-renderer';
+import { it, jest } from '@jest/globals';
+
 import App from '../App';
 
-// Note: import explicitly to use the types shipped with jest.
-import {it} from '@jest/globals';
+// App starts timers, AppState/Linking listeners and async native calls in its
+// effects. Use fake timers, flush effects inside act(), then unmount so none of
+// that work runs after Jest tears the environment down (which would otherwise
+// crash the run even though the assertion passes).
+jest.useFakeTimers();
 
-// Note: test renderer must be required after react-native.
-import renderer from 'react-test-renderer';
+it('renders correctly', async () => {
+  let tree: renderer.ReactTestRenderer | undefined;
 
-it('renders correctly', () => {
-  renderer.create(<App />);
+  await act(async () => {
+    tree = renderer.create(<App />);
+  });
+
+  await act(async () => {
+    tree?.unmount();
+  });
 });
