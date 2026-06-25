@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Modal, View, Text, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -14,6 +14,7 @@ import {
   TEXT_WALKTHROUGH_GET_STARTED,
 } from '../constants';
 import { walkthroughStyles as s } from '../styles/WalkthroughStyles';
+import WalkthroughPreview from './walkthroughPreviews';
 
 /**
  * First-run onboarding overlay. Shown once (gated by an AsyncStorage flag in
@@ -48,6 +49,13 @@ const Walkthrough: React.FC<WalkthroughProps> = ({
 
   const handleBack = () => setStep((prev) => Math.max(prev - 1, 0));
 
+  // Always start the tour on the first slide each time it opens. The component
+  // stays mounted (visibility is toggled), so without this a re-launch from
+  // Settings would resume on whatever slide it was last left on.
+  useEffect(() => {
+    if (visible) setStep(0);
+  }, [visible]);
+
   return (
     <Modal
       visible={visible}
@@ -80,15 +88,10 @@ const Walkthrough: React.FC<WalkthroughProps> = ({
             )}
           </View>
 
-          {/* Icon badge + title + body for the current step. */}
+          {/* Live in-app preview + title + body for the current step. */}
           <View style={s.content}>
-            <View
-              style={[
-                s.iconBadge,
-                { borderColor: bg.modalBorder, backgroundColor: bg.buttonBg },
-              ]}
-            >
-              <Ionicons name={current.icon} size={64} color={bg.modalTitle} />
+            <View style={s.previewCard}>
+              <WalkthroughPreview id={current.preview} theme={theme} />
             </View>
             <Text style={[s.title, { color: bg.headerTextColor }]}>
               {current.title}

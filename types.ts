@@ -113,8 +113,20 @@ export interface NavItem {
 // WALKTHROUGH / ONBOARDING TYPES
 // ============================================================================
 
+// Identifies which live in-app preview a walkthrough slide renders. Each id maps
+// to a component in components/walkthroughPreviews/ that mirrors the real screen.
+export type WalkthroughPreviewId =
+  | 'welcome'
+  | 'compass'
+  | 'alarm'
+  | 'programs'
+  | 'settings';
+
 export interface WalkthroughStep {
+  // Kept as a lightweight fallback / semantic hint; the slide art is now driven
+  // by `preview` (a live mock-up of the real screen) rather than this icon.
   icon: keyof typeof Ionicons.glyphMap;
+  preview: WalkthroughPreviewId;
   title: string;
   body: string;
 }
@@ -320,6 +332,8 @@ export interface SettingsViewProps {
   audioVolume?: number;
   onVolumeChange?: (volume: number) => void;
   targetLocation?: TargetLocation | null;
+  // Re-launches the first-run walkthrough on demand (Settings → "How to use the app").
+  onShowWalkthrough?: () => void;
   style?: object;
 }
 

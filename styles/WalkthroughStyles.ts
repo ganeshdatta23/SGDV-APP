@@ -24,17 +24,15 @@ export const walkthroughStyles = StyleSheet.create({
     paddingVertical: 4,
     paddingHorizontal: 8,
   },
-  // Center area: icon badge + title + body.
+  // Center area: live preview + title + body.
   content: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  iconBadge: {
-    width: 132,
-    height: 132,
-    borderRadius: 66,
-    borderWidth: 2,
+  // Wraps the per-slide live in-app preview (components/walkthrough/). Replaces
+  // the old icon badge; sized by the preview itself, just centered and spaced.
+  previewCard: {
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 36,

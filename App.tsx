@@ -158,6 +158,14 @@ function App(): React.JSX.Element {
     }
   }, []);
 
+  // Re-launch the walkthrough on demand (Settings → "How to use the app").
+  // Switch to the home tab first so the tour opens over a clean screen; the
+  // Walkthrough resets to the first slide whenever it becomes visible.
+  const handleShowWalkthrough = useCallback(() => {
+    setCurrentTab('home');
+    setShowWalkthrough(true);
+  }, []);
+
   // Fetch location on component mount
   useEffect(() => {
     const loadLocation = async () => {
@@ -713,7 +721,7 @@ function App(): React.JSX.Element {
       {currentTab === 'events' && <EventsView theme={currentTheme} />}
 
       {currentTab === 'settings' && (
-        <SettingsView 
+        <SettingsView
           currentTheme={currentTheme}
           onThemeChange={setCurrentTheme}
           audioEnabled={audioEnabled}
@@ -721,6 +729,7 @@ function App(): React.JSX.Element {
           audioVolume={audioVolume}
           onVolumeChange={setAudioVolume}
           targetLocation={targetLocation}
+          onShowWalkthrough={handleShowWalkthrough}
         />
       )}
 

@@ -10,6 +10,8 @@ import {
   TEXT_APPEARANCE,
   TEXT_SOUND,
   TEXT_CHOOSE_THEME,
+  TEXT_SHOW_WALKTHROUGH,
+  TEXT_SHOW_WALKTHROUGH_SUB,
   TEXT_DARSHAN_AUDIO_VOLUME,
   TEXT_ALARM_NOTIFICATION_SETTINGS,
   TEXT_ALARM_SOUND,
@@ -53,7 +55,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   audioVolume = 1.0,
   onVolumeChange,
   targetLocation,
-  style 
+  onShowWalkthrough,
+  style
 }) => {
   const [isThemeExpanded, setIsThemeExpanded] = useState(false);
   const [isSoundExpanded, setIsSoundExpanded] = useState(false);
@@ -232,6 +235,30 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             })}
           </View>
         )}
+
+        {/* How to use the app — replay the first-run walkthrough on demand. */}
+        <TouchableOpacity
+          testID="settings-show-walkthrough"
+          style={settingsViewStyles.settingRow}
+          onPress={onShowWalkthrough}
+          activeOpacity={0.7}
+          disabled={!onShowWalkthrough}
+        >
+          <View style={settingsViewStyles.settingLeft}>
+            <View style={[settingsViewStyles.iconContainer, { backgroundColor: theme.accent + '20' }]}>
+              <Ionicons name="help-circle-outline" size={20} color={theme.accent} />
+            </View>
+            <View style={settingsViewStyles.settingInfo}>
+              <Text style={[settingsViewStyles.settingTitle, { color: theme.itemText }]}>
+                {TEXT_SHOW_WALKTHROUGH}
+              </Text>
+              <Text style={[settingsViewStyles.settingSubtitle, { color: theme.itemSubtext }]}>
+                {TEXT_SHOW_WALKTHROUGH_SUB}
+              </Text>
+            </View>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color={theme.chevron} />
+        </TouchableOpacity>
       </View>
 
       {/* Sound Section */}
