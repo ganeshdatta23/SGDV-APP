@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from typing import List, TYPE_CHECKING
-from datetime import datetime, date
+from datetime import datetime, time, timezone
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from app.config import settings
 from app.schemas.events import EventCreate
 import logging
@@ -11,6 +12,47 @@ if TYPE_CHECKING:  # type hints only; SQLAlchemy/ORM unused on the Turso path
     from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
+
+
+def _programs_timezone() -> ZoneInfo:
+    tz_name = settings.PROGRAMS_TIMEZONE or "Asia/Kolkata"
+    try:
+        return ZoneInfo(tz_name)
+    except ZoneInfoNotFoundError:
+        logger.warning("Invalid PROGRAMS_TIMEZONE=%s; falling back to UTC", tz_name)
+        return ZoneInfo("UTC")
+
+
+def _programs_today(now: datetime | None = None) -> str:
+    tz = _programs_timezone()
+    current = now or datetime.now(tz)
+    if current.tzinfo is None:
+        current = current.replace(tzinfo=tz)
+    return current.astimezone(tz).date().isoformat()
+
+
+def _programs_day_start_utc(now: datetime | None = None) -> datetime:
+    tz = _programs_timezone()
+    current = now or datetime.now(tz)
+    if current.tzinfo is None:
+        current = current.replace(tzinfo=tz)
+    local_today = current.astimezone(tz).date()
+    local_start = datetime.combine(local_today, time.min, tzinfo=tz)
+    return local_start.astimezone(timezone.utc)
+
+
+def _sqlite_date_expr(column: str = "event_date") -> str:
+    """Return a SQLite expression for the event date in the Programs timezone."""
+    tz = _programs_timezone()
+    offset = datetime.now(timezone.utc).astimezone(tz).utcoffset()
+    if offset is None or offset.total_seconds() == 0:
+        return f"date({column})"
+
+    total_minutes = int(offset.total_seconds() // 60)
+    sign = "+" if total_minutes >= 0 else "-"
+    total_minutes = abs(total_minutes)
+    hours, minutes = divmod(total_minutes, 60)
+    return f"date({column}, '{sign}{hours:02d}:{minutes:02d}')"
 
 
 class EventService:
@@ -25,8 +67,7 @@ class EventService:
         from sqlalchemy import select
         from app.models.event import Event
 
-        # Get today's date at midnight (start of day)
-        today = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+        today = _programs_day_start_utc()
 
         query = (
             select(Event)
@@ -83,8 +124,7 @@ class EventService:
         from sqlalchemy import select
         from app.models.event import Event
 
-        # Get today's date at midnight (start of day)
-        today = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+        today = _programs_day_start_utc()
 
         delete_query = select(Event).where(Event.event_date < today)
         result = await db.execute(delete_query)
@@ -114,10 +154,11 @@ def _normalize_event_date(value: str) -> str:
 async def _get_published_events_turso() -> List:
     from app import turso
 
-    today = date.today().isoformat()
+    today = _programs_today()
+    event_date_expr = _sqlite_date_expr()
     return await turso.fetch_all(
         f"SELECT {_EVENT_COLS} FROM events "
-        "WHERE is_published = 1 AND date(event_date) >= ? "
+        f"WHERE is_published = 1 AND {event_date_expr} >= ? "
         "ORDER BY event_date ASC",
         [today],
     )
@@ -162,9 +203,10 @@ async def _create_bulk_events_turso(events_data: List[EventCreate], admin_id) ->
 async def _cleanup_old_events_turso() -> int:
     from app import turso
 
-    today = date.today().isoformat()
+    today = _programs_today()
+    event_date_expr = _sqlite_date_expr()
     rs = await turso.execute(
-        "DELETE FROM events WHERE date(event_date) < ?", [today]
+        f"DELETE FROM events WHERE {event_date_expr} < ?", [today]
     )
     count = getattr(rs, "rows_affected", 0) or 0
     if count:

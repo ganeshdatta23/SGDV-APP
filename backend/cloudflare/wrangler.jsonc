@@ -10,6 +10,7 @@
     "ORIGIN": "https://sgvd-backend-ten.vercel.app",
     "CACHE_TTL": "3600",
     "CACHE_PATHS": "/sgvd/locations,/sgvd/events",
-    "BROWSER_TTL": "0"
+    "BROWSER_TTL": "0",
+    "PROGRAMS_TIMEZONE": "Asia/Kolkata"
   }
 }

@@ -20,11 +20,13 @@
  *     Cache API: entries are retained ~24h and the 1h freshness window is
  *     enforced with an X-Edge-Stored-At stamp.
  *
- * Vars (set in wrangler.jsonc): ORIGIN, CACHE_TTL, CACHE_PATHS, BROWSER_TTL.
+ * Vars (set in wrangler.jsonc): ORIGIN, CACHE_TTL, CACHE_PATHS, BROWSER_TTL,
+ * PROGRAMS_TIMEZONE.
  * Deploy: `cd cloudflare && wrangler deploy`.
  */
 const DEFAULT_ORIGIN = "https://sgvd-backend-ten.vercel.app";
 const DEFAULT_CACHE_PATHS = "/sgvd/locations,/sgvd/events";
+const DEFAULT_PROGRAMS_TIMEZONE = "Asia/Kolkata";
 const RETAIN_SECONDS = 86400; // how long the edge keeps an entry for stale fallback
 
 function norm(p) {
@@ -43,6 +45,22 @@ function cacheTtlFor(request, pathname, env) {
 function clientCacheControl(env) {
   const b = parseInt((env && env.BROWSER_TTL) || "0", 10);
   return b > 0 ? `public, max-age=${b}` : "no-store";
+}
+
+function programsDate(env, now = new Date()) {
+  const timeZone = (env && env.PROGRAMS_TIMEZONE) || DEFAULT_PROGRAMS_TIMEZONE;
+  try {
+    const parts = new Intl.DateTimeFormat("en-CA", {
+      timeZone,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).formatToParts(now);
+    const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+    return `${values.year}-${values.month}-${values.day}`;
+  } catch (e) {
+    return now.toISOString().slice(0, 10);
+  }
 }
 
 function buildUpstream(request, env) {
@@ -74,9 +92,13 @@ async function passThrough(request, env) {
 async function cachedRoute(request, env, ctx, ttl) {
   const { upstream, headers } = buildUpstream(request, env);
   const cache = caches.default;
-  // Key on the origin path only (these endpoints take no meaningful query), so
-  // a cache-busting query param on the client still maps to one cached entry.
-  const key = new Request(upstream.split("?")[0], { method: "GET" });
+  // Key cached endpoints without client query params. Programs also includes
+  // the configured calendar date so events refresh immediately after rollover.
+  const keyUrl = new URL(upstream.split("?")[0]);
+  if (norm(new URL(request.url).pathname) === "/sgvd/events") {
+    keyUrl.searchParams.set("programs_date", programsDate(env));
+  }
+  const key = new Request(keyUrl.toString(), { method: "GET" });
   const now = Date.now();
   const cc = clientCacheControl(env);
   const log = (state) => console.log(JSON.stringify({ xcache: state, key: key.url }));

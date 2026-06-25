@@ -42,6 +42,11 @@ class Settings(BaseSettings):
     # just run `python scripts/seed_defaults.py` / init once out-of-band.
     INIT_DB_ON_STARTUP: Optional[bool] = False
 
+    # Calendar date used for Programs visibility. The backend may run in UTC on
+    # serverless hosts, but SGVD programs should roll over on the temple/app
+    # calendar date.
+    PROGRAMS_TIMEZONE: Optional[str] = "Asia/Kolkata"
+
     def _has_postgres_url(self) -> bool:
         return bool(
             self.POSTGRES_URL_NON_POOLING or self.DATABASE_URL or self.POSTGRES_URL

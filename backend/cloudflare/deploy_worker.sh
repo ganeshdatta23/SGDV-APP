@@ -9,7 +9,7 @@
 #
 # Reads the token from CLOUDFLARE_API_TOKEN, else CLOUDFLARE_API_KEY in the
 # repo-root .env. Tunables via env: WORKER_NAME, ORIGIN, CACHE_TTL,
-# CACHE_PATHS, BROWSER_TTL.
+# CACHE_PATHS, BROWSER_TTL, PROGRAMS_TIMEZONE.
 #
 # Usage:
 #   ./cloudflare/deploy_worker.sh
@@ -28,6 +28,7 @@ ORIGIN="${ORIGIN:-https://sgvd-backend-ten.vercel.app}"
 CACHE_TTL="${CACHE_TTL:-3600}"
 CACHE_PATHS="${CACHE_PATHS:-/sgvd/locations,/sgvd/events}"
 BROWSER_TTL="${BROWSER_TTL:-0}"
+PROGRAMS_TIMEZONE="${PROGRAMS_TIMEZONE:-Asia/Kolkata}"
 API="https://api.cloudflare.com/client/v4"
 AUTH=(-H "Authorization: Bearer $TOKEN")
 
@@ -36,9 +37,9 @@ ACCT="$(curl -s "${AUTH[@]}" "$API/accounts" \
 : "${ACCT:?Could not resolve account id (token lacks account access?)}"
 echo ">> account=$ACCT  worker=$NAME  origin=$ORIGIN  cache_ttl=${CACHE_TTL}s  paths=$CACHE_PATHS"
 
-META="$(python3 - "$ORIGIN" "$CACHE_TTL" "$CACHE_PATHS" "$BROWSER_TTL" <<'PY'
+META="$(python3 - "$ORIGIN" "$CACHE_TTL" "$CACHE_PATHS" "$BROWSER_TTL" "$PROGRAMS_TIMEZONE" <<'PY'
 import json,sys
-origin,ttl,paths,bttl=sys.argv[1:5]
+origin,ttl,paths,bttl,programs_tz=sys.argv[1:6]
 print(json.dumps({
   "main_module":"worker-proxy.js",
   "compatibility_date":"2024-11-01",
@@ -47,6 +48,7 @@ print(json.dumps({
     {"type":"plain_text","name":"CACHE_TTL","text":ttl},
     {"type":"plain_text","name":"CACHE_PATHS","text":paths},
     {"type":"plain_text","name":"BROWSER_TTL","text":bttl},
+    {"type":"plain_text","name":"PROGRAMS_TIMEZONE","text":programs_tz},
   ],
 }))
 PY
