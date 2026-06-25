@@ -373,39 +373,40 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   </View>
                 </View>
               </View>
-              <View style={settingsViewStyles.optionRow}>
-                <TouchableOpacity
-                  style={[
-                    settingsViewStyles.optionButton,
-                    { borderColor: alarmSound === 'default' ? theme.accent : theme.sectionBorder, marginRight: 10 },
-                    alarmSound === 'default' && { backgroundColor: theme.selectedBg },
-                  ]}
-                  onPress={() => updateAlarmConfig({ alarmSound: 'default' })}
-                  activeOpacity={0.7}
-                >
-                  <Text style={[
-                    settingsViewStyles.optionButtonText,
-                    { color: alarmSound === 'default' ? theme.accent : theme.itemText }
-                  ]}>
-                    {TEXT_ALARM_SOUND_DEFAULT}
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[
-                    settingsViewStyles.optionButton,
-                    { borderColor: alarmSound === 'custom' ? theme.accent : theme.sectionBorder },
-                    alarmSound === 'custom' && { backgroundColor: theme.selectedBg },
-                  ]}
-                  onPress={() => updateAlarmConfig({ alarmSound: 'custom' })}
-                  activeOpacity={0.7}
-                >
-                  <Text style={[
-                    settingsViewStyles.optionButtonText,
-                    { color: alarmSound === 'custom' ? theme.accent : theme.itemText }
-                  ]}>
-                    {TEXT_ALARM_SOUND_CUSTOM}
-                  </Text>
-                </TouchableOpacity>
+              {/* Full-width stacked rows: the custom sound name is long and
+                  wrapped/looked cramped in the half-width side-by-side chips. */}
+              <View style={settingsViewStyles.soundOptionList}>
+                {([
+                  { value: 'default' as const, label: TEXT_ALARM_SOUND_DEFAULT },
+                  { value: 'custom' as const, label: TEXT_ALARM_SOUND_CUSTOM },
+                ]).map((opt) => {
+                  const selected = alarmSound === opt.value;
+                  return (
+                    <TouchableOpacity
+                      key={opt.value}
+                      style={[
+                        settingsViewStyles.soundOption,
+                        { borderColor: selected ? theme.accent : theme.sectionBorder },
+                        selected && { backgroundColor: theme.selectedBg },
+                      ]}
+                      onPress={() => updateAlarmConfig({ alarmSound: opt.value })}
+                      activeOpacity={0.7}
+                    >
+                      <Text
+                        style={[
+                          settingsViewStyles.soundOptionText,
+                          { color: selected ? theme.accent : theme.itemText },
+                        ]}
+                        numberOfLines={1}
+                      >
+                        {opt.label}
+                      </Text>
+                      {selected && (
+                        <Ionicons name="checkmark-circle" size={20} color={theme.accent} />
+                      )}
+                    </TouchableOpacity>
+                  );
+                })}
               </View>
 
               {/* Alarm Timeout */}

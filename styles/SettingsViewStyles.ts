@@ -141,6 +141,29 @@ export const settingsViewStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  // Full-width stacked rows for the alarm-sound choices, so a long sound name
+  // (e.g. "Sri Natha Charana Dwandvam") fits on one line instead of wrapping
+  // inside a cramped half-width chip.
+  soundOptionList: {
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+  },
+  soundOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    marginBottom: 8,
+  },
+  soundOptionText: {
+    fontSize: 14,
+    fontWeight: '600',
+    flexShrink: 1,
+    marginRight: 8,
+  },
   versionContainer: {
     alignItems: 'center',
     paddingVertical: 10,
