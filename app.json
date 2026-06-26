@@ -65,6 +65,7 @@
         }
       ],
       "./plugins/withAndroidAlarm",
+      "./plugins/withApkSizeOptimizations",
       "expo-audio",
       "expo-location",
       "expo-task-manager"
