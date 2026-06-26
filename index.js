@@ -16,10 +16,18 @@ if (Platform.OS === 'android') {
 
   // Read the user's alarm config (timeout/snooze/sound) directly from storage so
   // it works in the headless background context where React state is unavailable.
+  const normalizeOption = (value, allowedValues, fallback) =>
+    allowedValues.includes(value) ? value : fallback;
+
   const readAlarmConfig = async () => {
     try {
       const raw = await AsyncStorage.getItem('alarmConfig');
-      return raw ? JSON.parse(raw) : {};
+      const cfg = raw ? JSON.parse(raw) : {};
+      return {
+        ...cfg,
+        alarmTimeoutMs: normalizeOption(cfg.alarmTimeoutMs, [30000, 60000, 300000, 0], 60000),
+        snoozeMinutes: normalizeOption(cfg.snoozeMinutes, [1, 2, 5, 10], 5),
+      };
     } catch {
       return {};
     }

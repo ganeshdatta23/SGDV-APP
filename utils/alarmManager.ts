@@ -4,6 +4,13 @@ import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 import { calculateSunTimes } from './sgvdApi';
 import {
+  ALARM_TIMEOUT_OPTIONS,
+  DEFAULT_ALARM_CONFIG,
+  SNOOZE_DURATION_OPTIONS,
+  ALARM_CONFIG_KEY,
+  SCHEDULE_DAYS_AHEAD_OPTIONS,
+} from '../constants';
+import {
   initializeNotifeeChannels,
   scheduleNotifeeAlarm,
   cancelAllNotifeeAlarms,
@@ -33,25 +40,23 @@ Notifications.setNotificationHandler({
   }),
 });
 
-// Alarm configuration — the canonical AlarmConfig type lives in ../types and is
-// imported above so this module and the UI components never drift apart.
+const isAllowedOptionValue = <T extends number>(
+  options: readonly { value: T }[],
+  value: number
+) => options.some((option) => option.value === value);
 
-const DEFAULT_ALARM_CONFIG: AlarmConfig = {
-  sunriseEnabled: false,
-  sunsetEnabled: false,
-  sunriseOffset: 2, // 2 minutes before sunrise
-  sunsetOffset: 2, // 2 minutes before sunset
-  alarmEnabled: false,
-  sunriseAlarmEnabled: false,
-  sunsetAlarmEnabled: false,
-  notificationsEnabled: true, // Notifications enabled by default
-  sunriseNotificationEnabled: true, // Sunrise notifications enabled by default
-  sunsetNotificationEnabled: true, // Sunset notifications enabled by default
-  alarmSound: 'custom',
-  alarmTimeoutMs: 60000, // 1 minute
-  snoozeMinutes: 5, // 5 minutes
-  scheduleDaysAhead: 1, // default: today + tomorrow. User can raise to 2 or 4 in settings.
-};
+const normalizeAlarmConfig = (config: AlarmConfig): AlarmConfig => ({
+  ...config,
+  alarmTimeoutMs: isAllowedOptionValue(ALARM_TIMEOUT_OPTIONS, config.alarmTimeoutMs)
+    ? config.alarmTimeoutMs
+    : DEFAULT_ALARM_CONFIG.alarmTimeoutMs,
+  snoozeMinutes: isAllowedOptionValue(SNOOZE_DURATION_OPTIONS, config.snoozeMinutes)
+    ? config.snoozeMinutes
+    : DEFAULT_ALARM_CONFIG.snoozeMinutes,
+  scheduleDaysAhead: isAllowedOptionValue(SCHEDULE_DAYS_AHEAD_OPTIONS, config.scheduleDaysAhead)
+    ? config.scheduleDaysAhead
+    : DEFAULT_ALARM_CONFIG.scheduleDaysAhead,
+});
 
 // Store notification IDs for cleanup
 let scheduledNotificationIds: string[] = [];
@@ -225,8 +230,8 @@ export const initializeNotifications = async (): Promise<boolean> => {
 // Get alarm configuration
 export const getAlarmConfig = async (): Promise<AlarmConfig> => {
   try {
-    const config = await AsyncStorage.getItem('alarmConfig');
-    return config ? { ...DEFAULT_ALARM_CONFIG, ...JSON.parse(config) } : DEFAULT_ALARM_CONFIG;
+    const config = await AsyncStorage.getItem(ALARM_CONFIG_KEY);
+    return normalizeAlarmConfig(config ? { ...DEFAULT_ALARM_CONFIG, ...JSON.parse(config) } : DEFAULT_ALARM_CONFIG);
   } catch (error) {
     console.error('Error getting alarm config:', error);
     return DEFAULT_ALARM_CONFIG;
@@ -236,8 +241,9 @@ export const getAlarmConfig = async (): Promise<AlarmConfig> => {
 // Save alarm configuration
 export const saveAlarmConfig = async (config: AlarmConfig): Promise<void> => {
   try {
-    await AsyncStorage.setItem('alarmConfig', JSON.stringify(config));
-    console.log('Alarm config saved:', config);
+    const normalizedConfig = normalizeAlarmConfig(config);
+    await AsyncStorage.setItem(ALARM_CONFIG_KEY, JSON.stringify(normalizedConfig));
+    console.log('Alarm config saved:', normalizedConfig);
   } catch (error) {
     console.error('Error saving alarm config:', error);
   }
@@ -456,9 +462,9 @@ export const getNextAlarmInfo = async (latitude: number, longitude: number): Pro
 export const scheduleAlarmsForNext3Days = async (latitude: number, longitude: number): Promise<void> => {
   try {
     const config = await getAlarmConfig();
-    const daysAhead = config.scheduleDaysAhead ?? 1; // Default to 1 day ahead (today + tomorrow)
+    const scheduledDayCount = config.scheduleDaysAhead ?? 1;
 
-    console.log(`Scheduling alarms for ${daysAhead + 1} days (today + ${daysAhead} day(s) ahead)`);
+    console.log(`Scheduling alarms for ${scheduledDayCount} day(s), including today`);
 
     // Clear existing alarms first
     await cancelAllAlarms();
@@ -487,8 +493,8 @@ export const scheduleAlarmsForNext3Days = async (latitude: number, longitude: nu
     // the evening) nothing got scheduled and the UI showed "0 alarms scheduled".
     const baseSun = await calculateSunTimes(latitude, longitude);
 
-    // Schedule for today and next N days (where N = scheduleDaysAhead)
-    for (let dayOffset = 0; dayOffset <= daysAhead; dayOffset++) {
+    // Schedule for the selected number of calendar days, inclusive of today.
+    for (let dayOffset = 0; dayOffset < scheduledDayCount; dayOffset++) {
       const dayLabel = dayOffset === 0 ? 'today' : dayOffset === 1 ? 'tomorrow' : `day${dayOffset}`;
 
       if (shouldScheduleSunrise) {
@@ -528,7 +534,7 @@ export const scheduleAlarmsForNext3Days = async (latitude: number, longitude: nu
       }
     }
 
-    console.log(`Alarms scheduled successfully for ${daysAhead + 1} days`);
+    console.log(`Alarms scheduled successfully for ${scheduledDayCount} day(s)`);
   } catch (error) {
     console.error('Error scheduling alarms:', error);
   }

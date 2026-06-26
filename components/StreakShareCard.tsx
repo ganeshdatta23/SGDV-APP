@@ -8,6 +8,7 @@ import {
   STREAK_CARD_GOLD,
   STREAK_CARD_CREAM,
   TEXT_GURU_DIGVANDANAM,
+  buildStreakCardCaption,
 } from '../constants';
 import { streakStyles as s } from '../styles/StreakStyles';
 
@@ -37,16 +38,20 @@ const StreakShareCard = forwardRef<View, StreakShareCardProps>(
             {TEXT_GURU_DIGVANDANAM}
           </Text>
 
+          <Text style={[s.cardCaption, { color: STREAK_CARD_CREAM }]}>
+            {buildStreakCardCaption(currentStreak)}
+          </Text>
+
           <View style={[s.cardPhotoFrame, { borderColor: STREAK_CARD_GOLD }]}>
             <Image
-              source={require('../assets/images/swamiji-darshan.png')}
+              source={require('../assets/images/swamiji-darshan-portrait.png')}
               style={s.cardPhoto}
               resizeMode="cover"
             />
           </View>
 
           <View style={s.cardCountRow}>
-            <Ionicons name="flame" size={48} color={STREAK_CARD_GOLD} />
+            <Ionicons name="flame" size={42} color={STREAK_CARD_GOLD} />
             <Text style={[s.cardCount, { color: STREAK_CARD_GOLD }]}>{currentStreak}</Text>
           </View>
 

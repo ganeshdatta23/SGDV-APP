@@ -125,7 +125,7 @@ export const DEFAULT_ALARM_CONFIG: AlarmConfig = {
   alarmSound: 'custom',
   alarmTimeoutMs: 60000, // 1 minute
   snoozeMinutes: 5,
-  scheduleDaysAhead: 1, // default: today + tomorrow. User can raise to 2 or 4 in settings.
+  scheduleDaysAhead: 1, // scheduled day count, inclusive of today.
 };
 
 export const ALARM_MAX_DURATION_MS = 60000; // 1 minute
@@ -133,7 +133,7 @@ export const ALARM_TEST_DURATION_MS = 10000; // 10 seconds
 export const ALARM_TEST_DELAY_SECONDS = 5;
 export const ALARM_NOTIFICATION_CHANNEL = 'sunrise-sunset-alarms';
 export const ALARM_NOTIFICATION_CHANNEL_NAME = 'Sunrise & Sunset Alarms';
-export const ALARM_CONFIG_KEY = '@sgvd_alarm_config';
+export const ALARM_CONFIG_KEY = 'alarmConfig';
 
 // ============================================================================
 // THEME CONFIGURATION
@@ -652,20 +652,19 @@ export const TEXT_SNOOZE_DURATION_SUBTITLE = 'Ring again after';
 export const ALARM_TIMEOUT_OPTIONS: { label: string; value: number }[] = [
   { label: '30s', value: 30000 },
   { label: '1 min', value: 60000 },
-  { label: '2 min', value: 120000 },
   { label: '5 min', value: 300000 },
   { label: 'Never', value: 0 },
 ];
 export const SNOOZE_DURATION_OPTIONS: { label: string; value: number }[] = [
   { label: '1 min', value: 1 },
+  { label: '2 min', value: 2 },
   { label: '5 min', value: 5 },
   { label: '10 min', value: 10 },
-  { label: '15 min', value: 15 },
 ];
 export const TEXT_SCHEDULE_DAYS_AHEAD = 'Schedule Ahead';
-export const TEXT_SCHEDULE_DAYS_AHEAD_SUBTITLE = 'Pre-schedule alarms for the next';
-// Days-ahead options (max 4) kept small so the OS isn't flooded with exact
-// alarms; the schedule is refreshed every time the app is opened.
+export const TEXT_SCHEDULE_DAYS_AHEAD_SUBTITLE = 'Calendar days including today:';
+// Scheduled day-count options (max 4) are inclusive of today and kept small so
+// the OS isn't flooded with exact alarms; the schedule is refreshed on app open.
 export const SCHEDULE_DAYS_AHEAD_OPTIONS: { label: string; value: number }[] = [
   { label: '1 day', value: 1 },
   { label: '2 days', value: 2 },
@@ -728,8 +727,9 @@ export const INSTALL_ID_KEY = '@sgvd_install_id';
 export const STREAK_STATE_KEY = '@sgvd_streak_state';
 
 // A darshan counts toward the streak only if it happens within this many
-// minutes either side of that day's actual sunrise. Tunable.
-export const SUNRISE_WINDOW_MINUTES = 60;
+// minutes either side of that day's actual sunrise (i.e. ±10 min → a 20-min
+// window centered on sunrise). Tunable.
+export const SUNRISE_WINDOW_MINUTES = 10;
 
 // Milestones that trigger a celebration + share prompt (day 2 intentionally
 // omitted to avoid nagging). Used by both the modal and the contextual pill.
@@ -749,6 +749,13 @@ export const SGVD_STREAKS_URL = `${SGVD_API_BASE_URL}/sgvd/streaks`;
 // real Play Store / App Store / landing URL once published.
 export const APP_DOWNLOAD_URL =
   'https://play.google.com/store/apps/details?id=com.darshanamcompassnative';
+
+// On-card line under the title describing the streak in the user's voice.
+// Pluralizes "day" and reads naturally for a 1-day streak ("consecutive" only
+// makes sense for a multi-day streak).
+export const buildStreakCardCaption = (streak: number): string =>
+  `I have offered prayers in Swamiji's direction at sunrise for ${streak} ` +
+  `${streak === 1 ? 'day' : 'consecutive days'}`;
 
 // Builds the prefilled caption that accompanies the shared streak card image.
 export const buildStreakShareMessage = (streak: number): string =>
@@ -809,4 +816,3 @@ export const WALKTHROUGH_STEPS: WalkthroughStep[] = [
     body: 'Pick a theme, choose your alarm sound, and fine-tune timing any time from Settings.',
   },
 ];
-

@@ -291,8 +291,8 @@ export default function SunCycleView({ latitude, longitude }: SunCycleViewProps)
         {/* Scheduled alarms list (with per-alarm remove) */}
         {(config.notificationsEnabled || config.alarmEnabled) && (
           <>
-            {/* How many days ahead to schedule. Kept small (1/2/4) so the OS
-                isn't flooded with exact alarms; rescheduled on every app open. */}
+            {/* How many calendar days to schedule, inclusive of today. Kept small
+                (1/2/4) so the OS isn't flooded with exact alarms. */}
             <View style={sunCycleViewStyles.scheduleAheadRow}>
               <Text style={sunCycleViewStyles.scheduleAheadLabel}>{TEXT_SCHEDULE_AHEAD}</Text>
               <View style={sunCycleViewStyles.scheduleAheadOptions}>
@@ -306,7 +306,7 @@ export default function SunCycleView({ latitude, longitude }: SunCycleViewProps)
                         selected && sunCycleViewStyles.scheduleAheadChipActive,
                       ]}
                       onPress={() => updateConfig({ scheduleDaysAhead: days })}
-                      accessibilityLabel={`Schedule ${days} day${days > 1 ? 's' : ''} ahead`}
+                      accessibilityLabel={`Schedule ${days} day${days > 1 ? 's' : ''}`}
                     >
                       <Text
                         style={[
@@ -325,8 +325,8 @@ export default function SunCycleView({ latitude, longitude }: SunCycleViewProps)
             <View style={sunCycleViewStyles.infoBox}>
               <Ionicons name="calendar" size={20} color={SUN_SUNRISE_ICON_COLOR} />
               <Text style={sunCycleViewStyles.infoText}>
-                {scheduledAlarms.length} alarm{scheduledAlarms.length === 1 ? '' : 's'} scheduled for the next{' '}
-                {config.scheduleDaysAhead ?? 1} day{(config.scheduleDaysAhead ?? 1) === 1 ? '' : 's'}
+                {scheduledAlarms.length} alarm{scheduledAlarms.length === 1 ? '' : 's'} scheduled across{' '}
+                {config.scheduleDaysAhead ?? 1} day{(config.scheduleDaysAhead ?? 1) === 1 ? '' : 's'}, including today
               </Text>
             </View>
 
@@ -357,4 +357,3 @@ export default function SunCycleView({ latitude, longitude }: SunCycleViewProps)
     </ScrollView>
   );
 }
-
