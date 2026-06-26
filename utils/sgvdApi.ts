@@ -55,6 +55,15 @@ const getHardcodedTestTimes = (): { sunrise: Date; sunset: Date } => {
 // Cache validity duration (1 minute in milliseconds)
 const CACHE_VALIDITY_MS = 60 * 1000;
 
+// Stale-while-revalidate window. When a cached location is younger than this we
+// return it instantly and refresh in the background, instead of blocking on the
+// proxy. The upstream location changes at most a few times a year, so a slightly
+// stale read for a single app-open is harmless — and it removes the 1-2 blocking
+// round-trips that made the Alarm tab slow (calculateSunTimes runs on every open,
+// sometimes twice). Matches the Cloudflare edge cache TTL (1h). Release builds
+// only: dev builds stay network-first so QA sun-time overrides appear at once.
+const LOCATION_SWR_FRESH_MS = 60 * 60 * 1000;
+
 // Events cache validity duration (10 minutes in milliseconds)
 const EVENTS_CACHE_VALIDITY_MS = 10 * 60 * 1000;
 const EVENTS_CACHE_KEY = '@sgvd_events_cache';
@@ -326,128 +335,191 @@ const loadCachedLocation = async (): Promise<LocationData | null> => {
  * Fallback chain: API -> Cache -> Hardcoded fallback
  * Returns location info including name, coordinates, sunrise/sunset times
  */
-export const fetchLocationDirect = async (): Promise<LocationData> => {
-  // STEP 1: Try API first
-  try {
-    console.log('🌐 STEP 1: Fetching location data from API...');
-    
-    const response = await fetch(SGVD_API_URL, {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-      },
-    });
+/**
+ * Network path: fetch the location (incl. sunrise/sunset) from the API, refresh
+ * the cache, and record the successful sync. Throws on any network/HTTP error or
+ * empty result — the caller decides the fallback.
+ */
+const fetchLocationFromNetwork = async (): Promise<LocationData> => {
+  console.log('🌐 Fetching location data from API...');
 
-    console.log('SGVD API: Response status:', response.status);
-    
-    if (!response.ok) {
-      console.error('SGVD API: Error - Status:', response.status);
-      throw new Error(`API returned status ${response.status}`);
-    }
+  const response = await fetch(SGVD_API_URL, {
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+    },
+  });
 
-    const data = await response.json();
-    console.log('SGVD API: Raw response:', JSON.stringify(data, null, 2));
-    
-    // The API returns { results: [...] }
-    if (data?.results?.length > 0) {
-      const locationData = data.results[0];
-      console.log('STEP 1 SUCCESS: Location found from API:', locationData.name);
-      
-      // Extract time from API and apply to today's date
-      // This ignores the date from API and uses only the time portion
-      const fallbackTimes = getFallbackSunTimes();
-      const sunrise = locationData.sunrise 
-        ? applyTimeToToday(locationData.sunrise) 
-        : fallbackTimes.sunrise;
-      const sunset = locationData.sunset 
-        ? applyTimeToToday(locationData.sunset) 
-        : fallbackTimes.sunset;
-      
-      console.log('SGVD API: Time extraction:', {
-        apiSunrise: locationData.sunrise,
-        appliedSunrise: sunrise.toISOString(),
-        apiSunset: locationData.sunset,
-        appliedSunset: sunset.toISOString(),
-      });
-      
-      const locationName = locationData.name?.trim() || "Appaji's Location";
-      const location: LocationData = {
-        name: locationName,
-        address: locationName,
-        latitude: locationData.latitude,
-        longitude: locationData.longitude,
-        sunrise,
-        sunset,
-        googleMapsUrl: `https://www.google.com/maps/@${locationData.latitude},${locationData.longitude},17z`
-      };
-      
-      console.log('SGVD API: Location data ready:', {
-        name: location.name,
-        coords: `${location.latitude}, ${location.longitude}`,
-        sunrise: formatSunTime(location.sunrise),
-        sunset: formatSunTime(location.sunset)
-      });
-      
-      // Update cache with location data (saves to both in-memory and AsyncStorage)
-      await updateCache(location);
+  console.log('SGVD API: Response status:', response.status);
 
-      // Record the last SUCCESSFUL API sync. This drives the weekly staleness
-      // prompt + purge, and is set ONLY here (not in updateCache, which also runs
-      // on cache restore) so a served-from-cache read never advances the clock.
-      try {
-        await AsyncStorage.setItem(LOCATION_LAST_SYNC_KEY, Date.now().toString());
-      } catch (error) {
-        console.warn('Failed to record last sync timestamp:', error);
-      }
+  if (!response.ok) {
+    console.error('SGVD API: Error - Status:', response.status);
+    throw new Error(`API returned status ${response.status}`);
+  }
 
-      return location;
-    }
+  const data = await response.json();
 
+  // The API returns { results: [...] }
+  if (!(data?.results?.length > 0)) {
     throw new Error('No location found in API response');
+  }
+
+  const locationData = data.results[0];
+  console.log('SGVD API: Location found:', locationData.name);
+
+  // Extract time from API and apply to today's date — ignore the API's date and
+  // use only the time portion.
+  const fallbackTimes = getFallbackSunTimes();
+  const sunrise = locationData.sunrise
+    ? applyTimeToToday(locationData.sunrise)
+    : fallbackTimes.sunrise;
+  const sunset = locationData.sunset
+    ? applyTimeToToday(locationData.sunset)
+    : fallbackTimes.sunset;
+
+  const locationName = locationData.name?.trim() || "Appaji's Location";
+  const location: LocationData = {
+    name: locationName,
+    address: locationName,
+    latitude: locationData.latitude,
+    longitude: locationData.longitude,
+    sunrise,
+    sunset,
+    googleMapsUrl: `https://www.google.com/maps/@${locationData.latitude},${locationData.longitude},17z`,
+  };
+
+  console.log('SGVD API: Location data ready:', {
+    name: location.name,
+    coords: `${location.latitude}, ${location.longitude}`,
+    sunrise: formatSunTime(location.sunrise),
+    sunset: formatSunTime(location.sunset),
+  });
+
+  // Update cache with location data (saves to both in-memory and AsyncStorage)
+  await updateCache(location);
+
+  // Record the last SUCCESSFUL API sync. This drives the weekly staleness
+  // prompt + purge, and is set ONLY here (not in updateCache, which also runs
+  // on cache restore) so a served-from-cache read never advances the clock.
+  try {
+    await AsyncStorage.setItem(LOCATION_LAST_SYNC_KEY, Date.now().toString());
+  } catch (error) {
+    console.warn('Failed to record last sync timestamp:', error);
+  }
+
+  return location;
+};
+
+/**
+ * Return a recently-cached location (in-memory first, then AsyncStorage) when it
+ * is younger than the SWR window, with its sun times re-anchored to today; else
+ * null. This is the fast path that lets the Alarm tab open without a network
+ * round-trip. It deliberately does NOT touch the cache timestamps, so the weekly
+ * staleness/purge logic still measures from the last real sync.
+ */
+const loadFreshLocation = async (): Promise<LocationData | null> => {
+  const today = new Date().toISOString().split('T')[0];
+
+  // In-memory cache populated by an earlier fetch this session.
+  if (
+    cache &&
+    cache.date === today &&
+    Date.now() - cache.timestamp < LOCATION_SWR_FRESH_MS
+  ) {
+    return cache.location;
+  }
+
+  try {
+    const cachedLocationStr = await AsyncStorage.getItem(LOCATION_CACHE_KEY);
+    const cachedTimestamp = await AsyncStorage.getItem(LOCATION_TIMESTAMP_KEY);
+    if (cachedLocationStr && cachedTimestamp) {
+      const age = Date.now() - parseInt(cachedTimestamp, 10);
+      if (age < LOCATION_SWR_FRESH_MS) {
+        const cachedData = JSON.parse(cachedLocationStr);
+        return {
+          ...cachedData,
+          sunrise: applyTimeToToday(cachedData.sunrise),
+          sunset: applyTimeToToday(cachedData.sunset),
+        };
+      }
+    }
+  } catch (error) {
+    console.warn('loadFreshLocation: cache read failed:', error);
+  }
+
+  return null;
+};
+
+// Single-flight background refresh, so the two sun-time reads on an Alarm-tab
+// open (and any rapid re-renders) share ONE network request instead of each
+// firing its own. Errors are swallowed — the cache we just served is good enough.
+let backgroundRefresh: Promise<unknown> | null = null;
+const revalidateLocationInBackground = (): void => {
+  if (backgroundRefresh) return;
+  backgroundRefresh = fetchLocationFromNetwork()
+    .then(() => console.log('Background location refresh complete'))
+    .catch((error) =>
+      console.log('Background location refresh failed (ignored):', error),
+    )
+    .finally(() => {
+      backgroundRefresh = null;
+    });
+};
+
+/**
+ * Full fallback chain: network -> cache (in-memory/AsyncStorage, up to 3 days) ->
+ * hardcoded fallback. Never throws.
+ */
+const fetchLocationWithFallback = async (): Promise<LocationData> => {
+  try {
+    return await fetchLocationFromNetwork();
   } catch (apiError) {
-    // STEP 2: API failed - try internal cache (in-memory + AsyncStorage)
-    console.warn('STEP 1 FAILED: API error:', apiError);
-    console.log('STEP 2: Checking internal cache...');
-    
+    // API failed — try the internal cache (in-memory + AsyncStorage).
+    console.warn('Location API failed, falling back to cache:', apiError);
     try {
       const cachedLocation = await loadCachedLocation();
-      
       if (cachedLocation) {
-        console.log('STEP 2 SUCCESS: Using cached location data');
-        console.log('Cached location:', {
-          name: cachedLocation.name,
-          coords: `${cachedLocation.latitude}, ${cachedLocation.longitude}`,
-          sunrise: formatSunTime(cachedLocation.sunrise),
-          sunset: formatSunTime(cachedLocation.sunset)
-        });
+        console.log('Using cached location data (fallback)');
         return cachedLocation;
       }
-      
-      console.log('STEP 2 FAILED: No valid cache found');
+      console.log('No valid cache found');
     } catch (cacheError) {
-      console.warn('STEP 2 FAILED: Cache read error:', cacheError);
+      console.warn('Cache read error:', cacheError);
     }
-    
-    // STEP 3: Both API and cache failed - use hardcoded fallback
-    console.log('STEP 3: Using hardcoded fallback location');
+
+    // Both API and cache failed — use the hardcoded fallback.
+    console.log('Using hardcoded fallback location');
     const fallbackTimes = getFallbackSunTimes();
-    const location: LocationData = {
+    return {
       ...FALLBACK_LOCATION,
       address: FALLBACK_LOCATION.name,
       sunrise: fallbackTimes.sunrise,
       sunset: fallbackTimes.sunset,
     };
-    
-    console.log('STEP 3 SUCCESS: Fallback location loaded:', {
-      name: location.name,
-      coords: `${location.latitude}, ${location.longitude}`,
-      sunrise: formatSunTime(location.sunrise),
-      sunset: formatSunTime(location.sunset)
-    });
-    
-    return location;
   }
+};
+
+/**
+ * Fetches location data (including sunrise/sunset times) for the app.
+ *
+ * Release builds use stale-while-revalidate: if a recently-cached location
+ * exists (younger than LOCATION_SWR_FRESH_MS) it is returned instantly and
+ * refreshed in the background, so the Alarm tab and sun-time reads load without
+ * blocking on the proxy. Dev builds skip the fast path (network-first) so QA
+ * sun-time overrides are reflected immediately. In every case the network path
+ * falls back to the cache and then a hardcoded location.
+ */
+export const fetchLocationDirect = async (): Promise<LocationData> => {
+  if (!__DEV__) {
+    const fresh = await loadFreshLocation();
+    if (fresh) {
+      console.log('Using fresh cached location (revalidating in background)');
+      revalidateLocationInBackground();
+      return fresh;
+    }
+  }
+  return fetchLocationWithFallback();
 };
 
 // Update cache with fresh data (both in-memory and AsyncStorage)
@@ -681,13 +753,14 @@ export async function purgeStaleLocationCache(
 }
 
 /**
- * Force a fresh API fetch, bypassing the 60s in-memory freshness short-circuit.
- * Used by the offline->online background refresh. The fallback chain inside
- * fetchLocationDirect still protects against the API being unreachable.
+ * Force a fresh API fetch, bypassing the stale-while-revalidate fast path. Used
+ * by the offline->online background refresh, which wants a guaranteed network
+ * attempt rather than a (possibly fresh) cached read. The fallback chain inside
+ * fetchLocationWithFallback still protects against the API being unreachable.
  */
 export async function forceRefreshLocation(): Promise<LocationData> {
   cache = null;
-  return fetchLocationDirect();
+  return fetchLocationWithFallback();
 }
 
 // ============================================================================

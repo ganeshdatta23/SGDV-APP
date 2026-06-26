@@ -65,6 +65,7 @@ import {
   TEXT_CUSTOMIZE_EXPERIENCE,
   TEXT_STOP_ALARM,
   WALKTHROUGH_STORAGE_KEY,
+  SETTINGS_PREFS_KEY,
   CONNECTIVITY_DEBOUNCE_MS,
   LOCATION_LAST_SYNC_KEY,
   LOCATION_TIMESTAMP_KEY,
@@ -127,7 +128,12 @@ function App(): React.JSX.Element {
   
   // Audio volume state (0-1 range)
   const [audioVolume, setAudioVolume] = useState(AUDIO_VOLUME_DEFAULT);
-  
+
+  // Becomes true once persisted UI prefs (theme/audio) have been read from
+  // AsyncStorage. Guards the persist-on-change effect so it never writes the
+  // initial defaults back before the saved values are loaded.
+  const prefsHydratedRef = useRef(false);
+
   // Get current background theme based on state
   const currentBgTheme = APP_BACKGROUNDS[currentTheme];
 
@@ -171,6 +177,52 @@ function App(): React.JSX.Element {
 
     return () => subscription?.remove();
   }, []);
+
+  // Load persisted UI preferences (theme, audio on/off, audio volume) once on
+  // mount and apply them. Previously these lived only in React state seeded from
+  // constants, so every change was lost on app restart. Failures are non-fatal —
+  // we just keep the defaults.
+  useEffect(() => {
+    (async () => {
+      try {
+        const raw = await AsyncStorage.getItem(SETTINGS_PREFS_KEY);
+        if (raw) {
+          const prefs = JSON.parse(raw);
+          if (
+            prefs.theme === 'light' ||
+            prefs.theme === 'dark' ||
+            prefs.theme === 'cosmic'
+          ) {
+            setCurrentTheme(prefs.theme);
+          }
+          if (typeof prefs.audioEnabled === 'boolean') {
+            setAudioEnabled(prefs.audioEnabled);
+          }
+          if (
+            typeof prefs.audioVolume === 'number' &&
+            prefs.audioVolume >= 0 &&
+            prefs.audioVolume <= 1
+          ) {
+            setAudioVolume(prefs.audioVolume);
+          }
+        }
+      } catch (error) {
+        console.log('Settings prefs read failed (using defaults):', error);
+      } finally {
+        prefsHydratedRef.current = true;
+      }
+    })();
+  }, []);
+
+  // Persist UI preferences whenever they change, after the initial hydration so
+  // we never clobber the saved values with the startup defaults.
+  useEffect(() => {
+    if (!prefsHydratedRef.current) return;
+    AsyncStorage.setItem(
+      SETTINGS_PREFS_KEY,
+      JSON.stringify({ theme: currentTheme, audioEnabled, audioVolume }),
+    ).catch((error) => console.log('Settings prefs write failed:', error));
+  }, [currentTheme, audioEnabled, audioVolume]);
 
   // First-run walkthrough check: show the onboarding overlay only if the user
   // has not seen it yet. Runs once on mount; failures are non-fatal (we simply

@@ -706,6 +706,11 @@ export const ANIMATION_SPRING_CONFIG = {
 // existing user sees the new tour once.
 export const WALKTHROUGH_STORAGE_KEY = 'hasSeenWalkthrough_v2';
 
+// Persisted UI preferences (theme, audio on/off, audio volume). Stored as a
+// single JSON blob so they survive app restarts — previously these lived only
+// in React state and reset to defaults on every launch.
+export const SETTINGS_PREFS_KEY = '@sgvd_settings_prefs';
+
 export const TEXT_WALKTHROUGH_SKIP = 'Skip';
 export const TEXT_WALKTHROUGH_NEXT = 'Next';
 export const TEXT_WALKTHROUGH_BACK = 'Back';
