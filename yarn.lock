@@ -4170,11 +4170,6 @@ expo-audio@~1.0.15:
   resolved "https://registry.npmjs.org/expo-audio/-/expo-audio-1.0.15.tgz"
   integrity sha512-zXKJ070jhEaxQwOwi44fzEznPUrOkCCltqHDK6mK/AfGdj9/ZfiwrmTxcgcQq4wpq0UeXsG2iEYPiRMsnPgBmg==
 
-expo-blur@~15.0.7:
-  version "15.0.7"
-  resolved "https://registry.npmjs.org/expo-blur/-/expo-blur-15.0.7.tgz"
-  integrity sha512-SugQQbQd+zRPy8z2G5qDD4NqhcD7srBF7fN7O7yq6q7ZFK59VWvpDxtMoUkmSfdxgqONsrBN/rLdk00USADrMg==
-
 expo-constants@~18.0.10:
   version "18.0.10"
   resolved "https://registry.npmjs.org/expo-constants/-/expo-constants-18.0.10.tgz"

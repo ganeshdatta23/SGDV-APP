@@ -24,6 +24,10 @@ const SIZE_PROPS = {
   reactNativeArchitectures: 'armeabi-v7a,arm64-v8a',
   'android.enableMinifyInReleaseBuilds': 'true',
   'android.enableShrinkResourcesInReleaseBuilds': 'true',
+  // The app ships no .gif/.webp assets, so drop Fresco's animated-gif / webp
+  // native libs (libgifimage.so, libstatic-webp.so, libnative-imagetranscoder.so).
+  'expo.gif.enabled': 'false',
+  'expo.webp.enabled': 'false',
 };
 
 const KEEP_MARKER = 'withApkSizeOptimizations keep rules';
